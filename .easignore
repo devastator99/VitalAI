@@ -1,0 +1,7 @@
+# Default .easignore
+node_modules/
+**/.git/
+.expo/
+!assets/**
+/android
+/ios
