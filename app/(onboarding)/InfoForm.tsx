@@ -180,7 +180,7 @@ export default function InfoForm() {
               source={
                 imageUrl
                   ? { uri: imageUrl }
-                  : require("../../assets/images/userx.png")
+                  : require("../../assets/images/asuka-2239.gif")
               }
               style={styles.profileImage}
             />

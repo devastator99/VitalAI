@@ -27,7 +27,7 @@ const UserCard = ({ user, openActionMenu }: UserCardProps) => {
         <View style={styles.avatarContainer}>
           <Image
             source={
-              imageUrl ? { uri: imageUrl } : require("~/assets/images/userx.png") // Default image path
+              imageUrl ? { uri: imageUrl } : require("~/assets/images/asuka-2239.gif") // Default image path
             }
             style={styles.avatarImage}
             resizeMode="cover"

@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GoogleOneTap, useSignIn } from "@clerk/clerk-react";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-import { useOAuth, useSSO } from "@clerk/clerk-expo";
+import { useOAuth } from "@clerk/clerk-expo";
 import { useAuthRequest } from "expo-auth-session";
 import { useWarmUpBrowser } from "~/utils/useWarmUpBrowser";
 import * as Linking from "expo-linking";
@@ -38,24 +38,24 @@ const BottomLoginSheet = () => {
   //   }
   // }, [response]);
 
-  const { startSSOFlow } = useSSO();
+  // const { startSSOFlow } = useSSO();
 
-  const handlePress = React.useCallback(async () => {
-    try {
-      const { createdSessionId, setActive, signIn, signUp } =
-        await startSSOFlow({
-          strategy: "oauth_google",
-          redirectUrl: Linking.createURL("/dashboard", { scheme: "myapp" }),
-        });
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
-      } else {
-        Alert.alert('yo man this is rigged');
-      }
-    } catch (err) {
-      console.error("SSO error", err);
-    }
-  }, []);
+  // const handlePress = React.useCallback(async () => {
+  //   try {
+  //     const { createdSessionId, setActive, signIn, signUp } =
+  //       // await startSSOFlow({
+  //       //   strategy: "oauth_google",
+  //       //   redirectUrl: Linking.createURL("/dashboard", { scheme: "myapp" }),
+  //       // });
+  //     if (createdSessionId) {
+  //       setActive!({ session: createdSessionId });
+  //     } else {
+  //       Alert.alert('yo man this is rigged');
+  //     }
+  //   } catch (err) {
+  //     console.error("SSO error", err);
+  //   }
+  // }, []);
 
   const { bottom } = useSafeAreaInsets();
 
@@ -66,7 +66,7 @@ const BottomLoginSheet = () => {
         <Text style={styles.btnLightText}>Continue with Apple</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={() => handlePress()}
+        onPress={() => {}}
         style={[styles.btn, styles.btnDark]}
       >
         <Ionicons

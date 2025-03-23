@@ -30,6 +30,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
+import { Id } from "~/convex/_generated/dataModel";
 // import { useConvexUser } from "~/utils/UserContext";
 /**
  * ---------------------------------------------
@@ -251,7 +252,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({ message }) => {
 
         {isMyMessage && (
           <Image
-            source={require("~/assets/images/read_receipt.png")} // or your read-receipt icon
+            source={require("~/assets/images/asuka-2239.gif")} // or your read-receipt icon
             style={[
               styles.readIndicator,
               { tintColor: isMessageRead ? "#53a6fd" : "#8aa69b" },
@@ -577,8 +578,8 @@ const Chat: FC<ChatProps> = ({ messages, loading, onLoadMore }) => {
 
     try {
       await sendMessages({
-        chatId: chatId,
-        senderId: currentUser!.userId!,
+        chatId: chatId as Id<"chats">,
+        senderId: currentUser!.userId! as Id<"users">,
         content: message,
         isAi: false,
         type: "text",

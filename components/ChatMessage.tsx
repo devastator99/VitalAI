@@ -25,7 +25,7 @@ const ChatMessage = ({
       {/* Avatar/Icon */}
       {role === Role.Bot ? (
         <View style={[styles.item, { backgroundColor: '#000' }]}>
-          <Image source={require('~/assets/images/user2.png')} style={styles.btnImage} />
+          <Image source={require('~/assets/images/logo-dark.png')} style={styles.btnImage} />
         </View>
       ) : (
         <Image source={require('~/assets/images/logo-dark.png')} style={styles.avatar} />

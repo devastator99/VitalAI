@@ -78,9 +78,6 @@ const AnimatedHeader = () => {
   }));
 
   return (
-    <LinearGradient
-      colors={["#000000", "#000000", "rgba(0, 0, 0, 0.8)", "rgba(0, 0, 0, 0.6)", "rgba(0, 0, 0, 0.4)", "rgba(0, 0, 0, 0.2)"]}
-    >
       <SafeAreaView>
         <StatusBar backgroundColor="transparent" translucent barStyle="dark-content" />
         <View style={styles3.headerContainer}>
@@ -108,7 +105,6 @@ const AnimatedHeader = () => {
           </View>
         </View>
       </SafeAreaView>
-    </LinearGradient>
   );
 };
 
@@ -437,9 +433,9 @@ const Layout = () => {
         },
         headerShadowVisible: false,
         drawerActiveBackgroundColor: Colors.selected,
-        drawerActiveTintColor: "#000",
-        drawerInactiveTintColor: "#000",
-        overlayColor: "rgba(0, 0, 0, 0.2)",
+        drawerActiveTintColor: "#fff",
+        drawerInactiveTintColor: "#fff",
+        overlayColor: "rgba(213, 22, 22, 0.2)",
         drawerItemStyle: { borderRadius: 12 },
         drawerLabelStyle: { marginLeft: -20 },
         drawerStyle: { width: dimensions.width * 0.86 },

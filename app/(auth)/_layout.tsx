@@ -1,7 +1,7 @@
 import Colors from "~/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, Tabs, useRouter } from "expo-router";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View ,Image} from "react-native";
 import { Authenticated, useQuery } from "convex/react";
 // import { useConvexUser } from "~/utils/UserContext";
 import { Drawer } from "react-native-drawer-layout";
@@ -26,7 +26,7 @@ const Layout = () => {
   const staticBlurViewProps = {
     intensity: 40, // Set the desired static intensity
   };
-  const AnimatedBlurView = Animated.createAnimatedComponent(BlurView)
+  const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
   const scrollY = useSharedValue(0);
 
@@ -61,7 +61,19 @@ const Layout = () => {
             shadowColor: "transparent",
           },
           tabBarBackground: () => (
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)' }} />
+            <BlurView
+              intensity={70}
+              tint="dark"
+              experimentalBlurMethod={"dimezisBlurView"}
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+              }}
+            >
+            </BlurView>
           ),
         }}
       >

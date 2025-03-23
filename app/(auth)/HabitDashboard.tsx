@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import {
   ProgressBar,
-  FAB,
   Icon,
   Modal,
   Surface,
@@ -32,6 +31,8 @@ import {
 import { useSharedValue } from "react-native-reanimated";
 import Animated from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
+import { HabitCreationScreen } from "~/components/HabitCreationScreen";
+
 type HabitType = "boolean" | "numeric" | "categorical";
 
 interface Habit {
@@ -57,12 +58,12 @@ interface Entry {
 const { width: screenWidth } = Dimensions.get("window");
 const COLOR_PALETTE = [
   "#e6ac00",
-  "#2eb8b8", 
-  "#1a8cff", 
-  "#d31912", 
-  "#6a4c93", 
-  "#2eb8b8", 
-  "#999900", 
+  "#2eb8b8",
+  "#1a8cff",
+  "#d31912",
+  "#6a4c93",
+  "#2eb8b8",
+  "#999900",
   "#cc6600",
 ];
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -219,7 +220,7 @@ const HEADER_EXPANDED_HEIGHT = 150;
 const HEADER_COLLAPSED_HEIGHT = 100;
 const BUTTON_ROW_HEIGHT = 90;
 
-const HeaderWithButtons = ({ children }: { children: React.ReactNode }) => {
+const HeaderWithButtons = ({ children, showCreatePage, setShowCreatePage }: { children: React.ReactNode, showCreatePage: boolean, setShowCreatePage: React.Dispatch<React.SetStateAction<boolean>> }) => {
   const [selectedButton, setSelectedButton] = useState<string>("Daily");
   const scrollY = useSharedValue(0);
 
@@ -277,7 +278,7 @@ const HeaderWithButtons = ({ children }: { children: React.ReactNode }) => {
           Habits
         </Animated.Text>
         <View style={styles1.rightIcons}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowCreatePage(true)}>
             <Icon source="plus" size={20} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={{ marginLeft: 10 }}>
@@ -447,7 +448,7 @@ const HabitDashboard = () => {
   return (
     <Provider>
       <View style={{ flex: 1 }}>
-        <HeaderWithButtons>
+        <HeaderWithButtons showCreatePage={showCreatePage} setShowCreatePage={setShowCreatePage}>
           {habits.map((habit) => (
             <HabitCard
               key={habit._id}
@@ -457,12 +458,18 @@ const HabitDashboard = () => {
           ))}
         </HeaderWithButtons>
 
-        {showCreatePage && (
-          <HabitCreationScreen
-            onCreate={handleCreateHabit}
-            onClose={() => setShowCreatePage(false)}
-          />
-        )}
+        <Portal>
+          <Modal
+            visible={showCreatePage}
+            onDismiss={() => setShowCreatePage(false)}
+            contentContainerStyle={{ flex: 1, width: '100%', height: '100%', padding: 0 }}
+          >
+            <HabitCreationScreen
+              onCreate={handleCreateHabit}
+              onClose={() => setShowCreatePage(false)}
+            />
+          </Modal>
+        </Portal>
 
         {selectedHabit && (
           <Modal
@@ -477,12 +484,6 @@ const HabitDashboard = () => {
             />
           </Modal>
         )}
-
-        <FAB
-          icon="plus"
-          style={styles.fab}
-          onPress={() => setShowCreatePage(true)}
-        />
       </View>
     </Provider>
   );
@@ -519,7 +520,7 @@ const HabitCard = ({
       <View style={styles.frequencyContainer}>
         {DAYS.map((day) => (
           <Text
-            key={day}
+            key={`${habit._id}-${day}`}
             style={[
               styles.frequencyDay,
               habit.frequency.includes(day) && styles.frequencyDayActive,
@@ -647,276 +648,6 @@ const HabitDetailModal = ({
   );
 };
 
-export const HabitCreationScreen = ({
-  onCreate,
-  onClose,
-}: {
-  onCreate: (
-    habit: Omit<Habit, "_id" | "entries" | "streak" | "progress">
-  ) => void;
-  onClose: () => void;
-}) => {
-  const [name, setName] = useState("");
-  const [type, setType] = useState<HabitType>("numeric");
-  const [target, setTarget] = useState("");
-  const [unit, setUnit] = useState("");
-  const [frequency, setFrequency] = useState<string[]>([]);
-  const [color, setColor] = useState(COLOR_PALETTE[0]);
-  const [icon, setIcon] = useState(ICONS[0]);
-
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-
-    const newHabit = {
-      name,
-      type,
-      target: type === "numeric" ? Number(target) : undefined,
-      unit: type === "numeric" ? unit : undefined,
-      frequency,
-      color,
-      icon,
-    };
-
-    onCreate(newHabit);
-  };
-
-  const toggleDay = (day: string) => {
-    setFrequency((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
-  };
-
-  return (
-    <View style={styles2.container}>
-      <ScrollView contentContainerStyle={styles2.content}>
-        <Text style={styles2.title}>Create New Habit</Text>
-
-        <TextInput
-          placeholder="Habit name"
-          placeholderTextColor={color}
-          value={name}
-          onChangeText={setName}
-          style={[styles2.input, { borderColor: color, backgroundColor: color + "22" }]}
-        />
-
-        <TextInput
-          style={[styles2.input,{borderColor:color},{backgroundColor:color + "22"}]}
-          placeholder="Description (optional)"
-          placeholderTextColor={color}
-          value={unit}
-          onChangeText={setUnit}
-        />
-
-        <Text style={styles2.sectionTitle}>Type</Text>
-        <View style={styles2.radioRow}>
-          <RadioButton.Group
-            onValueChange={(v) => setType(v as HabitType)}
-            value={type}
-          >
-            <View style={styles2.radioItem}>
-              <RadioButton value="numeric" />
-              <Text>Numeric</Text>
-            </View>
-            <View style={styles2.radioItem}>
-              <RadioButton value="boolean" />
-              <Text>Yes/No</Text>
-            </View>
-            <View style={styles2.radioItem}>
-              <RadioButton value="categorical" />
-              <Text>Category</Text>
-            </View>
-          </RadioButton.Group>
-        </View>
-
-        {type === "numeric" && (
-          <>
-            <TextInput
-              style={[styles2.input,{borderColor:color},{backgroundColor:color + "22"}]}
-              placeholder="Daily Target"
-              value={target}
-              onChangeText={setTarget}
-              placeholderTextColor={color}
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={[styles2.input,{borderColor:color},{backgroundColor:color + "22"}]}
-              placeholder="Unit (e.g., minutes, glasses)"
-              value={unit}
-              placeholderTextColor={color}
-              onChangeText={setUnit}
-            />
-          </>
-        )}
-
-        <Text style={styles2.sectionTitle}>Frequency</Text>
-        <View style={styles2.wrapRow}>
-          {DAYS.map((day) => (
-            <TouchableOpacity
-              key={day}
-              onPress={() => toggleDay(day)}
-              style={[
-                styles2.dayButton,
-                {
-                  backgroundColor: frequency.includes(day)
-                    ? color + "66"
-                    : "transparent",
-                  borderColor: color,
-                },
-              ]}
-            >
-              <Text
-                style={{
-                  color: frequency.includes(day) ? color : color,
-                  fontWeight: "bold",
-                }}
-              >
-                {day[0].toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles2.sectionTitle}>Color</Text>
-        <View style={styles2.wrapRow}>
-          {COLOR_PALETTE.map((c) => (
-            <TouchableOpacity
-              key={c}
-              onPress={() => setColor(c)}
-              style={[
-                styles2.colorCircle,
-                { backgroundColor: c },
-                color === c && styles2.colorSelected,
-              ]}
-            />
-          ))}
-        </View>
-
-        <Text style={styles2.sectionTitle}>Icon</Text>
-        <View style={styles2.wrapRow}>
-          {ICONS.map((i) => (
-            <TouchableOpacity
-              key={i}
-              onPress={() => setIcon(i)}
-              style={[
-                styles2.iconBox,
-                {
-                  backgroundColor: icon === i ? color + "33" : "transparent",
-                },
-              ]}
-            >
-              <Icon source={i} size={24} color={icon === i ? color : "#666"} />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles2.buttonRow}>
-          <TouchableOpacity onPress={onClose} style={styles2.cancelButton}>
-            <Text style={{ color: "#333" }}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleSubmit}
-            style={[styles2.createButton, { backgroundColor: color }]}
-            disabled={
-              !name.trim() || (type === "numeric" && (!target || !unit))
-            }
-          >
-            <Text style={{ color: "white", fontWeight: "bold" }}>
-              Create Habit
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
-  );
-};
-
-const styles2 = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  input: {
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    width: "90%",
-    paddingVertical: 10,
-    borderRadius: 25,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginVertical: 10,
-  },
-  radioRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  radioItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  wrapRow: {
-    marginTop: 15,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 15,
-    gap: 12,
-  },
-  dayButton: {
-    borderWidth: 1,
-    padding: 8,
-    borderRadius: 40,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  colorCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 10,
-    marginBottom: 10,
-  },
-  colorSelected: {
-    borderWidth: 2,
-    borderColor: "#000",
-  },
-  iconBox: {
-    padding: 10,
-    marginRight: 8,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 30,
-  },
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: "#aaa",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  createButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-});
-
 // Helper Functions
 const calculateProgress = (habit: Habit, entries: Entry[]) => {
   if (habit.type === "numeric") {
@@ -1032,13 +763,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
-  },
-  fab: {
-    position: "absolute",
-    margin: 24,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#2196F3",
   },
   modalContainer: {
     padding: 0,

@@ -102,6 +102,10 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
 
   return (
     <Animated.View style={[styles.header1,{paddingBottom: bottom, paddingTop: 10}]}>
+      <BlurView
+              intensity={70}
+              tint="dark"
+              experimentalBlurMethod={"dimezisBlurView"}>
       <View style={styles.row}>
         <ATouchableOpacity onPress={expandItems} style={[styles.roundBtn, expandButtonStyle]}>
           <Ionicons name="add" size={24} color={Colors.greyLight} />
@@ -123,8 +127,8 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
           autoFocus
           ref={inputRef}
           placeholder="Message"
-          placeholderTextColor={Colors.greyLight}
-          style={[styles.messageInput, { backgroundColor: 'rgba(0,0,0,0.8)' }]}
+          placeholderTextColor={"white"}
+          style={[styles.messageInput, { backgroundColor: 'rgba(0, 0, 0, 0.2)' }]}
           onFocus={collapseItems}
           onChangeText={onChangeText}
           value={message}
@@ -140,13 +144,13 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
           </TouchableOpacity>
         )}
       </View>
+      </BlurView>
     </Animated.View>
   );
 });
 
 const styles = StyleSheet.create({
   header1:{
-    backgroundColor: "rgba(0, 0, 0, 0.95)",
     zIndex: 1000,
   },
   row: {
@@ -160,7 +164,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 20,
     padding: 10,
-    borderColor: Colors.greyLight,
+    borderColor: Colors.primary,
     backgroundColor: Colors.light,
   },
   roundBtn: {
@@ -175,6 +179,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  blurContainer: {
+    flex: 1,
+    overflow: 'hidden',
   },
 });
 
