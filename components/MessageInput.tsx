@@ -105,7 +105,7 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
       <BlurView
               intensity={70}
               tint="dark"
-              experimentalBlurMethod={"dimezisBlurView"}>
+              experimentalBlurMethod={"none"}>
       <View style={styles.row}>
         <ATouchableOpacity onPress={expandItems} style={[styles.roundBtn, expandButtonStyle]}>
           <Ionicons name="add" size={24} color={Colors.greyLight} />

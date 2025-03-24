@@ -64,7 +64,7 @@ const Layout = () => {
             <BlurView
               intensity={70}
               tint="dark"
-              experimentalBlurMethod={"dimezisBlurView"}
+              experimentalBlurMethod={"none"}
               style={{
                 position: "absolute",
                 top: 0,

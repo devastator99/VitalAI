@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, Modal, TouchableOpacity } from 'react-na
 import ContextMenu from 'react-native-context-menu-view';
 import { Role } from '~/utils/Interfaces';
 import Colors from '~/constants/Colors';
+import {MiniProfile} from './MiniProfile';
 
 type MessageBubbleProps = {
   content: string;
@@ -24,10 +25,7 @@ const ProfileDetails = ({ profileImage, userName, isVisible, onClose }: { profil
       onRequestClose={onClose}
     >
       <TouchableOpacity style={styles.modalOverlay} onPress={onClose}>
-        <View style={styles.profileModal}>
-          {profileImage && <Image source={{ uri: profileImage }} style={styles.modalAvatar} />}
-          <Text style={styles.modalUserName}>{userName}</Text>
-        </View>
+        <MiniProfile />
       </TouchableOpacity>
     </Modal>
   );
@@ -41,6 +39,7 @@ const MessageBubble = ({ content, role, imageUrl, isCurrentUser, profileImage, u
   };
 
   const handleProfileClose = () => {
+    
     setIsProfileVisible(false);
   };
 
@@ -136,27 +135,14 @@ const styles = StyleSheet.create({
     height: 240,
     borderRadius: 10,
   },
+  miniProfilePosition: {
+    position: 'absolute',
+    top: 50, // Adjust this value based on your layout needs
+    right: 20,
+  },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
-  },
-  profileModal: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
-  },
-  modalUserName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });
 
