@@ -52,7 +52,7 @@ const MessageBubble = ({ content, role, imageUrl, isCurrentUser, profileImage, u
           // AI Bot avatar
           //   <Image source={{ uri: profileImage }} style={styles.avatar} />
           <TouchableOpacity onPress={handleAvatarPress}>
-            <Image source={require('~/assets/images/icon.png')} style={styles.avatar} />
+            <Image source={require('~/assets/images/aiavatar.jpg')} style={styles.avatar} />
           </TouchableOpacity>
         ) : (
           // Other users avatar

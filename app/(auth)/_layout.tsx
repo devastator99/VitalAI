@@ -120,26 +120,6 @@ const Layout = () => {
           }}
         />
         <Tabs.Screen
-          name="UserDetailsForm"
-          options={{
-            title: "UserDetailsForm",
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="american-football" size={size} color={color} />
-            ),
-          }}
-        />
-        {/* <Tabs.Screen
-          name="ai"
-          options={{
-            title: "AI",
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="people-outline" size={size} color={color} />
-            ),
-          }}
-        /> */}
-        <Tabs.Screen
           name="settings"
           options={{
             title: "settings",
@@ -149,28 +129,6 @@ const Layout = () => {
             ),
           }}
         />
-        {/* 🔹 Settings Modal */}
-        {/* <Tabs.Screen
-          name="(modal)/settings"
-          options={{
-            headerTitle: "Settings",
-            presentation: "modal",
-            headerShadowVisible: false,
-            headerStyle: { backgroundColor: Colors.selected },
-            headerRight: () => (
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={{
-                  backgroundColor: Colors.greyLight,
-                  borderRadius: 20,
-                  padding: 4,
-                }}
-              >
-                <Ionicons name="close-outline" size={16} color={Colors.grey} />
-              </TouchableOpacity>
-            ),
-          }}
-        /> */}
       </Tabs>
     </Authenticated>
   );

@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Image,
+  Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -47,8 +48,8 @@ export default function Profile() {
   }
 
   return (
-      <LinearGradient colors={["#4682b4", "#5f9ea0"]} style={styles.gradient}>
-        <ScrollView contentContainerStyle={styles.container}>
+      <LinearGradient colors={["#0f0f0f", "#1a1a1a"]} style={styles.gradient}>
+        <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 20 }]}>
           {/* Profile Photo Section */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.avatarContainer}>
@@ -58,29 +59,34 @@ export default function Profile() {
                   style={styles.avatar}
                 />
               ) : (
-                <Ionicons name="person-outline" size={50} color="#4682b4" />
+                <Ionicons name="person-outline" size={50} color="#81b0ff" />
               )}
               <View style={styles.cameraIcon}>
                 <Ionicons name="camera-outline" size={20} color="white" />
               </View>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{user.name || "Profile"}</Text>
+            <Text style={styles.subtitle}>Fitness Enthusiast</Text>
           </View>
 
           {/* Details Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account Details</Text>
+            <Text style={styles.sectionTitle}>Personal Details</Text>
             {user.profileDetails?.height && (
               <View style={styles.row}>
-                <Ionicons name="body-outline" size={20} color="#fff" />
+                <View style={styles.iconContainer}>
+                  <Ionicons name="body-outline" size={20} color="#fff" />
+                </View>
                 <Text style={styles.rowText}>
-                  Height: {user.profileDetails.height} cm
+                  {user.profileDetails.height} cm
                 </Text>
               </View>
             )}
             {user.profileDetails?.weight && (
               <View style={styles.row}>
-                <Ionicons name="barbell-outline" size={20} color="#fff" />
+                <View style={styles.iconContainer}>
+                  <Ionicons name="barbell-outline" size={20} color="#fff" />
+                </View>
                 <Text style={styles.rowText}>
                   Weight: {user.profileDetails.weight} kg
                 </Text>
@@ -88,13 +94,17 @@ export default function Profile() {
             )}
             {user.profileDetails?.email && (
               <View style={styles.row}>
-                <Ionicons name="mail-outline" size={20} color="#fff" />
+                <View style={styles.iconContainer}>
+                  <Ionicons name="mail-outline" size={20} color="#fff" />
+                </View>
                 <Text style={styles.rowText}>{user.profileDetails.email}</Text>
               </View>
             )}
             {user.profileDetails?.phone && (
               <View style={styles.row}>
-                <Ionicons name="call-outline" size={20} color="#fff" />
+                <View style={styles.iconContainer}>
+                  <Ionicons name="call-outline" size={20} color="#fff" />
+                </View>
                 <Text style={styles.rowText}>{user.profileDetails.phone}</Text>
               </View>
             )}
@@ -102,7 +112,9 @@ export default function Profile() {
 
           {/* Edit Button */}
           <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit Profile</Text>
+            <LinearGradient colors={["#81b0ff", "#4d79ff"]} style={styles.buttonGradient}>
+              <Text style={styles.editButtonText}>Edit Profile</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
       </LinearGradient>
@@ -118,7 +130,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    padding: 20,
+    padding: 25,
     paddingBottom: 40,
   },
   header: {
@@ -126,19 +138,34 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "white",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 15,
-    position: "relative",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#2e2e2e",
+    borderWidth: 2,
+    borderColor: "#81b0ff",
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: "#81b0ff",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    resizeMode: 'cover'
   },
   cameraIcon: {
     position: "absolute",
@@ -149,28 +176,55 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
+    fontSize: 32,
+    fontWeight: '800',
+    color: "#f0f0f0",
+    marginTop: 15,
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    color: '#888',
+    fontSize: 16,
+    marginTop: 5,
   },
   section: {
     marginBottom: 30,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 10,
-    padding: 15,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 15,
+    padding: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#fff",
-    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: '700',
+    color: "#81b0ff",
+    marginBottom: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.2)",
+    borderBottomColor: "#2e2e2e",
+  },
+  iconContainer: {
+    backgroundColor: '#81b0ff33',
+    borderRadius: 8,
+    padding: 8,
+    marginRight: 12,
   },
   rowText: {
     fontSize: 16,
@@ -178,15 +232,19 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   editButton: {
-    backgroundColor: "#81b0ff",
-    borderRadius: 8,
-    paddingVertical: 15,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 20,
+  },
+  buttonGradient: {
+    paddingVertical: 16,
     alignItems: "center",
   },
   editButtonText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   loadingContainer: {
     flex: 1,

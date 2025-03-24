@@ -140,7 +140,7 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity>
-            <FontAwesome5 name="headphones" size={24} color={Colors.greyLight} />
+            <FontAwesome5 name="microphone-alt" size={24} color={Colors.greyLight} />
           </TouchableOpacity>
         )}
       </View>

@@ -362,10 +362,10 @@ const ChatPage = () => {
         colors={[
           "#000000",
           "#000000",
-          "rgba(0, 0, 0, 0.8)",
-          "rgba(0, 0, 0, 0.75)",
-          "rgba(0, 0, 0, 0.7)",
-          "rgba(0, 0, 0, 0.6)",
+          "rgba(0, 0, 0, 1)",
+          "rgba(0, 0, 0, 1)",
+          "rgba(0, 0, 0, 1)",
+          "rgba(0, 0, 0, 1)",
         ]}
         style={styles.gradient}
       >
@@ -386,13 +386,12 @@ const ChatPage = () => {
               color={Colors.greyLight}
             /> */}
           <FlashList
-            data={messages}
-            inverted={true}
+            data={[...messages].reverse()}
             renderItem={({ item }) => <RenderChatBubble item={item} />}
             estimatedItemSize={400}
-            contentContainerStyle={{ paddingTop: 30, paddingBottom: 150 }}
             keyboardDismissMode="on-drag"
             keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingTop: 10, paddingBottom: 150 }}
           />
         </View>
       </LinearGradient>
@@ -413,6 +412,10 @@ const ChatPage = () => {
     </View>
   );
 };
+
+// ListFooterComponent={<View style={{ height: 200 }} />}
+            // scrollIndicatorInsets={{ bottom: 150 }}
+//
 
 const styles = StyleSheet.create({
   safeArea: {

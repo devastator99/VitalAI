@@ -22,6 +22,7 @@ import {
   ActivityIndicator,
   Button,
   StatusBar,
+  ImageBackground,
 } from "react-native";
 import Colors from "~/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -78,10 +79,18 @@ const AnimatedHeader = () => {
   }));
 
   return (
-      <SafeAreaView>
-        <StatusBar backgroundColor="transparent" translucent barStyle="dark-content" />
+      <ImageBackground
+        source={require("~/assets/images/blakk.jpg")} 
+        style={{paddingTop:30}}
+        resizeMode="stretch"
+      >
+      <StatusBar
+        backgroundColor="transparent"
+        translucent
+         barStyle="light-content"
+      />
         <View style={styles3.headerContainer}>
-          <DrawerToggleButton/>
+          <DrawerToggleButton tintColor={Colors.primary} />
           <View style={styles3.container}>
             <Svg
               height="35"
@@ -104,10 +113,10 @@ const AnimatedHeader = () => {
             <Animated.View style={[styles3.underline, underlineStyle]} />
           </View>
         </View>
-      </SafeAreaView>
+      </ImageBackground>
   );
 };
-
+//<SafeAreaView style={{ backgroundColor: "rgb(28, 28, 28)" }}>
 //<BlurView intensity={70} tint="systemUltraThinMaterialLight">
 
 const styles3 = StyleSheet.create({
@@ -359,7 +368,9 @@ export const CustomDrawerContent = ({
 const Layout = () => {
   const currentUser = useQuery(api.users.getCurrentUser) as User | undefined;
   // Initialize with current user's chat ID if available
-  const [chatId, setChatId] = useState<string | null>(currentUser?.defaultChatId ?? null);
+  const [chatId, setChatId] = useState<string | null>(
+    currentUser?.defaultChatId ?? null
+  );
   const dimensions = useWindowDimensions();
   const router = useRouter();
   const Drawer = createDrawerNavigator();
@@ -370,7 +381,6 @@ const Layout = () => {
   // const userIdInitialized = useRef(false);
   // const { user } = useUser();
 
-  
   // useEffect(() => {
   //   if (user?.id && !userIdInitialized.current) {
   //     setUserId(user.id);
@@ -382,7 +392,7 @@ const Layout = () => {
     const initializeChat = async () => {
       if (currentUser === undefined) return; // Still loading
       if (isInitializing.current) return;
-      
+
       // Immediate update if we have a valid chat ID
       if (currentUser?.defaultChatId && currentUser.defaultChatId !== chatId) {
         setChatId(currentUser.defaultChatId);
@@ -435,7 +445,7 @@ const Layout = () => {
         drawerActiveBackgroundColor: Colors.selected,
         drawerActiveTintColor: "#fff",
         drawerInactiveTintColor: "#fff",
-        overlayColor: "rgba(213, 22, 22, 0.2)",
+        overlayColor: "rgba(0, 0, 0,0.8)",
         drawerItemStyle: { borderRadius: 12 },
         drawerLabelStyle: { marginLeft: -20 },
         drawerStyle: { width: dimensions.width * 0.86 },

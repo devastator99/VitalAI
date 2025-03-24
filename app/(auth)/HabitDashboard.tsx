@@ -289,7 +289,7 @@ const HeaderWithButtons = ({ children, showCreatePage, setShowCreatePage }: { ch
 
       {/* Buttons */}
       <Animated.View style={[styles1.buttonRowContainer, buttonRowStyle]}>
-        <View style={styles.buttonRow}>
+        <View style={styles1.buttonRow}>
           <TouchableOpacity
             style={[
               styles1.button,
@@ -372,15 +372,15 @@ const styles1 = StyleSheet.create({
     paddingVertical: 10,
     paddingLeft: 16,
     backgroundColor: "rgba(0, 0, 0, 0.8)",
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.4,
     borderColor: "#333",
-    gap: 15,
+    gap: 8,
   },
   button: {
     paddingVertical: 8,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: "#0086b3",
+    borderColor: "#0086b380",
     borderRadius: 25,
     backgroundColor: "transparent",
   },
@@ -394,6 +394,7 @@ const styles1 = StyleSheet.create({
     borderRadius: 25,
     paddingVertical: 8,
     paddingHorizontal: 25,
+    borderWidth: 0,
   },
 });
 
