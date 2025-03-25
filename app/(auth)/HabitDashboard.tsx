@@ -1,4 +1,3 @@
-import { LineChart } from "react-native-charts-wrapper";
 import React, { useState } from "react";
 import {
   ScrollView,
@@ -566,7 +565,7 @@ const HabitDetailModal = ({
     <Surface style={styles.modalContent}>
       <Text style={styles.modalTitle}>{habit.name} Progress</Text>
 
-      <LineChart
+      {/* <LineChart
         style={styles.chart}
         data={{
           dataSets: [
@@ -594,7 +593,7 @@ const HabitDetailModal = ({
           position: "BOTTOM",
           granularity: 1,
         }}
-      />
+      /> */}
 
       {habit.type === "numeric" && (
         <TextInput

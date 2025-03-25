@@ -1,7 +1,7 @@
 import Colors from "~/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, Tabs, useRouter } from "expo-router";
-import { TouchableOpacity, View ,Image} from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { Authenticated, useQuery } from "convex/react";
 // import { useConvexUser } from "~/utils/UserContext";
 import { Drawer } from "react-native-drawer-layout";
@@ -13,11 +13,41 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useClerk } from "@clerk/clerk-expo";
 import { useSharedValue } from "react-native-reanimated";
 import {
+  Canvas,
+  Fill,
+  Image,
+  BackdropBlur,
+  useImage,
+  Blur,
+} from "@shopify/react-native-skia";
+import {
   useAnimatedProps,
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";
 import Animated from "react-native-reanimated";
+
+
+export const Filter = () => {
+  const image = useImage(require("../../assets/images/purple.jpeg"));
+  if (!image) {
+    return null;
+  }
+  return (
+    <Canvas style={{ flex: 1 }}>
+      <Image
+        x={0}
+        y={0}
+        width={400}
+        height={256}
+        image={image}
+        fit="cover"
+      >
+        <Blur blur={4} />
+      </Image>
+    </Canvas>
+  );
+};
 
 const Layout = () => {
   const router = useRouter();
@@ -64,7 +94,7 @@ const Layout = () => {
             <BlurView
               intensity={70}
               tint="dark"
-              experimentalBlurMethod={"none"}
+              experimentalBlurMethod={"dimezisBlurView"}
               style={{
                 position: "absolute",
                 top: 0,
@@ -74,6 +104,7 @@ const Layout = () => {
               }}
             >
             </BlurView>
+            // <Filter/>
           ),
         }}
       >

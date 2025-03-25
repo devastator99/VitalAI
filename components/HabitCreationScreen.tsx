@@ -108,7 +108,7 @@ export const HabitCreationScreen = ({
               onChangeText={setName}
               style={[
                 styles2.input,
-                { borderColor: color, backgroundColor: color + "22" },
+                { borderColor: color, backgroundColor: color + "22" ,color: "#ffffff"},
               ]}
             />
 
@@ -116,7 +116,7 @@ export const HabitCreationScreen = ({
               style={[
                 styles2.input,
                 { borderColor: color },
-                { backgroundColor: color + "22" },
+                { backgroundColor: color + "22" ,color: "#ffffff"},
               ]}
               placeholder="Description (optional)"
               placeholderTextColor={color}
@@ -151,7 +151,7 @@ export const HabitCreationScreen = ({
                   style={[
                     styles2.input,
                     { borderColor: color },
-                    { backgroundColor: color + "22" },
+                    { backgroundColor: color + "22" ,color: "#ffffff"},
                   ]}
                   placeholder="Daily Target"
                   value={target}
@@ -163,7 +163,7 @@ export const HabitCreationScreen = ({
                   style={[
                     styles2.input,
                     { borderColor: color },
-                    { backgroundColor: color + "22" },
+                    { backgroundColor: color + "22" ,color: "#ffffff"},
                   ]}
                   placeholder="Unit (e.g., minutes, glasses)"
                   value={unit}

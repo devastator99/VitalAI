@@ -105,7 +105,7 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
       <BlurView
               intensity={70}
               tint="dark"
-              experimentalBlurMethod={"none"}>
+              experimentalBlurMethod={"dimezisBlurView"}>
       <View style={styles.row}>
         <ATouchableOpacity onPress={expandItems} style={[styles.roundBtn, expandButtonStyle]}>
           <Ionicons name="add" size={24} color={Colors.greyLight} />
@@ -127,8 +127,8 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
           autoFocus
           ref={inputRef}
           placeholder="Message"
-          placeholderTextColor={"white"}
-          style={[styles.messageInput, { backgroundColor: 'rgba(0, 0, 0, 0.2)' }]}
+          placeholderTextColor={"#ffffff"}
+          style={[styles.messageInput, { backgroundColor: 'rgba(0, 0, 0, 0.2)', color: '#ffffff' }]}
           onFocus={collapseItems}
           onChangeText={onChangeText}
           value={message}
