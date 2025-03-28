@@ -4,6 +4,8 @@ import ContextMenu from 'react-native-context-menu-view';
 import { Role } from '~/utils/Interfaces';
 import Colors from '~/constants/Colors';
 import {MiniProfile} from './MiniProfile';
+import BirdVector from './BirdVector';
+import LinearGradient from 'react-native-linear-gradient';
 
 type MessageBubbleProps = {
   content: string;
@@ -51,7 +53,7 @@ const MessageBubble = ({ content, role, imageUrl, isCurrentUser, profileImage, u
           // AI Bot avatar
           //   <Image source={{ uri: profileImage }} style={styles.avatar} />
           <TouchableOpacity onPress={handleAvatarPress}>
-            <Image source={require('~/assets/images/aiavatar.jpg')} style={styles.avatar} />
+            <BirdVector width={30} height={30} />
           </TouchableOpacity>
         ) : (
           // Other users avatar
@@ -114,13 +116,19 @@ const styles = StyleSheet.create({
   bubble: {
     padding: 12,
     borderRadius: 20,
-    maxWidth: '80%',
+    maxWidth: '90%',
   },
   userBubble: {
     backgroundColor: '#007AFF',
   },
   botBubble: {
-    backgroundColor: 'rgba(0,0,0,0.4)', //E5E5EA
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderLeftWidth: 0.15,
+    borderLeftColor: '#0ff', // Cyan neon color
+    shadowColor: '#0ff', // Optional glow effect
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
   },
   userText: {
     color: 'white',

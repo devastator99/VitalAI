@@ -360,12 +360,8 @@ const ChatPage = () => {
       />
       <LinearGradient
         colors={[
-          "#000000",
-          "#000000",
-          "rgba(0, 0, 0, 1)",
-          "rgba(0, 0, 0, 1)",
-          "rgba(0, 0, 0, 1)",
-          "rgba(0, 0, 0, 1)",
+          "rgba(0, 0, 0, 0.95)",
+          "rgba(0, 0, 0, 0.95)",
         ]}
         style={styles.gradient}
       >

@@ -50,7 +50,8 @@ import { BlurView } from "expo-blur";
 import { User } from "~/utils/Interfaces";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
-import SvgOne from "~/components/SvgOne";
+import SvgOne from "~/components/BirdVector";
+import BirdVector from "~/components/BirdVector";
 
 // Add type for navigation prop
 type NavigationProp = DrawerNavigationProp<Record<string, object>>;
@@ -96,7 +97,7 @@ const AnimatedHeader = () => {
       >
         <DrawerToggleButton tintColor={Colors.primary} />
         <View style={styles3.container}>
-          <SvgOne width={100} height={35} />
+          <BirdVector width={100} height={35} />
         </View>
       </View>
     </SafeAreaView>

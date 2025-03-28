@@ -9,7 +9,7 @@ const colors = {
   red:"rgb(155, 224, 254)",
 };
 
-const SvgOne = (props:any) => (
+const BirdVector = (props:any) => (
   <Svg
       viewBox="0 0 595.8 703.9"
       // Spread any parent-supplied props (e.g. width, height)
@@ -43,4 +43,4 @@ const SvgOne = (props:any) => (
     />
   </Svg>
 )
-export default SvgOne;
+export default BirdVector;
