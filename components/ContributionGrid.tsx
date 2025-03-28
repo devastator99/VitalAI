@@ -31,12 +31,13 @@ interface Entry {
     const getDates = () => {
       const dates = [];
       const today = new Date();
-      for (let i = 0; i < 90; i++) {
+      // Start from 89 days ago and move forward to today
+      for (let i = 89; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         dates.push(date.toISOString().split('T')[0]);
       }
-      return dates.reverse();
+      return dates;
     };
   
     // Memoize dates

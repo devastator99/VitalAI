@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
@@ -84,13 +84,38 @@ const AnimHeader = ({
 
         <View style={styles1.rightIcons}>
           {rightIcons.map((item: any, index: any) => (
-            <TouchableOpacity
+            <Pressable
               key={index}
               onPress={item.onPress}
-              style={{ marginLeft: 10 }}
+              android_ripple={{ 
+                color: 'rgba(255,255,255,0.1)', 
+                borderless: true,
+                radius: 20,
+                foreground: true
+              }}
+              style={({ pressed }) => ({
+                marginLeft: 10,
+                opacity: pressed ? 0.6 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+                backgroundColor: pressed ? 'rgba(255,255,255,0.1)' : 'transparent',
+                borderWidth: 1,
+                borderColor: pressed ? '#00BFFF' : 'transparent',
+                borderRadius: 20,
+              })}
+              hitSlop={10}
+              onPressIn={() => {
+                // Handle press start (for more complex animations)
+              }}
+              onPressOut={() => {
+                // Handle press release
+              }}
             >
-              <IconCircle name={item.icon} size={20}/>
-            </TouchableOpacity>
+              <IconCircle 
+                name={item.icon} 
+                size={20}
+                iconColor={'#00BFFF'}
+              />
+            </Pressable>
           ))}
         </View>
       </Animated.View>
@@ -148,6 +173,7 @@ const styles1 = StyleSheet.create({
   rightIcons: {
     flexDirection: "row",
     gap: 15,
+    padding:15,
   },
   buttonRowContainer: {
     position: "absolute",
