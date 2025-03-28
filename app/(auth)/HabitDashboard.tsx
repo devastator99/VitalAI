@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Button,
   TextInput,
+  FlatList,
 } from "react-native";
 import {
   ProgressBar,
@@ -26,11 +27,15 @@ import {
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  withSpring,
 } from "react-native-reanimated";
 import { useSharedValue } from "react-native-reanimated";
 import Animated from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import { HabitCreationScreen } from "~/components/HabitCreationScreen";
+import IconCircle from "~/components/IconCircle";
+import LinearGradient from "react-native-linear-gradient";
+import ContributionGrid from "~/components/ContributionGrid";
 
 type HabitType = "boolean" | "numeric" | "categorical";
 
@@ -47,6 +52,12 @@ interface Habit {
   streak: number;
   progress: { current: number; target: number };
 }
+
+// TO ADD: // Precompute lightened colors in habit creation
+//habit name and frequency in header in weekdays with right icons for edit delete and share
+//display  total , score percent ,in a card
+//display description in a card ,
+//display linechart of progress  aand a notes section with add note button
 
 interface Entry {
   date: string;
@@ -67,13 +78,19 @@ const COLOR_PALETTE = [
 ];
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const ICONS = [
-  "cup",
-  "pill",
-  "arm-flex",
-  "food-apple",
-  "sleep",
-  "yoga",
+  "water",
+  "medkit",
+  "fitness",
+  "fast-food",
+  "moon",
+  "bicycle",
   "walk",
+  "bed",
+  "leaf",
+  "book",
+  "school",
+  "heart",
+  "heart",
 ];
 
 const mockHabits: Habit[] = [
@@ -219,7 +236,25 @@ const HEADER_EXPANDED_HEIGHT = 150;
 const HEADER_COLLAPSED_HEIGHT = 100;
 const BUTTON_ROW_HEIGHT = 90;
 
-const HeaderWithButtons = ({ children, showCreatePage, setShowCreatePage }: { children: React.ReactNode, showCreatePage: boolean, setShowCreatePage: React.Dispatch<React.SetStateAction<boolean>> }) => {
+interface HeaderProps {
+  habits: Habit[];
+  showCreatePage: boolean;
+  setShowCreatePage: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedView: "Daily" | "Weekly" | "Overall";
+  setSelectedView: React.Dispatch<
+    React.SetStateAction<"Daily" | "Weekly" | "Overall">
+  >;
+  setSelectedHabit: React.Dispatch<React.SetStateAction<Habit | null>>;
+}
+
+const HeaderWithButtons = ({
+  habits,
+  showCreatePage,
+  setShowCreatePage,
+  selectedView,
+  setSelectedView,
+  setSelectedHabit,
+}: HeaderProps) => {
   const [selectedButton, setSelectedButton] = useState<string>("Daily");
   const scrollY = useSharedValue(0);
 
@@ -236,6 +271,7 @@ const HeaderWithButtons = ({ children, showCreatePage, setShowCreatePage }: { ch
       [HEADER_EXPANDED_HEIGHT, HEADER_COLLAPSED_HEIGHT],
       { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
     ),
+    useNativeDriver: true,
   }));
 
   const titleStyle = useAnimatedStyle(() => {
@@ -247,8 +283,8 @@ const HeaderWithButtons = ({ children, showCreatePage, setShowCreatePage }: { ch
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
     });
-
     return {
+      useNativeDriver: true,
       transform: [{ translateY }],
       fontSize,
     };
@@ -265,6 +301,7 @@ const HeaderWithButtons = ({ children, showCreatePage, setShowCreatePage }: { ch
         ),
       },
     ],
+    useNativeDriver: true,
   }));
 
   return (
@@ -278,10 +315,10 @@ const HeaderWithButtons = ({ children, showCreatePage, setShowCreatePage }: { ch
         </Animated.Text>
         <View style={styles1.rightIcons}>
           <TouchableOpacity onPress={() => setShowCreatePage(true)}>
-            <Icon source="plus" size={20} color="#fff" />
+            <IconCircle name="add" size={20} />
           </TouchableOpacity>
           <TouchableOpacity style={{ marginLeft: 10 }}>
-            <Icon source="cog" size={20} color="#fff" />
+            <IconCircle name="settings" size={20} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -289,48 +326,32 @@ const HeaderWithButtons = ({ children, showCreatePage, setShowCreatePage }: { ch
       {/* Buttons */}
       <Animated.View style={[styles1.buttonRowContainer, buttonRowStyle]}>
         <View style={styles1.buttonRow}>
-          <TouchableOpacity
-            style={[
-              styles1.button,
-              selectedButton === "Daily" && styles1.selectedButton,
-            ]}
-            onPress={() => setSelectedButton("Daily")}
-          >
-            <Text style={styles1.buttonText}>Daily</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles1.button,
-              selectedButton === "Weekly" && styles1.selectedButton,
-            ]}
-            onPress={() => setSelectedButton("Weekly")}
-          >
-            <Text style={styles1.buttonText}>Weekly</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles1.button,
-              selectedButton === "Overall" && styles1.selectedButton,
-            ]}
-            onPress={() => setSelectedButton("Overall")}
-          >
-            <Text style={styles1.buttonText}>Overall</Text>
-          </TouchableOpacity>
+          <ViewSelectorButton
+            label="Daily"
+            selected={selectedButton === "Daily"}
+            onPress={() => {
+              setSelectedButton("Daily");
+              setSelectedView("Daily");
+            }}
+          />
+          <ViewSelectorButton
+            label="Weekly"
+            selected={selectedButton === "Weekly"}
+            onPress={() => {
+              setSelectedButton("Weekly");
+              setSelectedView("Weekly");
+            }}
+          />
+          <ViewSelectorButton
+            label="Overall"
+            selected={selectedButton === "Overall"}
+            onPress={() => {
+              setSelectedButton("Overall");
+              setSelectedView("Overall");
+            }}
+          />
         </View>
       </Animated.View>
-
-      {/* Scrollable content passed from parent */}
-      <Animated.ScrollView
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        contentContainerStyle={{
-          paddingTop: HEADER_EXPANDED_HEIGHT + BUTTON_ROW_HEIGHT + 10,
-          paddingHorizontal: 16,
-          paddingBottom: 50,
-        }}
-      >
-        {children}
-      </Animated.ScrollView>
     </View>
   );
 };
@@ -401,6 +422,9 @@ const HabitDashboard = () => {
   const [habits, setHabits] = useState<Habit[]>(mockHabits);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [showCreatePage, setShowCreatePage] = useState(false);
+  const [selectedView, setSelectedView] = useState<
+    "Daily" | "Weekly" | "Overall"
+  >("Daily");
 
   const handleCreateHabit = (
     newHabit: Omit<Habit, "_id" | "entries" | "streak" | "progress">
@@ -448,21 +472,25 @@ const HabitDashboard = () => {
   return (
     <Provider>
       <View style={{ flex: 1 }}>
-        <HeaderWithButtons showCreatePage={showCreatePage} setShowCreatePage={setShowCreatePage}>
-          {habits.map((habit) => (
-            <HabitCard
-              key={habit._id}
-              habit={habit}
-              onPress={() => setSelectedHabit(habit)}
-            />
-          ))}
-        </HeaderWithButtons>
+        <HeaderWithButtons
+          habits={habits}
+          showCreatePage={showCreatePage}
+          setShowCreatePage={setShowCreatePage}
+          selectedView={selectedView}
+          setSelectedView={setSelectedView}
+          setSelectedHabit={setSelectedHabit}
+        />
 
         <Portal>
           <Modal
             visible={showCreatePage}
             onDismiss={() => setShowCreatePage(false)}
-            contentContainerStyle={{ flex: 1, width: '100%', height: '100%', padding: 0 }}
+            contentContainerStyle={{
+              flex: 1,
+              width: "100%",
+              height: "100%",
+              padding: 0,
+            }}
           >
             <HabitCreationScreen
               onCreate={handleCreateHabit}
@@ -484,6 +512,29 @@ const HabitDashboard = () => {
             />
           </Modal>
         )}
+
+        <Animated.FlatList
+          data={habits}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) =>
+            selectedView === "Overall" ? (
+              <ContributionGrid habit={item} />
+            ) : (
+              <HabitCard habit={item} onPress={() => setSelectedHabit(item)} />
+            )
+          }
+          scrollEventThrottle={16}
+          contentContainerStyle={{
+            paddingTop: HEADER_EXPANDED_HEIGHT + BUTTON_ROW_HEIGHT + 10,
+            paddingHorizontal: 16,
+            paddingBottom: 50,
+          }}
+          initialNumToRender={6}
+          maxToRenderPerBatch={6}
+          windowSize={11}
+          removeClippedSubviews={true}
+          updateCellsBatchingPeriod={100}
+        />
       </View>
     </Provider>
   );
@@ -491,52 +542,55 @@ const HabitDashboard = () => {
 
 const { width: CARD_WIDTH } = Dimensions.get("window");
 
-const HabitCard = ({
-  habit,
-  onPress,
-}: {
-  habit: Habit;
-  onPress: () => void;
-}) => {
-  return (
-    <View style={[styles.card, { backgroundColor: habit.color }]}>
-      <View style={styles.cardHeader}>
-        <Icon source={habit.icon} size={24} color="#fff" />
-        <Text style={styles.cardTitle}>{habit.name}</Text>
-      </View>
+const HabitCard = React.memo(
+  ({ habit, onPress }: { habit: Habit; onPress: () => void }) => {
+    // Create lighter shades of the habit color
+    const lighterColor1 = lightenColor(habit.color, 5); // First lighter shade
+    const lighterColor2 = lightenColor(habit.color, 10); // Second lighter shade
 
-      {habit.type === "numeric" && (
-        <ProgressBar
-          progress={habit.progress.current / (habit.target || 1)}
-          color="#fff"
-          style={styles.progressBar}
-        />
-      )}
+    return (
+      <TouchableOpacity onPress={onPress} style={styles.card}>
+        <LinearGradient
+          colors={[habit.color, lighterColor1, lighterColor2]} // Use three shades in the gradient
+          start={{ x: 0, y: 0 }} // Start from the left
+          end={{ x: 1, y: 0 }} // End at the right
+          style={[styles.card, { borderRadius: 25 }]} // Ensure the gradient covers the card
+        >
+          <View style={styles.cardHeader}>
+            <IconCircle name={habit.icon} size={24} iconColor="#fff" />
+            <Text style={styles.cardTitle}>{habit.name}</Text>
+          </View>
 
-      {habit.type === "boolean" && (
-        <Text style={styles.streakText}>{habit.streak} day streak!</Text>
-      )}
+          {habit.type === "numeric" && (
+            <ProgressBar
+              progress={habit.progress.current / (habit.target || 1)}
+              color="#fff"
+              style={styles.progressBar}
+            />
+          )}
 
-      <View style={styles.frequencyContainer}>
-        {DAYS.map((day) => (
-          <Text
-            key={`${habit._id}-${day}`}
-            style={[
-              styles.frequencyDay,
-              habit.frequency.includes(day) && styles.frequencyDayActive,
-            ]}
-          >
-            {day[0].toUpperCase()}
-          </Text>
-        ))}
-      </View>
+          {habit.type === "boolean" && (
+            <Text style={styles.streakText}>{habit.streak} day streak!</Text>
+          )}
 
-      {/* <TouchableOpacity onPress={onPress} style={styles.logButton}>
-        <Text style={styles.logButtonText}>Log Entry</Text>
-      </TouchableOpacity> */}
-    </View>
-  );
-};
+          <View style={styles.frequencyContainer}>
+            {DAYS.map((day) => (
+              <Text
+                key={`${habit._id}-${day}`}
+                style={[
+                  styles.frequencyDay,
+                  habit.frequency.includes(day) && styles.frequencyDayActive,
+                ]}
+              >
+                {day[0].toUpperCase()}
+              </Text>
+            ))}
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
+);
 
 const HabitDetailModal = ({
   habit,
@@ -688,13 +742,25 @@ const parseValueBasedOnType = (value: string, type: HabitType) => {
   }
 };
 
+// Function to lighten a color
+const lightenColor = (color: string, percent: number) => {
+  const num = parseInt(color.slice(1), 16);
+  const amt = Math.round(2.55 * percent);
+
+  const R = Math.min((num >> 16) + amt, 255);
+  const G = Math.min(((num >> 8) & 0x00ff) + amt, 255);
+  const B = Math.min((num & 0x0000ff) + amt, 255);
+
+  return `#${[R, G, B].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+};
+
 // Styles
 const styles = StyleSheet.create({
   card: {
     width: CARD_WIDTH - 40,
     borderRadius: 25,
     padding: 16,
-    marginVertical: 10,
+    marginVertical: 0,
     alignSelf: "center",
   },
   cardHeader: {
@@ -885,5 +951,36 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
 });
+
+// Memoize habit components to prevent unnecessary re-renders
+const ViewSelectorButton = React.memo(
+  ({
+    label,
+    selected,
+    onPress,
+  }: {
+    label: string;
+    selected: boolean;
+    onPress: () => void;
+  }) => {
+    // Replace Animated.View with simpler implementation
+    const scale = useSharedValue(1);
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: withSpring(selected ? 1.05 : 1) }],
+    }));
+
+    return (
+      <TouchableOpacity
+        style={[styles1.button, selected && styles1.selectedButton]}
+        onPress={onPress}
+        activeOpacity={0.6}
+      >
+        <Animated.Text style={[styles1.buttonText, animatedStyle]}>
+          {label}
+        </Animated.Text>
+      </TouchableOpacity>
+    );
+  }
+);
 
 export default HabitDashboard;

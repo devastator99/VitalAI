@@ -1,7 +1,7 @@
 import Colors from "~/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, Tabs, useRouter } from "expo-router";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { Authenticated, useQuery } from "convex/react";
 // import { useConvexUser } from "~/utils/UserContext";
 import { Drawer } from "react-native-drawer-layout";
@@ -27,7 +27,6 @@ import {
 } from "react-native-reanimated";
 import Animated from "react-native-reanimated";
 
-
 export const Filter = () => {
   const image = useImage(require("../../assets/images/purple.jpeg"));
   if (!image) {
@@ -35,14 +34,7 @@ export const Filter = () => {
   }
   return (
     <Canvas style={{ flex: 1 }}>
-      <Image
-        x={0}
-        y={0}
-        width={400}
-        height={256}
-        image={image}
-        fit="cover"
-      >
+      <Image x={0} y={0} width={400} height={256} image={image} fit="cover">
         <Blur blur={4} />
       </Image>
     </Canvas>
@@ -77,92 +69,160 @@ const Layout = () => {
   //             style={{ flex: 1 }}
   //           />
 
+  const tabs = [
+    {
+      name: "(drawer)",
+      label: "AI Chat",
+      icon: {
+        active: "chatbubble",
+        inactive: "chatbubble-outline",
+      },
+    },
+    {
+      name: "contacts",
+      label: "Contacts",
+      icon: {
+        active: "people",
+        inactive: "people-outline",
+      },
+    },
+    {
+      name: "Profile",
+      label: "Profile",
+      icon: {
+        active: "person",
+        inactive: "person-outline",
+      },
+    },
+    {
+      name: "HabitDashboard",
+      label: "Habits",
+      icon: {
+        active: "stats-chart",
+        inactive: "stats-chart-outline",
+      },
+    },
+    {
+      name: "settings",
+      label: "Settings",
+      icon: {
+        active: "settings",
+        inactive: "settings-outline",
+      },
+    },
+    {
+      name: "HabitHeatmap",
+      label: "heatmap",
+      icon: {
+        active: "settings",
+        inactive: "settings-outline",
+      },
+    },
+  ];
+
   return (
     <Authenticated>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Colors.primary,
-          tabBarInactiveTintColor: Colors.greyLight,
+          tabBarShowLabel: false,
           tabBarStyle: {
-            position: "absolute",
-            backgroundColor: "transparent",
+            backgroundColor: "rgba(19, 22, 28,0.4)",
             borderTopWidth: 0,
             elevation: 0,
-            shadowColor: "transparent",
+            height: 70,
+            position: "relative",
           },
-          tabBarBackground: () => (
-            <BlurView
-              intensity={70}
-              tint="dark"
-              experimentalBlurMethod={"dimezisBlurView"}
-              style={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-              }}
-            >
-            </BlurView>
-            // <Filter/>
-          ),
+          // tabBarBackground: () => (
+          //   // <BlurView
+          //   //   intensity={70}
+          //   //   tint="dark"
+          //   //   experimentalBlurMethod={"dimezisBlurView"}
+          //   //   style={{
+          //   //     position: "absolute",
+          //   //     top: 0,
+          //   //     right: 0,
+          //   //     bottom: 0,
+          //   //     left: 0,
+          //   //   }}
+          //   // />
+          // ),
         }}
       >
-        {/* 🔹 AI Chat Tab */}
-        <Tabs.Screen
-          name="(drawer)"
-          options={{
-            title: "AI Chat",
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="chatbubbles-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        {/* 🔹 Contacts Tab */}
-        <Tabs.Screen
-          name="contacts"
-          options={{
-            title: "Contacts",
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="people-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="Profile"
-          options={{
-            title: "Profile",
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="aperture" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="HabitDashboard"
-          options={{
-            title: "Habits",
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="aperture" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: "settings",
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="settings-outline" size={size} color={color} />
-            ),
-          }}
-        />
+        {tabs.map(({ name, label, icon }) => (
+          <Tabs.Screen
+            key={name}
+            name={name}
+            options={{
+              headerShown: false,
+              tabBarButton: (props: any) => (
+                <TouchableOpacity {...props} style={styles.tabButton}>
+                  <View
+                    style={[
+                      styles.tabContent,
+                      props.accessibilityState?.selected && styles.activeTab,
+                    ]}
+                  >
+                    <Ionicons
+                      name={
+                        props.accessibilityState?.selected
+                          ? (icon.active as keyof typeof Ionicons.glyphMap)
+                          : (icon.inactive as keyof typeof Ionicons.glyphMap)
+                      }
+                      size={20}
+                      color={
+                        props.accessibilityState?.selected
+                          ? "#539DF3"
+                          : "#676D75"
+                      }
+                    />
+
+                    {props.accessibilityState?.selected ? (
+                      <Text style={styles.activeLabel}>{label}</Text>
+                    ) : null}
+                  </View>
+                </TouchableOpacity>
+              ),
+            }}
+          />
+        ))}
       </Tabs>
     </Authenticated>
   );
 };
+
+const styles = StyleSheet.create({
+  tabButton: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+  },
+  tabContent: {
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  activeTab: {
+    flexDirection: "row",
+    backgroundColor: "rgba(83, 157, 243, 0.37)",
+    borderRadius: 100,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    gap: 3,
+  },
+  activeLabel: {
+    color: "#539DF3",
+    fontSize: 12,
+    fontFamily: "Poppins",
+    fontWeight: "500",
+    marginLeft: 4,
+  },
+  inactiveLabel: {
+    color: "#676D75",
+    fontSize: 12,
+    fontFamily: "Poppins",
+    fontWeight: "500",
+    marginTop: 2,
+  },
+});
 
 export default Layout;

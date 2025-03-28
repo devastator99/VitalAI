@@ -23,7 +23,9 @@ import {
 } from "react-native-paper";
 import { COLOR_PALETTE, DAYS, ICONS } from "./habit_components/habit_icons";
 import AnimHeader from "./AnimHeader";
+import ScreenTransitionView from "./ScreenTransitionView";
 type HabitType = "boolean" | "numeric" | "categorical";
+import { StatusBar } from "expo-status-bar";
 
 interface Habit {
   _id: string;
@@ -91,179 +93,185 @@ export const HabitCreationScreen = ({
 
   return (
     <Provider>
-      <AnimHeader
-        title="Create New Habit"
-        buttons={[]}
-        onButtonSelect={(selected) => {
-          console.log("Selected:x", selected);
-        }}
-        rightIcons={[{ icon: "sword-cross", onPress: onClose }]}
-      >
-        <View style={styles2.container}>
-          <ScrollView contentContainerStyle={styles2.content}>
-            <TextInput
-              placeholder="Habit name"
-              placeholderTextColor={color}
-              value={name}
-              onChangeText={setName}
-              style={[
-                styles2.input,
-                { borderColor: color, backgroundColor: color + "22" ,color: "#ffffff"},
-              ]}
-            />
+      <ScreenTransitionView style={{ flex: 1 }}>
+        <AnimHeader
+          title="Create New Habit"
+          buttons={[]}
+          onButtonSelect={(selected) => {
+            console.log("Selected:x", selected);
+          }}
+          rightIcons={[{ icon: "close", onPress: onClose }]}
+        >
+          <View style={styles2.container}>
+            <ScrollView contentContainerStyle={styles2.content}>
+              <TextInput
+                placeholder="Habit name"
+                placeholderTextColor={color}
+                value={name}
+                onChangeText={setName}
+                style={[
+                  styles2.input,
+                  {
+                    borderColor: color,
+                    backgroundColor: color + "22",
+                    color: "#ffffff",
+                  },
+                ]}
+              />
 
-            <TextInput
-              style={[
-                styles2.input,
-                { borderColor: color },
-                { backgroundColor: color + "22" ,color: "#ffffff"},
-              ]}
-              placeholder="Description (optional)"
-              placeholderTextColor={color}
-              value={unit}
-              onChangeText={setUnit}
-            />
+              <TextInput
+                style={[
+                  styles2.input,
+                  { borderColor: color },
+                  { backgroundColor: color + "22", color: "#ffffff" },
+                ]}
+                placeholder="Description (optional)"
+                placeholderTextColor={color}
+                value={unit}
+                onChangeText={setUnit}
+              />
 
-            <Text style={styles2.sectionTitle}>Type</Text>
-            <View style={styles2.radioRow}>
-              <RadioButton.Group
-                onValueChange={(v) => setType(v as HabitType)}
-                value={type}
-              >
-                <View style={styles2.radioItem}>
-                  <RadioButton value="numeric" />
-                  <Text>Numeric</Text>
-                </View>
-                <View style={styles2.radioItem}>
-                  <RadioButton value="boolean" />
-                  <Text>Yes/No</Text>
-                </View>
-                <View style={styles2.radioItem}>
-                  <RadioButton value="categorical" />
-                  <Text>Category</Text>
-                </View>
-              </RadioButton.Group>
-            </View>
+              <Text style={styles2.sectionTitle}>Type</Text>
+              <View style={styles2.radioRow}>
+                <RadioButton.Group
+                  onValueChange={(v) => setType(v as HabitType)}
+                  value={type}
+                >
+                  <View style={styles2.radioItem}>
+                    <RadioButton value="numeric" />
+                    <Text>Numeric</Text>
+                  </View>
+                  <View style={styles2.radioItem}>
+                    <RadioButton value="boolean" />
+                    <Text>Yes/No</Text>
+                  </View>
+                  <View style={styles2.radioItem}>
+                    <RadioButton value="categorical" />
+                    <Text>Category</Text>
+                  </View>
+                </RadioButton.Group>
+              </View>
 
-            {type === "numeric" && (
-              <>
-                <TextInput
-                  style={[
-                    styles2.input,
-                    { borderColor: color },
-                    { backgroundColor: color + "22" ,color: "#ffffff"},
-                  ]}
-                  placeholder="Daily Target"
-                  value={target}
-                  onChangeText={setTarget}
-                  placeholderTextColor={color}
-                  keyboardType="numeric"
-                />
-                <TextInput
-                  style={[
-                    styles2.input,
-                    { borderColor: color },
-                    { backgroundColor: color + "22" ,color: "#ffffff"},
-                  ]}
-                  placeholder="Unit (e.g., minutes, glasses)"
-                  value={unit}
-                  placeholderTextColor={color}
-                  onChangeText={setUnit}
-                />
-              </>
-            )}
+              {type === "numeric" && (
+                <>
+                  <TextInput
+                    style={[
+                      styles2.input,
+                      { borderColor: color },
+                      { backgroundColor: color + "22", color: "#ffffff" },
+                    ]}
+                    placeholder="Daily Target"
+                    value={target}
+                    onChangeText={setTarget}
+                    placeholderTextColor={color}
+                    keyboardType="numeric"
+                  />
+                  <TextInput
+                    style={[
+                      styles2.input,
+                      { borderColor: color },
+                      { backgroundColor: color + "22", color: "#ffffff" },
+                    ]}
+                    placeholder="Unit (e.g., minutes, glasses)"
+                    value={unit}
+                    placeholderTextColor={color}
+                    onChangeText={setUnit}
+                  />
+                </>
+              )}
 
-            <Text style={styles2.sectionTitle}>Frequency</Text>
-            <View style={styles2.wrapRow}>
-              {DAYS.map((day, index) => (
+              <Text style={styles2.sectionTitle}>Frequency</Text>
+              <View style={styles2.wrapRow}>
+                {DAYS.map((day, index) => (
+                  <TouchableOpacity
+                    key={`${day}-${index}`}
+                    onPress={() => toggleDay(day)}
+                    style={[
+                      styles2.dayButton,
+                      {
+                        backgroundColor: frequency.includes(day)
+                          ? color + "66"
+                          : "transparent",
+                        borderColor: color,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        color: frequency.includes(day) ? color : color,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {day[0].toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles2.sectionTitle}>Color</Text>
+              <View style={styles2.wrapRow}>
+                {COLOR_PALETTE.map((c, index) => (
+                  <TouchableOpacity
+                    key={`${c}-${index}`}
+                    onPress={() => setColor(c)}
+                    style={[
+                      styles2.colorCircle,
+                      { backgroundColor: c },
+                      color === c && styles2.colorSelected,
+                    ]}
+                  />
+                ))}
+              </View>
+
+              <Text style={styles2.sectionTitle}>Icon</Text>
+              <View style={styles2.wrapRow}>
+                {ICONS.map((i) => (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => setIcon(i)}
+                    style={[
+                      styles2.iconBox,
+                      {
+                        backgroundColor:
+                          icon === i ? color + "33" : "transparent",
+                      },
+                    ]}
+                  >
+                    <Icon
+                      source={i}
+                      size={24}
+                      color={icon === i ? color : "#666"}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles2.buttonContainer}>
                 <TouchableOpacity
-                  key={`${day}-${index}`}
-                  onPress={() => toggleDay(day)}
+                  onPress={handleSubmit}
                   style={[
-                    styles2.dayButton,
-                    {
-                      backgroundColor: frequency.includes(day)
-                        ? color + "66"
-                        : "transparent",
-                      borderColor: color,
-                    },
+                    styles2.createButton,
+                    { backgroundColor: color, width: "80%" },
                   ]}
+                  disabled={
+                    !name.trim() || (type === "numeric" && (!target || !unit))
+                  }
                 >
                   <Text
                     style={{
-                      color: frequency.includes(day) ? color : color,
+                      color: "white",
                       fontWeight: "bold",
+                      textAlign: "center",
                     }}
                   >
-                    {day[0].toUpperCase()}
+                    Create Habit
                   </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles2.sectionTitle}>Color</Text>
-            <View style={styles2.wrapRow}>
-              {COLOR_PALETTE.map((c, index) => (
-                <TouchableOpacity
-                  key={`${c}-${index}`}
-                  onPress={() => setColor(c)}
-                  style={[
-                    styles2.colorCircle,
-                    { backgroundColor: c },
-                    color === c && styles2.colorSelected,
-                  ]}
-                />
-              ))}
-            </View>
-
-            <Text style={styles2.sectionTitle}>Icon</Text>
-            <View style={styles2.wrapRow}>
-              {ICONS.map((i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => setIcon(i)}
-                  style={[
-                    styles2.iconBox,
-                    {
-                      backgroundColor:
-                        icon === i ? color + "33" : "transparent",
-                    },
-                  ]}
-                >
-                  <Icon
-                    source={i}
-                    size={24}
-                    color={icon === i ? color : "#666"}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles2.buttonContainer}>
-              <TouchableOpacity
-                onPress={handleSubmit}
-                style={[
-                  styles2.createButton,
-                  { backgroundColor: color, width: "80%" },
-                ]}
-                disabled={
-                  !name.trim() || (type === "numeric" && (!target || !unit))
-                }
-              >
-                <Text
-                  style={{
-                    color: "white",
-                    fontWeight: "bold",
-                    textAlign: "center",
-                  }}
-                >
-                  Create Habit
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </AnimHeader>
+              </View>
+            </ScrollView>
+          </View>
+        </AnimHeader>
+      </ScreenTransitionView>
     </Provider>
   );
 };

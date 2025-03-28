@@ -401,7 +401,7 @@ const ChatPage = () => {
         keyboardVerticalOffset={63}
         style={{
           position: "absolute",
-          bottom: 49,
+          bottom: 0,
           left: 0,
           width: "100%",
         }}

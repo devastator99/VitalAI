@@ -8,6 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Icon } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
+import IconCircle from "./IconCircle";
 
 interface AnimHeaderProps {
   title: string;
@@ -75,7 +76,7 @@ const AnimHeader = ({
 
   return (
     <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,1)" }}>
-      <StatusBar style="dark" />
+      <StatusBar backgroundColor="rgba(0,0,0,1)" />
       <Animated.View style={[styles1.header, headerStyle]}>
         <Animated.Text style={[styles1.title, titleStyle]}>
           {title}
@@ -88,7 +89,7 @@ const AnimHeader = ({
               onPress={item.onPress}
               style={{ marginLeft: 10 }}
             >
-              <Icon source={item.icon} size={20} color="#fff" />
+              <IconCircle name={item.icon} size={20}/>
             </TouchableOpacity>
           ))}
         </View>

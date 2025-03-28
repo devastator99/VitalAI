@@ -101,11 +101,11 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
   
 
   return (
-    <Animated.View style={[styles.header1,{paddingBottom: bottom, paddingTop: 10}]}>
-      <BlurView
+    <Animated.View style={[styles.header1, { paddingBottom: bottom, paddingTop: 10}]}>
+      {/* <BlurView
               intensity={70}
               tint="dark"
-              experimentalBlurMethod={"dimezisBlurView"}>
+              experimentalBlurMethod={"dimezisBlurView"}> */}
       <View style={styles.row}>
         <ATouchableOpacity onPress={expandItems} style={[styles.roundBtn, expandButtonStyle]}>
           <Ionicons name="add" size={24} color={Colors.greyLight} />
@@ -144,7 +144,7 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
           </TouchableOpacity>
         )}
       </View>
-      </BlurView>
+      {/* </BlurView> */}
     </Animated.View>
   );
 });
@@ -154,14 +154,16 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   row: {
+    height:60,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
+    backgroundColor: "rgb(12, 15, 18)",
   },
   messageInput: {
     flex: 1,
     marginHorizontal: 10,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1.5,
     borderRadius: 20,
     padding: 10,
     borderColor: Colors.primary,
