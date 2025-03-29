@@ -101,7 +101,7 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
   
 
   return (
-    <Animated.View style={[styles.header1, { paddingBottom: bottom, paddingTop: 10}]}>
+    <Animated.View style={[styles.header1, { paddingBottom: bottom, paddingTop: 0}]}>
       {/* <BlurView
               intensity={70}
               tint="dark"
@@ -151,7 +151,7 @@ const MessageInput = forwardRef(({ onShouldSend }: Props, ref) => {
 
 const styles = StyleSheet.create({
   header1:{
-    zIndex: 1000,
+    // zIndex: 1000,
   },
   row: {
     height:60,

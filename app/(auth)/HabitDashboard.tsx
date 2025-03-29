@@ -545,8 +545,8 @@ const { width: CARD_WIDTH } = Dimensions.get("window");
 const HabitCard = React.memo(
   ({ habit, onPress }: { habit: Habit; onPress: () => void }) => {
     // Create lighter shades of the habit color
-    const lighterColor1 = lightenColor(habit.color, 5); // First lighter shade
-    const lighterColor2 = lightenColor(habit.color, 10); // Second lighter shade
+    const lighterColor1 = lightenColor(habit.color, 10); // First lighter shade
+    const lighterColor2 = lightenColor(habit.color, 15); // Second lighter shade
 
     return (
       <TouchableOpacity onPress={onPress} style={styles.card}>

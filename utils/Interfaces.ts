@@ -1,6 +1,7 @@
 export enum Role {
     User = 0,
     Bot = 1,
+    participant =2
   }
   
   export interface Message {

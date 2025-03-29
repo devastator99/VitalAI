@@ -6,15 +6,22 @@ import Colors from '~/constants/Colors';
 import {MiniProfile} from './MiniProfile';
 import BirdVector from './BirdVector';
 import LinearGradient from 'react-native-linear-gradient';
+import { api } from '~/convex/_generated/api';
+import { useQuery } from 'convex/react';
+import { Id } from '~/convex/_generated/dataModel';
+import UserVector from './UserVector';
 
 type MessageBubbleProps = {
   content: string;
   role: Role;
-  imageUrl?: string;
   isCurrentUser?: boolean;
   profileImage?: string;
   userName?: string;
 };
+
+const MemoizedAvatarImage = React.memo(({ uri, style }: { uri: string; style: any }) => (
+  <Image source={{ uri }} style={style} />
+));
 
 const ProfileDetails = ({ profileImage, userName, isVisible, onClose }: { profileImage?: string, userName?: string, isVisible: boolean, onClose: () => void }) => {
   if (!isVisible) return null;
@@ -33,8 +40,11 @@ const ProfileDetails = ({ profileImage, userName, isVisible, onClose }: { profil
   );
 };
 
-const MessageBubble = ({ content, role, imageUrl, isCurrentUser, profileImage, userName }: MessageBubbleProps) => {
+const MessageBubble = ({ content, role, isCurrentUser, profileImage, userName }: MessageBubbleProps) => {
   const [isProfileVisible, setIsProfileVisible] = React.useState(false);
+  const imageUrl = useQuery(api.files.getImageUrl, 
+    profileImage ? { storageId: profileImage as Id<"_storage"> } : "skip"
+   );
 
   const handleAvatarPress = () => {
     setIsProfileVisible(true);
@@ -53,12 +63,25 @@ const MessageBubble = ({ content, role, imageUrl, isCurrentUser, profileImage, u
           // AI Bot avatar
           //   <Image source={{ uri: profileImage }} style={styles.avatar} />
           <TouchableOpacity onPress={handleAvatarPress}>
-            <BirdVector width={30} height={30} />
+            <BirdVector width={28} height={28} />
           </TouchableOpacity>
         ) : (
           // Other users avatar
           <TouchableOpacity onPress={handleAvatarPress}>
-            <Image source={{ uri: profileImage }} style={styles.avatar} />
+            {imageUrl ? (
+              <MemoizedAvatarImage uri={imageUrl} style={styles.avatar} />
+            ) : (
+              <View style={{
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)'
+              }}>
+                <UserVector height={18} width={18} />
+              </View>
+            )}
           </TouchableOpacity>
         )
       )}
@@ -79,8 +102,8 @@ const MessageBubble = ({ content, role, imageUrl, isCurrentUser, profileImage, u
           <Image source={{ uri: imageUrl }} style={styles.previewImage} />
         </ContextMenu>
       ) : (
-        <View style={[styles.bubble, isCurrentUser ? styles.userBubble : styles.botBubble]}>
-          <Text style={isCurrentUser ? styles.userText : styles.botText}>{content}</Text>
+        <View style={[styles.bubble, isCurrentUser ? styles.userBubble : role === Role.Bot ? styles.botBubble : styles.humanBubble]}>
+          <Text style={isCurrentUser ? styles.userText : role === Role.Bot ? styles.botText : styles.humanText}>{content}</Text>
         </View>
       )}
     </View>
@@ -122,19 +145,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
   },
   botBubble: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
     borderLeftWidth: 0.15,
     borderLeftColor: '#0ff', // Cyan neon color
     shadowColor: '#0ff', // Optional glow effect
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    shadowOpacity: 0.4, // Increased opacity for better visibility
+    shadowRadius: 12, // Increased radius for a more pronounced shadow
+  },
+  humanBubble: {
+    backgroundColor: 'rgb(40, 40, 40)',
+    maxWidth: '80%'
   },
   userText: {
     color: 'white',
     fontSize: 16,
   },
   botText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  humanText: {
     color: 'white',
     fontSize: 16,
   },

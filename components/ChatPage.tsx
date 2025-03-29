@@ -1,8 +1,8 @@
 import HeaderDropDown from "~/components/HeaderDropDown";
 import MessageInput from "~/components/MessageInput";
 import { defaultStyles } from "~/constants/Styles";
-import { Redirect, router, Stack, useLocalSearchParams } from "expo-router";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Stack, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Image,
   View,
@@ -36,16 +36,9 @@ import MessageBubble from "~/components/MessageBubble";
 const ChatPage = () => {
   const currentUser = useQuery(api.users.getCurrentUser);
   const initaichat = useMutation(api.chats.initAiChat);
-  const { signOut } = useAuth();
   const AI_USER_ID: Id<"users"> =
     "j576bezhm29ycwx1bh4mf7db3s7bpy6q" as Id<"users">;
-
-  // Replace '3.5' with your default GPT version; "gpt-3.5-turbo" is the default model
   const [gptVersion, setGptVersion] = useState("3.5");
-  // const [key, setKey] = useState(Constants.expoConfig?.extra?.OPENAI_API_KEY);
-  // const [organization, setOrganization] = useState(
-  //   Constants.expoConfig?.extra?.OPENAI_API_ORGANISATION
-  // );
   const [height, setHeight] = useState(0);
   const [messages, setMessages] = useState<
     {
@@ -55,14 +48,9 @@ const ChatPage = () => {
       isAI: boolean;
       createdAt: number;
       role: Role;
-      imageUrl?: string;
     }[]
   >([]);
   const { id } = useLocalSearchParams<{ id: string }>();
-  // const { chatId, setChatId } = useChat();
-  // const [chatId, setChatId] = useState<any | null>(id);
-  // const chatIdRef = useRef(id);
-
   const chatId = useMemo(() => {
     // Route param takes precedence
     if (id) return id;
@@ -137,7 +125,6 @@ const ChatPage = () => {
           isAI: Boolean(msg.isAi),
           createdAt: msg.createdAt,
           role: msg.isAi ? Role.Bot : Role.User,
-          imageUrl: msg.imageUrl,
         }))
       );
     }
@@ -289,7 +276,6 @@ const ChatPage = () => {
           isAI: false,
           createdAt: Date.now(),
           role: Role.User,
-          imageUrl: undefined,
         },
       ]);
 
@@ -315,7 +301,6 @@ const ChatPage = () => {
           isAI: true,
           createdAt: Date.now(),
           role: Role.Bot,
-          imageUrl: undefined,
         },
       ]);
     } catch (error) {
@@ -334,7 +319,6 @@ const ChatPage = () => {
       <MessageBubble
         content={item.content}
         role={item.role}
-        imageUrl={item.imageUrl}
         isCurrentUser={isCurrentUser}
         profileImage={senderUser?.profileDetails?.picture}
       />
@@ -359,10 +343,7 @@ const ChatPage = () => {
         }}
       />
       <LinearGradient
-        colors={[
-          "rgba(0, 0, 0, 0.95)",
-          "rgba(0, 0, 0, 0.95)",
-        ]}
+        colors={["rgba(0, 0, 0, 0.95)", "rgba(0, 0, 0, 0.95)"]}
         style={styles.gradient}
       >
         <View style={styles.page} onLayout={onLayout}>
@@ -376,11 +357,6 @@ const ChatPage = () => {
               />
             </View>
           )}
-          {/* <Button
-              title="Sign Out"
-              onPress={() => signOut()}
-              color={Colors.greyLight}
-            /> */}
           <FlashList
             data={[...messages].reverse()}
             renderItem={({ item }) => <RenderChatBubble item={item} />}
@@ -400,6 +376,7 @@ const ChatPage = () => {
           bottom: 0,
           left: 0,
           width: "100%",
+          backgroundColor: "black",
         }}
       >
         {messages.length === 0 && <MessageIdeas onSelectCard={getCompletion} />}
@@ -410,7 +387,7 @@ const ChatPage = () => {
 };
 
 // ListFooterComponent={<View style={{ height: 200 }} />}
-            // scrollIndicatorInsets={{ bottom: 150 }}
+// scrollIndicatorInsets={{ bottom: 150 }}
 //
 
 const styles = StyleSheet.create({

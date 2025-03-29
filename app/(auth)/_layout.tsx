@@ -208,6 +208,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     gap: 3,
+    borderWidth:0.2,
+    borderColor:"#539DF3"
   },
   activeLabel: {
     color: "#539DF3",

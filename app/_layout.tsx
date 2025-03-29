@@ -35,6 +35,7 @@ import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { StatusBar } from "expo-status-bar";
 import { PortalHost } from '@rn-primitives/portal';
+import { setBackgroundColorAsync } from "expo-system-ui";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -135,6 +136,9 @@ const InitialLayout = () => {
     userStatusResult,
     infoSubmitted,
   ]);
+
+  // this solves the issue of the background color being white in keyboardavoidingview
+  setBackgroundColorAsync("black");
 
   useEffect(() => {
     if (!authLoaded || isAdmin === undefined || isApproved === undefined)
