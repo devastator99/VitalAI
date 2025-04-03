@@ -36,3 +36,24 @@ export enum Role {
       phone?: string;
     };
   }
+
+  export interface Habit {
+    _id: string;
+    name: string;
+    type: HabitType;
+    target?: number;
+    unit?: string;
+    frequency: string[];
+    color: string;
+    icon: string;
+    entries: Entry[];
+    streak: number;
+    progress: { current: number; target: number };
+  }
+
+  export type HabitType = "boolean" | "numeric" | "categorical";
+  export interface Entry {
+  date: string;
+  value: number | boolean | string;
+  notes?: string;
+}

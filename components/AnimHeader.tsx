@@ -95,12 +95,13 @@ const AnimHeader = ({
               }}
               style={({ pressed }) => ({
                 marginLeft: 10,
-                opacity: pressed ? 0.6 : 1,
+                opacity: pressed ? 0.2 : 1,
                 transform: [{ scale: pressed ? 0.95 : 1 }],
                 backgroundColor: pressed ? 'rgba(255,255,255,0.1)' : 'transparent',
                 borderWidth: 1,
                 borderColor: pressed ? '#00BFFF' : 'transparent',
                 borderRadius: 20,
+                elevation:1
               })}
               hitSlop={10}
               onPressIn={() => {

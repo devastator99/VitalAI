@@ -117,7 +117,8 @@ const styles3 = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 90,
-    paddingBottom:5
+    paddingBottom:5,
+    borderRadius:20
   }
 });
 

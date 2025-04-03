@@ -14,6 +14,8 @@ import {
   Button,
   StatusBar,
   SafeAreaView,
+  RefreshControl,
+  TouchableOpacity,
 } from "react-native";
 // import OpenAI from "openai";
 import { FlashList } from "@shopify/flash-list";
@@ -58,12 +60,12 @@ const ChatPage = () => {
     return currentUser?.defaultChatId ?? null;
   }, [id, currentUser?.defaultChatId]);
 
-  console.log("THIS IS THE ID PARAM IN COMPONENT");
-  console.log(id);
-  console.log("chat id state is :", chatId);
+  // console.log("THIS IS THE ID PARAM IN COMPONENT");
+  // console.log(id);
+  // console.log("chat id state is :", chatId);
   // console.log(chatId);
   // console.log(chatIdRef);
-  console.log("---------------------------------");
+  // console.log("---------------------------------");
 
   // function setChatId(id: string) {
   //   chatIdRef.current = id;
@@ -325,6 +327,29 @@ const ChatPage = () => {
     );
   };
 
+  const listRef = useRef<FlashList<any>>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [isNearBottom, setIsNearBottom] = useState(true);
+
+  // Add this useEffect for automatic scrolling only when near bottom
+  useEffect(() => {
+    if (messages.length > 0 && isNearBottom) {
+      listRef.current?.scrollToEnd({ animated: false });
+    }
+  }, [messages, isNearBottom]);
+
+  const handleScroll = ({ nativeEvent }: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = nativeEvent;
+    const paddingToBottom = 100;
+    const isCloseToBottom = 
+      contentOffset.y + layoutMeasurement.height >= 
+      contentSize.height - paddingToBottom;
+    
+    setIsNearBottom(isCloseToBottom);
+    setShowScrollToBottom(!isCloseToBottom);
+  };
+
   return (
     <View style={defaultStyles.pageContainer}>
       <Stack.Screen
@@ -358,13 +383,39 @@ const ChatPage = () => {
             </View>
           )}
           <FlashList
+            ref={listRef}
             data={[...messages].reverse()}
             renderItem={({ item }) => <RenderChatBubble item={item} />}
             estimatedItemSize={400}
-            keyboardDismissMode="on-drag"
+            keyboardDismissMode="interactive"
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingTop: 10, paddingBottom: 150 }}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => {
+                  // Implement your refresh logic here
+                  setRefreshing(true);
+                  setTimeout(() => setRefreshing(false), 1000);
+                }}
+                colors={['rgba(0,0,0,1)']}
+                tintColor={Colors.blue}
+              />
+            }
           />
+          {showScrollToBottom && (
+            <TouchableOpacity
+              style={styles.scrollToBottomButton}
+              onPress={() => {
+                listRef.current?.scrollToEnd({ animated: true });
+                setShowScrollToBottom(false);
+              }}
+            >
+              <Text style={styles.scrollToBottomText}> ↓ </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </LinearGradient>
 
@@ -445,6 +496,19 @@ const styles = StyleSheet.create({
   consultantText: {
     color: "black",
     fontSize: 16,
+  },
+  scrollToBottomButton: {
+    position: 'absolute',
+    bottom: 70,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(1, 142, 250,0.7)',
+    padding: 12,
+    borderRadius: 25,
+    zIndex: 1000,
+  },
+  scrollToBottomText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
 

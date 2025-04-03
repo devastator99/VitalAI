@@ -129,6 +129,10 @@ export default function InfoForm() {
     }
   };
 
+
+
+  
+
   const handleSubmit = async () => {
     try {
       await saveUserInfo(formData);

@@ -2,37 +2,22 @@ import { View, Text, StyleSheet } from 'react-native';
 import IconCircle from './IconCircle';
 import React, { useMemo } from 'react';
 import { FlashList } from "@shopify/flash-list";
+import type { Habit } from "~/utils/Interfaces";
+import type { Entry } from "~/utils/Interfaces";
+import type { HabitType } from "~/utils/Interfaces";
 
-type HabitType = "boolean" | "numeric" | "categorical";
-
-interface Habit {
-  _id: string;
-  name: string;
-  type: HabitType;
-  target?: number;
-  unit?: string;
-  frequency: string[];
-  color: string;
-  icon: string;
-  entries: Entry[];
-  streak: number;
-  progress: { current: number; target: number };
-}
-
-interface Entry {
-    date: string;
-    value: number | boolean | string;
-    notes?: string;
-  }
   
 
   const ContributionGrid = React.memo(({ habit }: { habit: Habit }) => {
+    // Use mockHabits as an example habit
+    // Assuming mockHabits is an array and we take the first one
+  
     // Generate dates for the last 90 days
     const getDates = () => {
       const dates = [];
       const today = new Date();
-      // Start from 89 days ago and move forward to today
-      for (let i = 89; i >= 0; i--) {
+      // Adjust to 76 days (approx 11 weeks) to fit 3 months
+      for (let i = 76; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         dates.push(date.toISOString().split('T')[0]);
@@ -75,6 +60,11 @@ interface Entry {
       return monthLabels[firstDay.getMonth()];
     };
   
+    const calculateDateFromGridPosition = (weekIndex: number, dayIndex: number) => {
+      const position = weekIndex * 7 + dayIndex;
+      return dates[position] ?? ''; // Use the precomputed dates array
+    };
+  
     return (
       <View style={contributionStyles.habitContainer}>
         <View style={contributionStyles.habitHeader}>
@@ -85,7 +75,7 @@ interface Entry {
         <View style={contributionStyles.gridContainer}>
           <View style={contributionStyles.monthLabels}>
             {data.map((_, i) => (
-              i % 4 === 0 && (
+              i % 5 === 0 && (
                 <Text key={i} style={contributionStyles.monthLabel}>
                   {getMonthLabel(i)}
                 </Text>
@@ -98,21 +88,37 @@ interface Entry {
             data={data}
             showsHorizontalScrollIndicator={false}
             keyExtractor={(_, i) => i.toString()}
-            estimatedItemSize={14}
+            estimatedItemSize={90}
             renderItem={({ item: week, index }) => (
               <View style={contributionStyles.weekColumn}>
-                {week.map((completed, dayIndex) => (
-                  <View
-                    key={`${index}-${dayIndex}`}
-                    style={[
-                      contributionStyles.day,
-                      {
-                        backgroundColor: completed ? habit.color : '#ebedf0',
-                        opacity: completed ? 0.8 : 0.3
-                      }
-                    ]}
-                  />
-                ))}
+                {week.map((completed, dayIndex) => {
+                  // Calculate completion based on habit type and entries
+                  const currentDate = calculateDateFromGridPosition(index, dayIndex);
+                  const entry = habit.entries.find(e => e.date === currentDate);
+
+                  let isCompleted = false;
+                  if (habit.type === "boolean") {
+                    isCompleted = entry?.value === true;
+                  } else if (habit.type === "numeric") {
+                    isCompleted = entry ? (entry.value as number) >= (habit.target as number) : false;
+                  }
+                  
+                  return (
+                    <View
+                      key={`${index}-${dayIndex}`}
+                      style={[
+                        contributionStyles.day,
+                        {
+                          backgroundColor: isCompleted ? habit.color : '#ebedf0',
+                          opacity: isCompleted ? 0.8 : 0.3,
+                          position: 'absolute',
+                          left: 0,
+                          top: dayIndex * 17
+                        }
+                      ]}
+                    />
+                  );
+                })}
               </View>
             )}
           />
@@ -132,7 +138,7 @@ interface Entry {
     habitHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 12,
+      marginTop: 8
     },
     habitName: {
       color: '#fff',
@@ -142,12 +148,14 @@ interface Entry {
     },
     gridContainer: {
       flexDirection: 'row',
+      marginBottom: 14,
+      marginLeft:10
     },
     monthLabels: {
       justifyContent: 'center',
       gap:10,
       marginRight: 20,
-      paddingTop: 0,
+      paddingTop: 25,
     },
     monthLabel: {
       color: '#676D75',
@@ -156,8 +164,12 @@ interface Entry {
       marginBottom: 8,
     },
     weekColumn: {
-      marginTop:15,
-      marginRight: 5,
+      marginTop: 15,
+      marginRight: 4,
+      marginLeft:4,
+      position: 'relative',
+      height: 119,
+      width: 15
     },
     day: {
       width: 15,

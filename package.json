@@ -55,6 +55,7 @@
     "expo-dev-client": "~5.0.14",
     "expo-document-picker": "~13.0.1",
     "expo-file-system": "~18.0.11",
+    "expo-image-manipulator": "~13.0.6",
     "expo-image-picker": "~16.0.6",
     "expo-linear-gradient": "~14.0.1",
     "expo-linking": "~7.0.2",
@@ -73,6 +74,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "^0.76.5",
+    "react-native-calendars": "^1.1310.0",
     "react-native-context-menu-view": "^1.16.0",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-get-random-values": "^1.11.0",
@@ -92,13 +94,15 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
+    "sharp": "^0.33.5",
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "3.3.5",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.0.3",
     "validator": "^13.12.0",
     "zeego": "^3.0.6",
-    "zustand": "^4.4.7"
+    "zustand": "^4.4.7",
+    "undefined": "react-native-ml-kit/text-recognition"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

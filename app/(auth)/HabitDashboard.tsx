@@ -8,6 +8,8 @@ import {
   Button,
   TextInput,
   FlatList,
+  ActivityIndicator,
+  PanResponder,
 } from "react-native";
 import {
   ProgressBar,
@@ -28,6 +30,7 @@ import {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSharedValue } from "react-native-reanimated";
 import Animated from "react-native-reanimated";
@@ -36,22 +39,13 @@ import { HabitCreationScreen } from "~/components/HabitCreationScreen";
 import IconCircle from "~/components/IconCircle";
 import LinearGradient from "react-native-linear-gradient";
 import ContributionGrid from "~/components/ContributionGrid";
+import type { Habit } from "~/utils/Interfaces";
+import type { Entry } from "~/utils/Interfaces";
+import type { HabitType } from "~/utils/Interfaces";
+import HabitDetail from "~/components/HabitDetail";
+import { useNavigation } from "@react-navigation/native";
 
-type HabitType = "boolean" | "numeric" | "categorical";
 
-interface Habit {
-  _id: string;
-  name: string;
-  type: HabitType;
-  target?: number;
-  unit?: string;
-  frequency: string[];
-  color: string;
-  icon: string;
-  entries: Entry[];
-  streak: number;
-  progress: { current: number; target: number };
-}
 
 // TO ADD: // Precompute lightened colors in habit creation
 //habit name and frequency in header in weekdays with right icons for edit delete and share
@@ -59,11 +53,7 @@ interface Habit {
 //display description in a card ,
 //display linechart of progress  aand a notes section with add note button
 
-interface Entry {
-  date: string;
-  value: number | boolean | string;
-  notes?: string;
-}
+
 
 const { width: screenWidth } = Dimensions.get("window");
 const COLOR_PALETTE = [
@@ -93,7 +83,7 @@ const ICONS = [
   "heart",
 ];
 
-const mockHabits: Habit[] = [
+export const mockHabits: Habit[] = [
   {
     _id: "1",
     name: "Water Intake",
@@ -104,9 +94,14 @@ const mockHabits: Habit[] = [
     color: COLOR_PALETTE[0],
     icon: ICONS[0],
     entries: [
-      { date: "2024-03-01", value: 7, notes: "Forgot morning glass" },
-      { date: "2024-03-02", value: 8 },
-      { date: "2024-03-03", value: 6, notes: "Travel day" },
+      { date: "2025-03-01", value: 8, notes: "Forgot morning glass" },
+      { date: "2025-03-02", value: 8 },
+      { date: "2025-03-03", value: 8, notes: "Travel day" },
+      ...Array.from({ length: 15 }, (_, i) => ({
+        date: `2025-03-${(4 + i).toString().padStart(2, '0')}`,
+        value: 8,
+        notes: "Completed target"
+      }))
     ],
     streak: 2,
     progress: { current: 21, target: 24 },
@@ -121,12 +116,17 @@ const mockHabits: Habit[] = [
     color: COLOR_PALETTE[1],
     icon: ICONS[1],
     entries: [
-      { date: "2024-03-01", value: 7, notes: "Forgot morning glass" },
-      { date: "2024-03-02", value: 8 },
-      { date: "2024-03-03", value: 6, notes: "Travel day" },
+      { date: "2025-03-01", value: 7, notes: "Forgot morning glass" },
+      { date: "2025-03-02", value: 8 },
+      { date: "2025-03-03", value: 6, notes: "Travel day" },
+      ...Array.from({ length: 15 }, (_, i) => ({
+        date: `2025-03-${(4 + i).toString().padStart(2, '0')}`,
+        value: 8,
+        notes: "Completed target"
+      }))
     ],
-    streak: 2,
-    progress: { current: 21, target: 24 },
+    streak: 15,
+    progress: { current: 135, target: 144 },
   },
   {
     _id: "3",
@@ -138,9 +138,9 @@ const mockHabits: Habit[] = [
     color: COLOR_PALETTE[2],
     icon: ICONS[2],
     entries: [
-      { date: "2024-03-01", value: 7, notes: "Forgot morning glass" },
-      { date: "2024-03-02", value: 8 },
-      { date: "2024-03-03", value: 6, notes: "Travel day" },
+      { date: "2025-03-01", value: 7, notes: "Forgot morning glass" },
+      { date: "2025-03-02", value: 8 },
+      { date: "2025-03-03", value: 6, notes: "Travel day" },    
     ],
     streak: 2,
     progress: { current: 21, target: 24 },
@@ -154,10 +154,10 @@ const mockHabits: Habit[] = [
     frequency: DAYS,
     color: COLOR_PALETTE[3],
     icon: ICONS[3],
-    entries: [
-      { date: "2024-03-01", value: 7, notes: "Forgot morning glass" },
-      { date: "2024-03-02", value: 8 },
-      { date: "2024-03-03", value: 6, notes: "Travel day" },
+    entries: [  
+      { date: "2025-03-01", value: 7, notes: "Forgot morning glass" },
+      { date: "2025-03-02", value: 8 },
+      { date: "2025-03-03", value: 6, notes: "Travel day" },
     ],
     streak: 2,
     progress: { current: 21, target: 24 },
@@ -172,9 +172,9 @@ const mockHabits: Habit[] = [
     color: COLOR_PALETTE[4],
     icon: ICONS[4],
     entries: [
-      { date: "2024-03-01", value: 7, notes: "Forgot morning glass" },
-      { date: "2024-03-02", value: 8 },
-      { date: "2024-03-03", value: 6, notes: "Travel day" },
+      { date: "2025-03-01", value: 8, notes: "Forgot morning glass" },  
+      { date: "2025-03-02", value: 8 },
+      { date: "2025-03-03", value: 8, notes: "Travel day" },
     ],
     streak: 2,
     progress: { current: 21, target: 24 },
@@ -189,9 +189,9 @@ const mockHabits: Habit[] = [
     color: COLOR_PALETTE[5],
     icon: ICONS[5],
     entries: [
-      { date: "2024-03-01", value: 7, notes: "Forgot morning glass" },
-      { date: "2024-03-02", value: 8 },
-      { date: "2024-03-03", value: 6, notes: "Travel day" },
+      { date: "2025-03-01", value: 7, notes: "Forgot morning glass" },    
+      { date: "2025-03-02", value: 8 },
+      { date: "2025-03-03", value: 6, notes: "Travel day" },
     ],
     streak: 2,
     progress: { current: 21, target: 24 },
@@ -206,9 +206,9 @@ const mockHabits: Habit[] = [
     color: COLOR_PALETTE[6],
     icon: ICONS[2],
     entries: [
-      { date: "2024-03-01", value: 7, notes: "Forgot morning glass" },
-      { date: "2024-03-02", value: 8 },
-      { date: "2024-03-03", value: 6, notes: "Travel day" },
+      { date: "2025-03-01", value: 7, notes: "Forgot morning glass" },
+      { date: "2025-03-02", value: 8 },
+      { date: "2025-03-03", value: 6, notes: "Travel day" },
     ],
     streak: 2,
     progress: { current: 21, target: 24 },
@@ -223,9 +223,9 @@ const mockHabits: Habit[] = [
     color: COLOR_PALETTE[7],
     icon: ICONS[5],
     entries: [
-      { date: "2024-03-01", value: 7, notes: "Forgot morning glass" },
-      { date: "2024-03-02", value: 8 },
-      { date: "2024-03-03", value: 6, notes: "Travel day" },
+      { date: "2025-03-01", value: 7, notes: "Forgot morning glass" },
+      { date: "2025-03-02", value: 8 },
+      { date: "2025-03-03", value: 6, notes: "Travel day" },
     ],
     streak: 2,
     progress: { current: 21, target: 24 },
@@ -245,6 +245,8 @@ interface HeaderProps {
     React.SetStateAction<"Daily" | "Weekly" | "Overall">
   >;
   setSelectedHabit: React.Dispatch<React.SetStateAction<Habit | null>>;
+  isLoadingView: "Daily" | "Weekly" | "Overall" | null;
+  setIsLoadingView: React.Dispatch<React.SetStateAction<"Daily" | "Weekly" | "Overall" | null>>;
 }
 
 const HeaderWithButtons = ({
@@ -254,6 +256,8 @@ const HeaderWithButtons = ({
   selectedView,
   setSelectedView,
   setSelectedHabit,
+  isLoadingView,
+  setIsLoadingView,
 }: HeaderProps) => {
   const [selectedButton, setSelectedButton] = useState<string>("Daily");
   const scrollY = useSharedValue(0);
@@ -314,10 +318,10 @@ const HeaderWithButtons = ({
           Habits
         </Animated.Text>
         <View style={styles1.rightIcons}>
-          <TouchableOpacity onPress={() => setShowCreatePage(true)}>
+          <TouchableOpacity style={{elevation:1}} onPress={() => setShowCreatePage(true)}>
             <IconCircle name="add" size={20} />
           </TouchableOpacity>
-          <TouchableOpacity style={{ marginLeft: 10 }}>
+          <TouchableOpacity style={{ marginLeft: 10 ,elevation:1}}>
             <IconCircle name="settings" size={20} />
           </TouchableOpacity>
         </View>
@@ -331,24 +335,39 @@ const HeaderWithButtons = ({
             selected={selectedButton === "Daily"}
             onPress={() => {
               setSelectedButton("Daily");
-              setSelectedView("Daily");
+              setIsLoadingView("Daily");
+              setTimeout(() => {
+                setSelectedView("Daily");
+                setIsLoadingView(null);
+              }, 1000);
             }}
+            isLoading={isLoadingView === "Daily"}
           />
           <ViewSelectorButton
             label="Weekly"
             selected={selectedButton === "Weekly"}
             onPress={() => {
               setSelectedButton("Weekly");
-              setSelectedView("Weekly");
+              setIsLoadingView("Weekly");
+              setTimeout(() => {
+                setSelectedView("Weekly");
+                setIsLoadingView(null);
+              }, 1000);
             }}
+            isLoading={isLoadingView === "Weekly"}
           />
           <ViewSelectorButton
             label="Overall"
             selected={selectedButton === "Overall"}
             onPress={() => {
               setSelectedButton("Overall");
-              setSelectedView("Overall");
+              setIsLoadingView("Overall");
+              setTimeout(() => {
+                setSelectedView("Overall");
+                setIsLoadingView(null);
+              },1000);
             }}
+            isLoading={isLoadingView === "Overall"}
           />
         </View>
       </Animated.View>
@@ -425,6 +444,9 @@ const HabitDashboard = () => {
   const [selectedView, setSelectedView] = useState<
     "Daily" | "Weekly" | "Overall"
   >("Daily");
+  const [isLoadingView, setIsLoadingView] = useState<
+    "Daily" | "Weekly" | "Overall" | null
+  >(null);
 
   const handleCreateHabit = (
     newHabit: Omit<Habit, "_id" | "entries" | "streak" | "progress">
@@ -471,70 +493,80 @@ const HabitDashboard = () => {
 
   return (
     <Provider>
-      <View style={{ flex: 1 }}>
-        <HeaderWithButtons
-          habits={habits}
-          showCreatePage={showCreatePage}
-          setShowCreatePage={setShowCreatePage}
-          selectedView={selectedView}
-          setSelectedView={setSelectedView}
-          setSelectedHabit={setSelectedHabit}
-        />
-
-        <Portal>
-          <Modal
-            visible={showCreatePage}
-            onDismiss={() => setShowCreatePage(false)}
-            contentContainerStyle={{
-              flex: 1,
-              width: "100%",
-              height: "100%",
-              padding: 0,
-            }}
-          >
-            <HabitCreationScreen
-              onCreate={handleCreateHabit}
-              onClose={() => setShowCreatePage(false)}
+      <View style={{ flex: 1, backgroundColor: 'black' }}>
+        {showCreatePage ? (
+          <HabitCreationScreen
+            onCreate={handleCreateHabit}
+            onClose={() => setShowCreatePage(false)}
+          />
+        ) : selectedHabit ? (
+          <HabitDetail 
+            habit={selectedHabit} 
+            onClose={() => setSelectedHabit(null)}
+          />
+        ) : (
+          <>
+            <HeaderWithButtons
+              habits={habits}
+              showCreatePage={showCreatePage}
+              setShowCreatePage={setShowCreatePage}
+              selectedView={selectedView}
+              setSelectedView={setSelectedView}
+              setSelectedHabit={setSelectedHabit}
+              isLoadingView={isLoadingView}
+              setIsLoadingView={setIsLoadingView}
             />
-          </Modal>
-        </Portal>
 
-        {selectedHabit && (
-          <Modal
-            visible={!!selectedHabit}
-            onDismiss={() => setSelectedHabit(null)}
-            contentContainerStyle={styles.modalContainer}
-          >
-            <HabitDetailModal
-              habit={selectedHabit}
-              onClose={() => setSelectedHabit(null)}
-              onLogEntry={handleLogEntry}
-            />
-          </Modal>
-        )}
-
-        <Animated.FlatList
-          data={habits}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) =>
-            selectedView === "Overall" ? (
-              <ContributionGrid habit={item} />
+            {isLoadingView ? (
+              <View style={{ flex: 1, justifyContent: 'center',backgroundColor:'black', alignItems: 'center' , marginBottom:120 }}>
+                <ActivityIndicator size="large" color="#fff" />
+              </View>
             ) : (
-              <HabitCard habit={item} onPress={() => setSelectedHabit(item)} />
-            )
-          }
-          scrollEventThrottle={16}
-          contentContainerStyle={{
-            paddingTop: HEADER_EXPANDED_HEIGHT + BUTTON_ROW_HEIGHT + 10,
-            paddingHorizontal: 16,
-            paddingBottom: 50,
-          }}
-          initialNumToRender={6}
-          maxToRenderPerBatch={6}
-          windowSize={11}
-          removeClippedSubviews={true}
-          updateCellsBatchingPeriod={100}
-        />
+              <Animated.FlatList
+                data={habits}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) =>
+                  selectedView === "Overall" ? (
+                    isLoadingView === "Overall" ? (
+                      <View style={{ 
+                        width: CARD_WIDTH - 40, 
+                        height: 200, 
+                        justifyContent: 'center', 
+                        alignItems: 'center',
+                        backgroundColor: 'black',
+                        borderRadius: 25,
+                        marginVertical: 0,
+                        alignSelf: 'center'
+                      }}>
+                        <ActivityIndicator size="large" color="#fff" />
+                      </View>
+                    ) : (
+                      <ContributionGrid habit={item} />
+                    )
+                  ) : (
+                    <HabitCard 
+                      habit={item} 
+                      onPress={() => setSelectedHabit(item)}
+                      selectedView={selectedView}
+                      handleLogEntry={handleLogEntry}
+                    />
+                  )
+                }
+                scrollEventThrottle={16}
+                contentContainerStyle={{
+                  paddingTop: HEADER_EXPANDED_HEIGHT + BUTTON_ROW_HEIGHT + 10,
+                  paddingHorizontal: 16,
+                  paddingBottom: 50,
+                }}
+                initialNumToRender={6}
+                maxToRenderPerBatch={6}
+                windowSize={11}
+                removeClippedSubviews={true}
+                updateCellsBatchingPeriod={100}
+              />
+            )}
+          </>
+        )}
       </View>
     </Provider>
   );
@@ -543,164 +575,108 @@ const HabitDashboard = () => {
 const { width: CARD_WIDTH } = Dimensions.get("window");
 
 const HabitCard = React.memo(
-  ({ habit, onPress }: { habit: Habit; onPress: () => void }) => {
-    // Create lighter shades of the habit color
-    const lighterColor1 = lightenColor(habit.color, 10); // First lighter shade
-    const lighterColor2 = lightenColor(habit.color, 15); // Second lighter shade
+  ({ habit, onPress, selectedView, handleLogEntry }: { 
+    habit: Habit; 
+    onPress: () => void; 
+    selectedView: "Daily" | "Weekly" | "Overall";
+    handleLogEntry: (id: string, value: boolean | number | string, notes: string) => void 
+  }) => {
+    const lighterColor1 = lightenColor(habit.color, 10);
+    const lighterColor2 = lightenColor(habit.color, 15);
+    const translateX = useSharedValue(0);
+    const opacity = useSharedValue(1);
+
+    const panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderMove: (_, gestureState) => {
+        translateX.value = gestureState.dx;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (Math.abs(gestureState.dx) > 100) {
+          opacity.value = withTiming(0, { duration: 200 });
+          translateX.value = withTiming(gestureState.dx * 2, { duration: 200 });
+          
+          // Handle completion action after animation
+          setTimeout(() => {
+            if (gestureState.dx > 0) {
+              // Swipe right - mark as done
+              handleLogEntry(habit._id, true, 'Completed via swipe');
+            } else {
+              // Swipe left - skip
+              handleLogEntry(habit._id, false, 'Skipped via swipe');
+            }
+            // Reset animation values
+            translateX.value = 0;
+            opacity.value = 1;
+          }, 200);
+        } else {
+          // Return to original position
+          translateX.value = withSpring(0);
+        }
+      }
+    });
+
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ translateX: translateX.value }],
+      opacity: opacity.value
+    }));
 
     return (
-      <TouchableOpacity onPress={onPress} style={styles.card}>
-        <LinearGradient
-          colors={[habit.color, lighterColor1, lighterColor2]} // Use three shades in the gradient
-          start={{ x: 0, y: 0 }} // Start from the left
-          end={{ x: 1, y: 0 }} // End at the right
-          style={[styles.card, { borderRadius: 25 }]} // Ensure the gradient covers the card
+      <Animated.View 
+        {...panResponder.panHandlers}
+        style={[animatedStyle, { width: '100%', alignItems: 'center' }]}
+      >
+        <TouchableOpacity 
+          onPress={onPress} 
+          style={styles.card}
+          activeOpacity={0.9}
         >
-          <View style={styles.cardHeader}>
-            <IconCircle name={habit.icon} size={24} iconColor="#fff" />
-            <Text style={styles.cardTitle}>{habit.name}</Text>
-          </View>
-
-          {habit.type === "numeric" && (
-            <ProgressBar
-              progress={habit.progress.current / (habit.target || 1)}
-              color="#fff"
-              style={styles.progressBar}
-            />
-          )}
-
-          {habit.type === "boolean" && (
-            <Text style={styles.streakText}>{habit.streak} day streak!</Text>
-          )}
-
-          <View style={styles.frequencyContainer}>
-            {DAYS.map((day) => (
-              <Text
-                key={`${habit._id}-${day}`}
-                style={[
-                  styles.frequencyDay,
-                  habit.frequency.includes(day) && styles.frequencyDayActive,
-                ]}
-              >
-                {day[0].toUpperCase()}
+          <LinearGradient
+            colors={[habit.color, lighterColor1, lighterColor2]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.card, { borderRadius: 25 }]}
+          >
+            <View style={styles.cardHeader}>
+              <IconCircle name={habit.icon} size={24} iconColor="#fff" />
+              <Text style={styles.cardTitle}>{habit.name}</Text>
+              <Text style={[styles.streakText, { marginLeft: 'auto' }]}>
+                {habit.streak}🔥
               </Text>
-            ))}
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
+            </View>
+
+            {selectedView !== "Daily" && (
+              <>
+                {habit.type === "numeric" && (
+                  <ProgressBar
+                    progress={habit.progress.current / (habit.target || 1)}
+                    color="#fff"
+                    style={styles.progressBar}
+                  />
+                )}
+
+                <View style={styles.frequencyContainer}>
+                  {DAYS.map((day) => (
+                    <Text
+                      key={`${habit._id}-${day}`}
+                      style={[
+                        styles.frequencyDay,
+                        habit.frequency.includes(day) && styles.frequencyDayActive,
+                      ]}
+                    >
+                      {day[0].toUpperCase()}
+                    </Text>
+                  ))}
+                </View>
+              </>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
     );
   }
 );
-
-const HabitDetailModal = ({
-  habit,
-  onClose,
-  onLogEntry,
-}: {
-  habit: Habit;
-  onClose: () => void;
-  onLogEntry: (
-    habitId: string,
-    value: number | boolean | string,
-    notes: string
-  ) => void;
-}) => {
-  const [logValue, setLogValue] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const handleSubmit = () => {
-    if (!logValue.trim()) return;
-    const parsedValue = parseValueBasedOnType(logValue, habit.type);
-    onLogEntry(habit._id, parsedValue, notes);
-    onClose();
-  };
-
-  return (
-    <Surface style={styles.modalContent}>
-      <Text style={styles.modalTitle}>{habit.name} Progress</Text>
-
-      {/* <LineChart
-        style={styles.chart}
-        data={{
-          dataSets: [
-            {
-              label: habit.name,
-              values: habit.entries.map((e) => ({
-                x: new Date(e.date).getTime(),
-                y: typeof e.value === "number" ? e.value : 0,
-              })),
-              config: {
-                color: habit.color,
-                drawValues: false,
-                lineWidth: 2,
-              },
-            },
-          ],
-        }}
-        xAxis={{
-          valueFormatter: habit.entries.map((e) =>
-            new Date(e.date).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })
-          ),
-          position: "BOTTOM",
-          granularity: 1,
-        }}
-      /> */}
-
-      {habit.type === "numeric" && (
-        <TextInput
-          placeholder={`Amount (${habit.unit})`}
-          keyboardType="numeric"
-          value={logValue}
-          onChangeText={setLogValue}
-          style={styles.input}
-        />
-      )}
-
-      {habit.type === "boolean" && (
-        <View style={styles.booleanContainer}>
-          <Chip
-            selected={logValue === "true"}
-            onPress={() => setLogValue("true")}
-            style={styles.chip}
-          >
-            Completed
-          </Chip>
-          <Chip
-            selected={logValue === "false"}
-            onPress={() => setLogValue("false")}
-            style={styles.chip}
-          >
-            Missed
-          </Chip>
-        </View>
-      )}
-
-      <TextInput
-        placeholder="Notes"
-        value={notes}
-        onChangeText={setNotes}
-        multiline
-        style={styles.input}
-      />
-
-      <View style={styles.buttonRow}>
-        <TouchableOpacity onPress={onClose} style={styles.button}>
-          Cancel
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleSubmit}
-          style={[styles.button, { backgroundColor: habit.color }]}
-          disabled={!logValue}
-        >
-          <Text style={{ color: "white" }}>Save Entry</Text>
-        </TouchableOpacity>
-      </View>
-    </Surface>
-  );
-};
 
 // Helper Functions
 const calculateProgress = (habit: Habit, entries: Entry[]) => {
@@ -762,6 +738,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginVertical: 0,
     alignSelf: "center",
+    elevation:1
   },
   cardHeader: {
     flexDirection: "row",
@@ -843,7 +820,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     marginBottom: 20,
-    color: "#2d3436",
+    color: "rgb(0, 0, 0)",
   },
   chart: {
     height: 200,
@@ -950,6 +927,25 @@ const styles = StyleSheet.create({
   radioGroup: {
     marginVertical: 8,
   },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    backgroundColor: 'rgba(0,0,0,0.9)',
+  },
+  backButton: {
+    marginRight: 16,
+  },
+  detailTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  detailContent: {
+    padding: 16,
+  },
 });
 
 // Memoize habit components to prevent unnecessary re-renders
@@ -958,10 +954,12 @@ const ViewSelectorButton = React.memo(
     label,
     selected,
     onPress,
+    isLoading,
   }: {
     label: string;
     selected: boolean;
     onPress: () => void;
+    isLoading?: boolean;
   }) => {
     // Replace Animated.View with simpler implementation
     const scale = useSharedValue(1);
@@ -974,10 +972,15 @@ const ViewSelectorButton = React.memo(
         style={[styles1.button, selected && styles1.selectedButton]}
         onPress={onPress}
         activeOpacity={0.6}
+        disabled={isLoading}
       >
-        <Animated.Text style={[styles1.buttonText, animatedStyle]}>
-          {label}
-        </Animated.Text>
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Animated.Text style={[styles1.buttonText, animatedStyle]}>
+            {label}
+          </Animated.Text>
+        )}
       </TouchableOpacity>
     );
   }

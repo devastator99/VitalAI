@@ -74,19 +74,20 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   media: defineTable({
-    messageId: v.id("messages"),
-    url: v.string(),
-    type: v.union(
-      v.literal("image"),
-      v.literal("video"),
-      v.literal("audio"),
-      v.literal("file")
-    ),
-    size: v.optional(v.number()),
+    storageId : v.id("_storage"),
     mimeType: v.string(),
-    duration: v.optional(v.number()), //absolutely required for video and audio
-    fileName: v.string(),
+    authorId: v.id("users"),
+    // type: v.union(
+    //   v.literal("image"),
+    //   v.literal("video"),
+    //   v.literal("audio"),
+    //   v.literal("file")
+    // ),
+    // type : v.string(),
     createdAt: v.number(),
+    messageId: v.optional(v.id("messages")),
+    size: v.optional(v.number()),
+    duration: v.optional(v.number()), //absolutely required for video and audio
     metadata: v.optional(
       v.object({
         width: v.optional(v.number()),
@@ -96,8 +97,7 @@ export default defineSchema({
       })
     ),
   })
-    .index("by_messageId", ["messageId"])
-    .index("by_type", ["type"]),
+    .index("by_messageId", ["messageId"]),
 
   orders: defineTable({
     orderId: v.string(), // Razorpay order ID

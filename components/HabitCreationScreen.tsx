@@ -93,7 +93,7 @@ export const HabitCreationScreen = ({
 
   return (
     <Provider>
-      <ScreenTransitionView style={{ flex: 1 }}>
+      <ScreenTransitionView style={{ flex: 1 ,marginTop:10}}>
         <AnimHeader
           title="Create New Habit"
           buttons={[]}
@@ -359,7 +359,7 @@ const styles2 = StyleSheet.create({
   createButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 20,
     borderColor: "white",
     borderWidth: 1,
   },

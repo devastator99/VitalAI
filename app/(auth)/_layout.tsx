@@ -196,6 +196,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 10,
+    elevation:1
   },
   tabContent: {
     alignItems: "center",
