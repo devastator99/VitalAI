@@ -23,7 +23,7 @@ import {
   Button,
   ImageBackground,
 } from "react-native";
-import Colors from "~/constants/Colors";
+import Colors from "~/utils/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { DrawerActions, NavigationContainer } from "@react-navigation/native";
@@ -52,6 +52,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import SvgOne from "~/components/BirdVector";
 import BirdVector from "~/components/BirdVector";
+import { useAppStore } from "~/store";
+import AnimatedButton from "~/components/AnimatedButton";
+import MagButton from "~/components/MagButton";
 
 // Add type for navigation prop
 type NavigationProp = DrawerNavigationProp<Record<string, object>>;
@@ -118,7 +121,6 @@ const styles3 = StyleSheet.create({
     justifyContent: "center",
     marginLeft: 90,
     paddingBottom:5,
-    borderRadius:20
   }
 });
 
@@ -239,144 +241,155 @@ export const CustomDrawerContent = ({
   };
 
   return (
-    <View style={{ flex: 1, marginTop: top }}>
-      <View style={{ backgroundColor: "#fff", paddingBottom: 10 }}>
+    <LinearGradient 
+      colors={[Colors.PitchBlack, "#001a33", Colors.PitchBlack]}
+      style={{ flex: 1 }}
+    >
+      {/* Header Section */}
+      <BlurView intensity={70} tint="dark" style={styles.header}>
         <View style={styles.searchSection}>
           <Ionicons
-            style={styles.searchIcon}
             name="search"
             size={20}
             color={Colors.greyLight}
+            style={styles.searchIcon}
           />
           <TextInput
-            style={styles.input}
-            placeholder="Search"
-            underlineColorAndroid="transparent"
+            placeholder="Search chats"
+            placeholderTextColor={Colors.greyLight + 'aa'}
+            style={styles.searchInput}
           />
         </View>
-      </View>
+      </BlurView>
 
-      <Button
-        title="Sign Out"
-        onPress={() => signOut()}
-        color={Colors.greyLight}
-      />
-
+      {/* Chat List */}
       <DrawerContentScrollView
         {...props}
-        contentContainerStyle={{ backgroundColor: "#fff", paddingTop: 0 }}
+        contentContainerStyle={styles.listContent}
       >
-        <DrawerItemList {...props} />
-        {history.map((chat) => {
-          const chatType = chat.type === "group" ? "ai-chat" : "private-chat";
-          return (
-            <ContextMenu.Root key={chat.id}>
-              <ContextMenu.Trigger>
-                <DrawerItem
-                  label={chat.title || "untitled chat"}
-                  onPress={() => handleChatPress(chat)}
-                  inactiveTintColor="#000"
+        {history.map((chat) => (
+          <ContextMenu.Root key={chat.id}>
+            <ContextMenu.Trigger>
+              <LinearGradient
+                colors={['#ffffff08', '#ffffff02']}
+                style={styles.chatItem}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Ionicons 
+                  name={chat.type === 'group' ? 'people' : 'chatbubble'} 
+                  size={18} 
+                  color={Colors.greyLight} 
                 />
-              </ContextMenu.Trigger>
-              <ContextMenu.Content>
-                <ContextMenu.Preview>
-                  {() => (
-                    <View
-                      style={{
-                        padding: 16,
-                        height: 200,
-                        backgroundColor: "#fff",
-                      }}
-                    >
-                      <Text>{chat.title || "Untitled Chat"}</Text>
-                    </View>
-                  )}
-                </ContextMenu.Preview>
+                <Text style={styles.chatTitle}>
+                  {chat.title || "Untitled Chat"}
+                </Text>
+              </LinearGradient>
+            </ContextMenu.Trigger>
+            <ContextMenu.Content>
+              <ContextMenu.Preview>
+                {() => (
+                  <View
+                    style={{
+                      padding: 16,
+                      height: 200,
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <Text>{chat.title || "Untitled Chat"}</Text>
+                  </View>
+                )}
+              </ContextMenu.Preview>
 
-                <ContextMenu.Item
-                  key={"rename"}
-                  onSelect={() => onRenameChat(chat.id)}
-                >
-                  <ContextMenu.ItemTitle>Rename</ContextMenu.ItemTitle>
-                  <ContextMenu.ItemIcon
-                    ios={{
-                      name: "pencil",
-                      pointSize: 18,
-                    }}
-                  />
-                </ContextMenu.Item>
-                <ContextMenu.Item
-                  key={"delete"}
-                  onSelect={() => onDeleteChat(chat.id)}
-                  destructive
-                >
-                  <ContextMenu.ItemTitle>Delete</ContextMenu.ItemTitle>
-                  <ContextMenu.ItemIcon
-                    ios={{
-                      name: "trash",
-                      pointSize: 18,
-                    }}
-                  />
-                </ContextMenu.Item>
-              </ContextMenu.Content>
-            </ContextMenu.Root>
-          );
-        })}
+              <ContextMenu.Item
+                key={"rename"}
+                onSelect={() => onRenameChat(chat.id)}
+              >
+                <ContextMenu.ItemTitle>Rename</ContextMenu.ItemTitle>
+                <ContextMenu.ItemIcon
+                  ios={{
+                    name: "pencil",
+                    pointSize: 18,
+                  }}
+                />
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                key={"delete"}
+                onSelect={() => onDeleteChat(chat.id)}
+                destructive
+              >
+                <ContextMenu.ItemTitle>Delete</ContextMenu.ItemTitle>
+                <ContextMenu.ItemIcon
+                  ios={{
+                    name: "trash",
+                    pointSize: 18,
+                  }}
+                />
+              </ContextMenu.Item>
+            </ContextMenu.Content>
+          </ContextMenu.Root>
+        ))}
       </DrawerContentScrollView>
 
-      <View
-        style={{
-          padding: 16,
-          paddingBottom: 10 + bottom,
-          backgroundColor: Colors.light,
-        }}
+      {/* Footer Section */}
+      <LinearGradient
+        colors={[Colors.PitchBlack, Colors.PitchBlack]}
+        style={styles.footer}
       >
+        <MagButton
+          onPress={() => signOut()}
+          buttonColor={Colors.lightRed}
+          buttonStyle={styles.signOutButton}
+        >
+          <Ionicons name="log-out-outline" size={22} color={Colors.red} />
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </MagButton>
+        
         <Link href="/(auth)/(modal)/settings" asChild>
-          <TouchableOpacity style={styles.footer}>
-            <Image
+          <TouchableOpacity style={styles.profileButton}>
+            {/* <Image
               source={require("~/assets/images/sample.png")}
               style={styles.avatar}
             />
-            <Text style={styles.userName}>sample user</Text>
+            <View>
+              <Text style={styles.userName}>Sample User</Text>
+              <Text style={styles.userEmail}>user@example.com</Text>
+            </View>
             <Ionicons
               name="ellipsis-horizontal"
-              size={24}
+              size={20}
               color={Colors.greyLight}
-            />
+            /> */}
           </TouchableOpacity>
         </Link>
-      </View>
-    </View>
+      </LinearGradient>
+    </LinearGradient>
   );
 };
 
 const Layout = () => {
+  const {chatId,setChatId} = useAppStore();
   const currentUser = useQuery(api.users.getCurrentUser) as User | undefined;
-  // Initialize with current user's chat ID if available
-  const [chatId, setChatId] = useState<string | null>(
-    currentUser?.defaultChatId ?? null
-  );
   const dimensions = useWindowDimensions();
   const router = useRouter();
   const Drawer = createDrawerNavigator();
   const INitAiChat = useMutation(api.chats.initAiChat);
   const updateuserchatid = useMutation(api.users.updateChatID);
-  const isInitializing = useRef(false);
-  // const [userId, setUserId] = useState<string | null>(null);
-  // const userIdInitialized = useRef(false);
-  // const { user } = useUser();
+  const { isInitializing, setIsInitializing } = useAppStore((state) => ({
+    isInitializing: state.isInitializing,
+    setIsInitializing: state.setIsInitializing,
+  }));
 
-  // useEffect(() => {
-  //   if (user?.id && !userIdInitialized.current) {
-  //     setUserId(user.id);
-  //     userIdInitialized.current = true;
-  //   }
-  // }, [user]);
+  useEffect(() => {
+    if (currentUser) {
+      setChatId(currentUser?.defaultChatId ?? null);
+    }
+  }, [currentUser, setChatId]);
 
   useEffect(() => {
     const initializeChat = async () => {
       if (currentUser === undefined) return; // Still loading
-      if (isInitializing.current) return;
+      if (isInitializing) return;
 
       // Immediate update if we have a valid chat ID
       if (currentUser?.defaultChatId && currentUser.defaultChatId !== chatId) {
@@ -386,7 +399,7 @@ const Layout = () => {
 
       // Only proceed if we truly need to create a new chat
       if (!currentUser?.defaultChatId) {
-        isInitializing.current = true;
+        setIsInitializing(true);
         try {
           const id = await INitAiChat();
           if (id) {
@@ -397,7 +410,7 @@ const Layout = () => {
         } catch (error) {
           console.error("Chat initialization failed:", error);
         } finally {
-          isInitializing.current = false;
+          setIsInitializing(false);
         }
       }
     };
@@ -413,8 +426,8 @@ const Layout = () => {
     );
   }
 
-  console.log("this is CHATID global from DRAWER LAYOUT-->>>>");
-  console.log(chatId);
+  // console.log("this is CHATID global from DRAWER LAYOUT-->>>>");
+  // console.log(chatId);
 
   return (
     <Drawer.Navigator
@@ -449,64 +462,92 @@ const Layout = () => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    paddingTop: 50,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#ffffff33',
+  },
   searchSection: {
-    marginHorizontal: 16,
-    borderRadius: 10,
-    height: 34,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: Colors.input,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: Colors.mainBlue,
   },
-  searchIcon: {
-    padding: 6,
-  },
-  input: {
+  searchInput: {
     flex: 1,
-    paddingTop: 8,
-    paddingRight: 8,
-    paddingBottom: 8,
-    paddingLeft: 0,
-    alignItems: "center",
-    color: "#424242",
+    color: Colors.greyLight,
+    paddingVertical: 10,
+    fontSize: 15,
   },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
+  listContent: {
+    paddingVertical: 8,
+  },
+  chatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginVertical: 4,
+    marginHorizontal: 8,
+    borderRadius: 12,
     gap: 12,
   },
-  roundImage: {
-    width: 30,
-    height: 30,
+  chatTitle: {
+    color: Colors.greyLight,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  footer: {
+    padding: 4,
+    gap: 12,
+    height: 100,
+    alignItems: 'center',
+  },
+  signOutButton: {
+    borderWidth: 2,
+    borderColor: Colors.lightRed,
+    borderRadius: 25,
+    flex:0,
+    alignItems: 'center',
+    gap: 0,
+    padding: 5,
+    backgroundColor: 'rgba(128, 55, 55, 0.7)',
+    width: 100,
+    height: 60,
+  },
+  signOutText: {
+    color: Colors.red,
+    fontSize: 14,
+  },
+  profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: 20,
   },
   userName: {
-    fontSize: 16,
-    fontWeight: "600",
-    flex: 1,
+    color: Colors.greyLight,
+    fontWeight: '500',
   },
-  item: {
-    borderRadius: 15,
-    overflow: "hidden",
-  },
-  btnImage: {
-    margin: 6,
-    width: 16,
-    height: 16,
-  },
-  dallEImage: {
-    width: 28,
-    height: 28,
-    resizeMode: "cover",
+  userEmail: {
+    color: Colors.greyLight + 'aa',
+    fontSize: 12,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  searchIcon: {
+    marginRight: 8
   },
 });
 

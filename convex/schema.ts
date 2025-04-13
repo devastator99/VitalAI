@@ -59,13 +59,14 @@ export default defineSchema({
       v.literal("audio"),
       v.literal("file")
     ),
-    mediaUrl: v.optional(v.string()),
+    attachId: v.optional(v.id("_storage")),
     replyTo: v.optional(v.id("users")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_chatId", ["chatId"])
-    .index("by_senderId", ["senderId"]),
+    .index("by_senderId", ["senderId"])
+    .index("by_attachId",["attachId"]),
 
   contacts: defineTable({
     userId: v.id("users"), // Reference to the user , convex id

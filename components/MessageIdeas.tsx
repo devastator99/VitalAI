@@ -1,4 +1,4 @@
-import Colors from "~/constants/Colors";
+import Colors from "~/utils/Colors";
 import {
   Text,
   ScrollView,
@@ -36,10 +36,10 @@ const MessageIdeas = ({ onSelectCard }: Props) => {
               style={styles.card}
               onPress={() => onSelectCard(`${item.title} ${item.text}`)}
             >
-              <Text style={{ fontSize: 16, fontWeight: "500" }}>
+              <Text style={{ fontSize: 16, fontWeight: "500" ,color:Colors.white}}>
                 {item.title}
               </Text>
-              <Text style={{ color: Colors.grey, fontSize: 14 }}>
+              <Text style={{ color: Colors.primary, fontSize: 14 }}>
                 {item.text}
               </Text>
             </TouchableOpacity>
@@ -54,9 +54,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "transparent",
     padding: 15,
-    borderRadius: 10,
+    borderWidth:1,
+    borderColor:Colors.mainBlue,
+    borderRadius: 25,
   },
 });
 export default MessageIdeas;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,15 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AnimHeader from "~/components/AnimHeader";
+import ScreenTransitionView from "~/components/ScreenTransitionView";
 
 export default function Profile() {
   const user = useQuery(api.users.getCurrentUser);
@@ -21,8 +24,22 @@ export default function Profile() {
   const imageUrl = useQuery(api.files.getImageUrl, 
     profilePicture ? { storageId: profilePicture } : "skip"
   );
-  const insets = useSafeAreaInsets();
 
+  const MemoizedAvatarImage = React.memo(
+    ({ uri, style }: { uri: string; style: any }) => (
+      <Image source={{ uri }} style={style} />
+    )
+  );
+  const insets = useSafeAreaInsets();
+  console.log(profilePicture);
+  
+  useEffect(() => {
+    if (imageUrl) {
+    console.log(imageUrl);
+    }
+  }, [imageUrl]);
+
+  
   if (user === undefined) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -48,78 +65,120 @@ export default function Profile() {
   }
 
   return (
-      <LinearGradient colors={["#0f0f0f", "#1a1a1a"]} style={styles.gradient}>
-        <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 20 }]}>
-          {/* Profile Photo Section */}
-          <View style={styles.header}>
+    <ScreenTransitionView style={{ flex: 1 }}>
+      <AnimHeader
+        title="Profile"
+        buttons={[]}
+        onButtonSelect={() => {}}
+        rightIcons={[
+          { 
+            icon: "settings-outline", 
+            onPress: () => console.log("Open settings") 
+          }
+        ]}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Profile Header */}
+          <View style={styles.profileHeader}>
             <TouchableOpacity style={styles.avatarContainer}>
-              {imageUrl ? (
-                <Image
-                  source={{ uri: imageUrl }}
-                  style={styles.avatar}
-                />
+              {profilePicture ? (
+                imageUrl ? (
+                  <MemoizedAvatarImage
+                    uri={imageUrl as string}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={styles.loadingIndicator}>
+                    <ActivityIndicator size="small" color="#00BFFF" />
+                  </View>
+                )
               ) : (
-                <Ionicons name="person-outline" size={50} color="#81b0ff" />
+                <Ionicons name="person-outline" size={50} color="#00BFFF" />
               )}
               <View style={styles.cameraIcon}>
                 <Ionicons name="camera-outline" size={20} color="white" />
               </View>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{user.name || "Profile"}</Text>
+            <Text style={styles.headerTitle}>{user.name || "User"}</Text>
             <Text style={styles.subtitle}>Fitness Enthusiast</Text>
           </View>
 
           {/* Details Section */}
-          <View style={styles.section}>
+          <LinearGradient
+            colors={["#00BFFF33", "#1a1a1a"]}
+            style={styles.section}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
             <Text style={styles.sectionTitle}>Personal Details</Text>
+            
             {user.profileDetails?.height && (
-              <View style={styles.row}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="body-outline" size={20} color="#fff" />
-                </View>
-                <Text style={styles.rowText}>
-                  {user.profileDetails.height} cm
-                </Text>
-              </View>
+              <DetailRow
+                icon="body-outline"
+                label="Height"
+                value={`${user.profileDetails.height} cm`}
+              />
             )}
+            
             {user.profileDetails?.weight && (
-              <View style={styles.row}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="barbell-outline" size={20} color="#fff" />
-                </View>
-                <Text style={styles.rowText}>
-                  Weight: {user.profileDetails.weight} kg
-                </Text>
-              </View>
+              <DetailRow
+                icon="barbell-outline"
+                label="Weight"
+                value={`${user.profileDetails.weight} kg`}
+              />
             )}
+            
             {user.profileDetails?.email && (
-              <View style={styles.row}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="mail-outline" size={20} color="#fff" />
-                </View>
-                <Text style={styles.rowText}>{user.profileDetails.email}</Text>
-              </View>
+              <DetailRow
+                icon="mail-outline"
+                label="Email"
+                value={user.profileDetails.email}
+              />
             )}
+            
             {user.profileDetails?.phone && (
-              <View style={styles.row}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="call-outline" size={20} color="#fff" />
-                </View>
-                <Text style={styles.rowText}>{user.profileDetails.phone}</Text>
-              </View>
+              <DetailRow
+                icon="call-outline"
+                label="Phone"
+                value={user.profileDetails.phone}
+              />
             )}
-          </View>
+          </LinearGradient>
 
           {/* Edit Button */}
-          <TouchableOpacity style={styles.editButton}>
-            <LinearGradient colors={["#81b0ff", "#4d79ff"]} style={styles.buttonGradient}>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => console.log("Edit profile")}
+          >
+            <LinearGradient
+              colors={["#00BFFF", "#0066FF"]}
+              style={styles.buttonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
-      </LinearGradient>
+      </AnimHeader>
+    </ScreenTransitionView>
   );
 }
+
+const DetailRow = ({ icon, label, value }: { icon: string, label: string, value: string }) => (
+  <View style={styles.row}>
+    <View style={styles.iconContainer}>
+      <Ionicons name={icon as any} size={20} color="#00BFFF" />
+    </View>
+    <View>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue}>{value}</Text>
+    </View>
+  </View>
+);
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -130,10 +189,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    padding: 25,
+    padding: 24,
     paddingBottom: 40,
+    backgroundColor: "rgba(0,0,0,0.95)",
   },
-  header: {
+  profileHeader: {
     alignItems: "center",
     marginBottom: 30,
   },
@@ -141,14 +201,14 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#2e2e2e",
+    backgroundColor: "#1a1a1a",
     borderWidth: 2,
-    borderColor: "#81b0ff",
+    borderColor: "#00BFFF",
     justifyContent: 'center',
     alignItems: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: "#81b0ff",
+        shadowColor: "#00BFFF",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 6,
@@ -171,12 +231,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#4682b4",
+    backgroundColor: "#00BFFF",
     borderRadius: 15,
     padding: 5,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: "#f0f0f0",
     marginTop: 15,
@@ -189,9 +249,10 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 30,
-    backgroundColor: "#1a1a1a",
-    borderRadius: 15,
+    borderRadius: 20,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#00BFFF33',
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -205,13 +266,11 @@ const styles = StyleSheet.create({
     }),
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: "#81b0ff",
-    marginBottom: 15,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    fontSize: 20,
+    fontWeight: '800',
+    color: "#00BFFF",
+    marginBottom: 20,
+    letterSpacing: 0.5,
   },
   row: {
     flexDirection: "row",
@@ -221,20 +280,31 @@ const styles = StyleSheet.create({
     borderBottomColor: "#2e2e2e",
   },
   iconContainer: {
-    backgroundColor: '#81b0ff33',
-    borderRadius: 8,
-    padding: 8,
-    marginRight: 12,
+    backgroundColor: '#00BFFF33',
+    borderRadius: 10,
+    padding: 10,
+    marginRight: 15,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  rowText: {
+  rowLabel: {
+    fontSize: 14,
+    color: "#888",
+    marginBottom: 2,
+  },
+  rowValue: {
     fontSize: 16,
     color: "#fff",
-    marginLeft: 10,
+    fontWeight: '600',
   },
   editButton: {
-    borderRadius: 12,
+    borderRadius: 15,
     overflow: 'hidden',
     marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#00BFFF33',
   },
   buttonGradient: {
     paddingVertical: 16,
@@ -242,7 +312,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -263,5 +333,14 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     color: "#ff4d4d",
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

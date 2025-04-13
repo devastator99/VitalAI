@@ -1,357 +1,163 @@
-import HeaderDropDown from "~/components/HeaderDropDown";
-import MessageInput from "~/components/MessageInput";
-import { defaultStyles } from "~/constants/Styles";
-import { Stack, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
+  Alert,
   Image,
-  View,
-  Text,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
-  Button,
-  StatusBar,
-  SafeAreaView,
-  RefreshControl,
+  StyleSheet,
   TouchableOpacity,
+  View,
 } from "react-native";
-// import OpenAI from "openai";
 import { FlashList } from "@shopify/flash-list";
-import ChatMessage from "~/components/ChatMessage";
-import { Message, Role } from "~/utils/Interfaces";
-import MessageIdeas from "~/components/MessageIdeas";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "~/convex/_generated/api";
-import Constants from "expo-constants";
-// import { streamCompletion } from "~/utils/openRouterApi";
-import { useChat } from "~/utils/ChatContext";
-import { useAuth } from "@clerk/clerk-expo";
-import Colors from "~/constants/Colors";
-import { fetchGeminiResponse } from "~/utils/openRouterApi";
-import { LinearGradient } from "expo-linear-gradient";
-// import { useConvexUser } from "~/utils/UserContext";
+import { useAppStore } from "~/store";
+import { defaultStyles } from "~/constants/Styles";
 import { Id } from "~/convex/_generated/dataModel";
+import { Stack, useLocalSearchParams } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { Role } from "~/utils/Interfaces";
+import React from "react";
+
+// Components
+import HeaderDropDown from "~/components/HeaderDropDown";
+import MessageInput from "~/components/MessageInput";
 import MessageBubble from "~/components/MessageBubble";
+import MessageIdeas from "~/components/MessageIdeas";
+import ScrollToBottomButton from "./ScrollToBottomButton";
+import FilePreview from '~/components/FilePreview';
 
-const ChatPage = () => {
-  const currentUser = useQuery(api.users.getCurrentUser);
-  const initaichat = useMutation(api.chats.initAiChat);
-  const AI_USER_ID: Id<"users"> =
-    "j576bezhm29ycwx1bh4mf7db3s7bpy6q" as Id<"users">;
-  const [gptVersion, setGptVersion] = useState("3.5");
-  const [height, setHeight] = useState(0);
-  const [messages, setMessages] = useState<
-    {
-      id: string;
-      content: string;
-      senderId: Id<"users">;
-      isAI: boolean;
-      createdAt: number;
-      role: Role;
-    }[]
-  >([]);
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const chatId = useMemo(() => {
-    // Route param takes precedence
-    if (id) return id;
-    // Fall back to user's default chat
-    return currentUser?.defaultChatId ?? null;
-  }, [id, currentUser?.defaultChatId]);
+// Utilities
+import { fetchGeminiResponse } from "~/utils/openRouterApi";
+import Colors from "~/constants/Colors";
+import { usePaginatedQuery } from "convex/react";
+import { api } from "~/convex/_generated/api";
+import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 
-  // console.log("THIS IS THE ID PARAM IN COMPONENT");
-  // console.log(id);
-  // console.log("chat id state is :", chatId);
-  // console.log(chatId);
-  // console.log(chatIdRef);
-  // console.log("---------------------------------");
+const AI_USER_ID = "j576bezhm29ycwx1bh4mf7db3s7bpy6q" as Id<"users">;
 
-  // function setChatId(id: string) {
-  //   chatIdRef.current = id;
-  //   _setChatId(id);
-  // }
-
-  const [loading, setLoading] = useState(false); // Add loading state
-
-  // useEffect(() => {
-  //   if (id && id !== chatId) {
-  //     console.log("Updating chatId from route param:", id);
-  //     setChatId(id);
-  //   }
-  // }, [id]);
-
-  // useEffect(() => {
-  //   const initializeChat = async () => {
-  //     if (!chatId && currentUser) {
-  //       try {
-  //         const newChatId = await initaichat();
-  //         if (currentUser.defaultChatId!=newChatId){
-  //         currentUser.defaultChatId = newChatId;};
-  //         setChatId(newChatId); // Store in state to prevent re-render loops
-  //         router.replace(`/(auth)/(drawer)/(ai-chat)/${newChatId}`); // Update route
-  //       } catch (error) {
-  //         console.error("Failed to initialize chat:", error);
-  //         Alert.alert("Error", "Could not create a new chat");
-  //       }
-  //     }
-  //   };
-
-  //   initializeChat();
-  // }, [chatId, currentUser]);
-
-  const addMessage = useMutation(api.messages.sendMessage);
-
-  // Move useQuery outside of useEffect
-  const messagesData = useQuery(
-    api.messages.getMessages,
-    chatId ? { chatId } : "skip"
-  );
-
-  // useEffect(() => {
-  //   initialiseChat();
-  // }, []);
-
-  // useEffect(() => {
-  //   initialiseChat();
-  // }, [id]);
-
-  // Update messages state when messagesData changes
-  useEffect(() => {
-    if (messagesData) {
-      setMessages(
-        messagesData.map((msg: any) => ({
-          id: msg._id,
-          content: msg.content,
-          senderId: msg.senderId,
-          isAI: Boolean(msg.isAi),
-          createdAt: msg.createdAt,
-          role: msg.isAi ? Role.Bot : Role.User,
-        }))
-      );
-    }
-  }, [messagesData]);
-
-  // useEffect(() => {
-  //   if (!chatId && currentUser?.defaultChatId) {
-  //     console.log("Redirecting to default chat");
-  //     router.replace(`/(auth)/(drawer)/(ai-chat)/${currentUser?.defaultChatId}`);
-  //   }
-  // }, [chatId, currentUser]);
-
-  // if (!key || key === "" || !organization || organization === "") {
-  //   return <Redirect href={"/(auth)/(modal)/settings"} />;
-  // }
-
-  // const openAI = useMemo(() => {
-  //   if (!key || key === "" || !organization || organization === "") {
-  //     console.error("OpenAI API key or organization is missing");
-  //     return null;
-  //   }
-  //   try {
-  //     return new OpenAI({ apiKey: key, organization });
-  //   } catch (error) {
-  //     console.error("Failed to initialize OpenAI client:", error);
-  //     return null;
-  //   }
-  // }, [key, organization]);
-
-  // const openAI = useMemo(() => {
-  //   if (!key || key === "" || !organization || organization === "") {
-  //     console.warn("OpenAI credentials missing");
-  //     return null;
-  //   }
-
-  //   try {
-  //     const client = new OpenAI({ apiKey: key, organization });
-
-  //     // Test the client with a simple request
-  //     // client.chat.stream({
-  //     //   messages: [
-  //     //     {
-  //     //       role: 'user',
-  //     //       content: 'How do I star a repo?',
-  //     //     },
-  //     //   ],
-  //     //   model: 'gpt-3.5-turbo',
-  //     // }).catch((error:any) => {
-  //     //   console.error("❌ OpenAI test request failed:", error.message);
-  //     //   Alert.alert(
-  //     //     "OpenAI Error",
-  //     //     "Failed to connect to OpenAI. Please check your API key and organization ID."
-  //     //   );
-  //     // });
-
-  //     console.log("client init openai-----");
-  //     return client;
-  //   } catch (error) {
-  //     console.error("❌ Failed to initialize OpenAI client:", error);
-  //     Alert.alert(
-  //       "Configuration Error",
-  //       "Failed to initialize OpenAI client. Please check your settings."
-  //     );
-  //     return null;
-  //   }
-  // }, [key, organization]);
-
-  // useEffect(() => {
-  //   if (!openAI) return;
-
-  //   const handleNewMessage = (payload: any) => {
-  //     console.log("received message chunk", payload);
-  //     setMessages((prevMessages) => {
-  //       // Handle empty or invalid payload
-  //       if (!payload?.choices?.[0]) return prevMessages;
-
-  //       const newMessage = payload.choices[0].delta?.content;
-  //       if (newMessage) {
-  //         const lastMessage = prevMessages[prevMessages.length - 1];
-  //         if (!lastMessage) return prevMessages;
-
-  //         return [
-  //           ...prevMessages.slice(0, -1),
-  //           { ...lastMessage, content: lastMessage.content + newMessage },
-  //         ];
-  //       }
-
-  //       // Handle stream completion
-  //       if (payload.choices[0].finishReason === "stop") {
-  //         const lastMessage = prevMessages[prevMessages.length - 1];
-  //         if (!lastMessage) return prevMessages;
-
-  //         // Save the complete AI response to database
-  //         addMessage({
-  //           chatId: chatIdRef.current!,
-  //           senderId: AI_USER_ID, // Use the constant instead of hardcoded value
-  //           content: lastMessage.content,
-  //           isAi: true,
-  //           type: "text",
-  //         });
-  //       }
-  //       return prevMessages;
-  //     });
-  //   };
-
-  //   openAI.chat.addListener("onChatMessageReceived", handleNewMessage);
-  //   return () => openAI.chat.removeListener("onChatMessageReceived");
-  // }, [openAI, addMessage]);
-
-  const onGptVersionChange = (version: string) => setGptVersion(version);
-
-  const onLayout = (event: any) => {
-    const { height } = event.nativeEvent.layout;
-    setHeight(height / 2);
-  };
-
-  const getCompletion = async (text: string) => {
-    try {
-      const isFileMessage = text.startsWith('{"assets":');
-      const content = isFileMessage ? JSON.parse(text) : text;
-
-      if (isFileMessage) {
-        console.log("Received file:", content);
-        return;
-      }
-
-      setLoading(true);
-      if (!chatId) {
-        console.error("Chat ID is missing!");
-        return;
-      }
-
-      // Save user message
-      const userMsgId = await addMessage({
-        chatId: chatId as Id<"chats">,
-        content: content,
-        senderId: currentUser?._id!,
-        isAi: false,
-        type: "text",
-      });
-
-      // Add user message to UI
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: userMsgId,
-          content: content,
-          senderId: currentUser?._id!,
-          isAI: false,
-          createdAt: Date.now(),
-          role: Role.User,
-        },
-      ]);
-
-      // Get AI response
-      const aiResponse = await fetchGeminiResponse(content);
-
-      // Save AI response
-      const aiMsgId = await addMessage({
-        chatId: chatId as Id<"chats">,
-        content: aiResponse,
-        senderId: AI_USER_ID,
-        isAi: true,
-        type: "text",
-      });
-
-      // Add AI response to UI
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: aiMsgId,
-          content: aiResponse,
-          senderId: AI_USER_ID,
-          isAI: true,
-          createdAt: Date.now(),
-          role: Role.Bot,
-        },
-      ]);
-    } catch (error) {
-      console.error("Error in getCompletion:", error);
-      Alert.alert("Error", "Failed to process message");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const RenderChatBubble = ({ item }: { item: (typeof messages)[0] }) => {
-    const isCurrentUser = item.senderId === currentUser?._id;
-    const senderUser = useQuery(api.users.getUserById, { id: item.senderId });
-
-    return (
-      <MessageBubble
-        content={item.content}
-        role={item.role}
-        isCurrentUser={isCurrentUser}
-        profileImage={senderUser?.profileDetails?.picture}
-      />
-    );
-  };
-
-  const listRef = useRef<FlashList<any>>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [isNearBottom, setIsNearBottom] = useState(true);
-
-  // Add this useEffect for automatic scrolling only when near bottom
-  useEffect(() => {
-    if (messages.length > 0 && isNearBottom) {
-      listRef.current?.scrollToEnd({ animated: false });
-    }
-  }, [messages, isNearBottom]);
-
-  const handleScroll = ({ nativeEvent }: any) => {
-    const { contentOffset, contentSize, layoutMeasurement } = nativeEvent;
-    const paddingToBottom = 100;
-    const isCloseToBottom = 
-      contentOffset.y + layoutMeasurement.height >= 
-      contentSize.height - paddingToBottom;
-    
-    setIsNearBottom(isCloseToBottom);
-    setShowScrollToBottom(!isCloseToBottom);
-  };
+const RenderChatBubble = React.memo(({ item, currentUser }: { item: any, currentUser: any }) => {
+  const isCurrentUser = item.senderId === currentUser?._id;
+  const senderUser = useQuery(api.users.getUserById, { id: item.senderId });
 
   return (
-    <View style={defaultStyles.pageContainer}>
+    <MessageBubble
+      content={item.content}
+      role={item.isAi ? Role.Bot : Role.User}
+      isCurrentUser={isCurrentUser}
+      profileImage={senderUser?.profileDetails?.picture}
+      type={item.type}
+      attachId={item.attachId}
+    />
+  );
+});
+
+const ChatPage = () => {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const listRef = useRef<FlashList<any>>(null);
+  const {
+    messages,
+    gptVersion,
+    loading,
+    showScrollToBottom,
+    previewFile,
+    setPreviewFile,
+    setGptVersion,
+    setLoading,
+    setShowScrollToBottom,
+    setIsNearBottom,
+  } = useAppStore();
+
+  const currentUser = useQuery(api.users.getCurrentUser);
+  // Chat ID Management
+  const chatId = useMemo(
+    () => id || currentUser?.defaultChatId,
+    [id, currentUser]
+  );
+  // const messagesData = useQuery(
+  //   api.messages.getMessages,
+  //   chatId ? { chatId } : "skip"
+  // );
+
+  const { results, status, loadMore } = usePaginatedQuery(
+    api.messages.getMessages,
+    chatId ? { chatId } : "skip",
+    { initialNumItems: 100 }
+  );
+
+  // Media Handling
+  const handleMessageSubmit = useMutation(api.messages.sendMessage);
+
+  // Message Handling
+  const handleSend = useCallback(
+    async (content: string) => {
+      if (!content.trim() || !chatId || !currentUser) return;
+      setLoading(true);
+      try {
+        await handleMessageSubmit({
+          content,
+          chatId: chatId as Id<"chats">,
+          senderId: currentUser._id,
+          isAi: false,
+          type: "text",
+        });
+      } catch (error) {
+        Alert.alert("Error", "Failed to send message");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [chatId, currentUser]
+  );
+
+  // Media Handling
+  const handleMedia = useCallback(
+    async (attachId: string, content: string) => {
+      if (!chatId || !currentUser || !previewFile) return;
+
+      setLoading(true);
+      try {
+        if (!attachId) return;
+
+        await handleMessageSubmit({
+          chatId: chatId as Id<"chats">,
+          senderId: currentUser._id,
+          isAi: false,
+          content: content || "Media shared",
+          type: previewFile.type === 'document' ? 'file' : previewFile.type,
+          attachId: attachId as Id<"_storage">,
+        });
+      } catch (error) {
+        Alert.alert("Error", "Failed to upload media");
+      } finally {
+        setLoading(false);
+      }
+    }, [chatId, currentUser, previewFile]);
+
+  // Scroll Handling
+  const handleScroll = useCallback(({ nativeEvent }: { nativeEvent: any }) => {
+    const paddingToBottom = 100;
+    const { contentOffset } = nativeEvent;
+    // Reverse the logic for inverted list
+    const isCloseToBottom = contentOffset.y <= paddingToBottom;
+
+    setIsNearBottom(isCloseToBottom);
+    setShowScrollToBottom(!isCloseToBottom);
+  }, []);
+
+  // List Optimization
+  const estimatedItemSize = 80;
+
+  const getItemType = useCallback((item: any) => {
+    return item.type;
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: any }) => <RenderChatBubble item={item} currentUser={currentUser} />,
+    [currentUser]
+  );
+
+  return (
+    <View style={[defaultStyles.pageContainer, { backgroundColor: "rgba(0, 0, 0, 0.2)" }]}>
       <Stack.Screen
         options={{
           headerTitle: () => (
@@ -361,155 +167,112 @@ const ChatPage = () => {
                 { key: "3.5", title: "GPT-3.5", icon: "bolt" },
                 { key: "4", title: "GPT-4", icon: "sparkles" },
               ]}
-              onSelect={onGptVersionChange}
+              onSelect={setGptVersion}
               selected={gptVersion}
             />
           ),
         }}
       />
+
       <LinearGradient
         colors={["rgba(0, 0, 0, 0.95)", "rgba(0, 0, 0, 0.95)"]}
-        style={styles.gradient}
+        style={[styles.gradient, { flex: 1 }]}
       >
-        <View style={styles.page} onLayout={onLayout}>
-          {messages.length == 0 && (
-            <View
-              style={[styles.logoContainer, { marginTop: height / 2 - 100 }]}
-            >
-              <Image
-                source={require("~/assets/images/ring-103.gif")}
-                style={styles.image}
-              />
-            </View>
-          )}
+        <View style={{ flex: 1 }}>
           <FlashList
             ref={listRef}
-            data={[...messages].reverse()}
-            renderItem={({ item }) => <RenderChatBubble item={item} />}
-            estimatedItemSize={400}
-            keyboardDismissMode="interactive"
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingTop: 10, paddingBottom: 150 }}
+            data={[...results]}
+            keyExtractor={(item) => item._id}
+            renderItem={renderItem}
+            estimatedItemSize={estimatedItemSize}
+            getItemType={getItemType}
             onScroll={handleScroll}
             scrollEventThrottle={16}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => {
-                  // Implement your refresh logic here
-                  setRefreshing(true);
-                  setTimeout(() => setRefreshing(false), 1000);
-                }}
-                colors={['rgba(0,0,0,1)']}
-                tintColor={Colors.blue}
-              />
+            keyboardDismissMode="on-drag"
+            removeClippedSubviews
+            drawDistance={500}
+            inverted={true}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={<EmptyState />}
+            onEndReached={() => loadMore(50)}
+            onEndReachedThreshold={0.5}
+          />
+        </View>
+
+        {showScrollToBottom && (
+          <ScrollToBottomButton
+            onPress={() =>
+              listRef.current?.scrollToOffset({ 
+                offset: 0,  // Keep this as 0 since we're using inverted list
+                animated: true 
+              })
             }
           />
-          {showScrollToBottom && (
-            <TouchableOpacity
-              style={styles.scrollToBottomButton}
-              onPress={() => {
-                listRef.current?.scrollToEnd({ animated: true });
-                setShowScrollToBottom(false);
-              }}
-            >
-              <Text style={styles.scrollToBottomText}> ↓ </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        )}
       </LinearGradient>
+
+      {previewFile && (
+          <FilePreview
+            fileUri={previewFile.uri}
+            fileType={previewFile.type}
+            fileName={previewFile.name}
+            attachId={previewFile.attachId || ""}
+            onSend={(attachId) => {
+              handleMedia(attachId, 'File shared');
+              setPreviewFile(null);
+            }}
+            onCancel={() => setPreviewFile(null)}
+          />
+        )}
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={63}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          width: "100%",
-          backgroundColor: "black",
-        }}
+        style={styles.inputContainer}
       >
-        {messages.length === 0 && <MessageIdeas onSelectCard={getCompletion} />}
-        <MessageInput onShouldSend={getCompletion} />
+        {!results?.length && <MessageIdeas onSelectCard={handleSend} />}
+        
+        <MessageInput onShouldSend={handleSend} />
       </KeyboardAvoidingView>
     </View>
   );
 };
 
-// ListFooterComponent={<View style={{ height: 200 }} />}
-// scrollIndicatorInsets={{ bottom: 150 }}
-//
+const EmptyState = () => (
+  <View style={styles.emptyContainer}>
+    <Image
+      source={require("~/assets/images/ring-103.gif")}
+      style={styles.emptyImage}
+    />
+  </View>
+);
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
   gradient: {
     flex: 1,
   },
-  logoContainer: {
-    alignSelf: "center",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 60,
-    height: 60,
-    backgroundColor: "#ffffff",
-    borderRadius: 50,
+  listContent: {
+    paddingTop: 100,
+    paddingBottom: 30,
   },
-  image: {
-    width: 60,
-    height: 60,
-    resizeMode: "cover",
+  inputContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    width: "100%",
+    backgroundColor: "black",
   },
-  page: {
+  emptyContainer: {
     flex: 1,
-    paddingTop: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: "50%",
   },
-  bubbleContainer: {
-    flexDirection: "row",
-    marginHorizontal: 8,
-    marginVertical: 4,
-  },
-  userBubbleContainer: {
-    justifyContent: "flex-end",
-  },
-  consultantBubbleContainer: {
-    justifyContent: "flex-start",
-  },
-  bubble: {
-    padding: 12,
-    borderRadius: 16,
-    maxWidth: "80%",
-  },
-  userBubble: {
-    backgroundColor: "#007AFF",
-  },
-  consultantBubble: {
-    backgroundColor: "#E5E5EA",
-  },
-  bubbleText: {
-    color: "white",
-    fontSize: 16,
-  },
-  consultantText: {
-    color: "black",
-    fontSize: 16,
-  },
-  scrollToBottomButton: {
-    position: 'absolute',
-    bottom: 70,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(1, 142, 250,0.7)',
-    padding: 12,
-    borderRadius: 25,
-    zIndex: 1000,
-  },
-  scrollToBottomText: {
-    color: 'white',
-    fontWeight: '600',
+  emptyImage: {
+    width: 60,
+    height: 60,
+    resizeMode: "contain",
   },
 });
 
-export default ChatPage;
+export default React.memo(ChatPage);

@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import validator from "validator";
 import { v4 as uuidv4 } from "uuid";
+import { paginationOptsValidator } from "convex/server";
 
 // Utility function to fetch a user by `userId` by clerk userid
 const getUserById = async (ctx: any, userId: string) => {
@@ -79,7 +80,7 @@ export const sendMessage = mutation({
       v.literal("audio"),
       v.literal("file")
     ),
-    mediaUrl: v.optional(v.string()),
+    attachId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const sender = await getUserbyconvID(ctx, args.senderId);
@@ -87,9 +88,9 @@ export const sendMessage = mutation({
     if (!chat) throw new Error("Chat not found");
 
     // Validate media URL if provided
-    if (args.mediaUrl && !validator.isURL(args.mediaUrl)) {
-      throw new Error("Invalid media URL");
-    }
+    // if (args.mediaUrl && !validator.isURL(args.mediaUrl)) {
+    //   throw new Error("Invalid media URL");
+    // }
 
     // Insert the new message
     const messageId = await ctx.db.insert("messages", {
@@ -98,7 +99,7 @@ export const sendMessage = mutation({
       content: args.content,
       isAi: args.isAi,
       type: args.type,
-      mediaUrl: args.mediaUrl || undefined,
+      attachId: args.attachId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -113,30 +114,73 @@ export const sendMessage = mutation({
   },
 });
 
-// Get messages for a chat
+// // Get messages for a chat
+// export const getMessages = query({
+//   args: {
+//     chatId: v.string(),
+//     limit: v.optional(v.number()),
+//     offset: v.optional(v.number()),
+//   },
+//   handler: async (ctx, args) => {
+//     const chat = await getChatById(ctx, args.chatId);
+
+//     const limit = args.limit || 50; // Default to 50 messages
+//     const offset = args.offset || 0;
+
+//     // Fetch and sort messages for the chat with pagination
+//     const messages = await ctx.db
+//       .query("messages")
+//       .filter((q) => q.eq(q.field("chatId"), chat._id))
+//       .collect();
+
+//     const sortedMessages = messages
+//       .sort((a, b) => b.createdAt - a.createdAt) // Sort by `createdAt` descending
+//       .slice(offset, offset + limit); // Apply pagination
+
+//     return sortedMessages;
+//   },
+// });
+
+// export const getMessages = query({
+//   args: {
+//     chatId: v.string(),
+//     limit: v.optional(v.number()),
+//     offset: v.optional(v.number()),
+//   },
+//   handler: async (ctx, args) => {
+//     const chat = await getChatById(ctx, args.chatId);
+//     const limit = args.limit || 50; // Default to 50 messages
+//     const offset = args.offset || 0;
+
+//     // Fetch all messages for the chat
+//     const allMessages = await ctx.db
+//       .query("messages")
+//       .filter((q) => q.eq(q.field("chatId"), chat._id))
+//       .collect();
+
+//     // Sort by `createdAt` descending
+//     const sortedMessages = allMessages.sort((a, b) => b.createdAt - a.createdAt);
+
+//     // Apply pagination
+//     const paginatedMessages = sortedMessages.slice(offset, offset + limit);
+
+//     return paginatedMessages;
+//   },
+// });
+
 export const getMessages = query({
   args: {
+    paginationOpts: paginationOptsValidator,
     chatId: v.string(),
-    limit: v.optional(v.number()),
-    offset: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const chat = await getChatById(ctx, args.chatId);
 
-    const limit = args.limit || 50; // Default to 50 messages
-    const offset = args.offset || 0;
-
-    // Fetch and sort messages for the chat with pagination
-    const messages = await ctx.db
+    return await ctx.db
       .query("messages")
-      .filter((q) => q.eq(q.field("chatId"), chat._id))
-      .collect();
-
-    const sortedMessages = messages
-      .sort((a, b) => b.createdAt - a.createdAt) // Sort by `createdAt` descending
-      .slice(offset, offset + limit); // Apply pagination
-
-    return sortedMessages;
+      .withIndex("by_chatId", (q) => q.eq("chatId", chat._id))
+      .order("desc")
+      .paginate(args.paginationOpts);
   },
 });
 

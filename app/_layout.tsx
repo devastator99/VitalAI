@@ -36,6 +36,7 @@ import { useColorScheme } from "~/lib/useColorScheme";
 import { StatusBar } from "expo-status-bar";
 import { PortalHost } from '@rn-primitives/portal';
 import { setBackgroundColorAsync } from "expo-system-ui";
+import { useAppStore } from "~/store";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -72,11 +73,13 @@ const InitialLayout = () => {
   const segments = useSegments();
   const router = useRouter();
 
+  const {userId,setUserId, isAdmin,setIsAdmin,isApproved, setIsApproved,detailsFilled, setDetailsFilled} = useAppStore();
+
   // 4. User state management
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean | undefined>();
-  const [isApproved, setIsApproved] = useState<boolean | undefined>();
-  const [detailsfilled, setdetailsfilled] = useState<boolean | undefined>();
+  // const [userId, setUserId] = useState<string | null>(null);
+  // const [isAdmin, setIsAdmin] = useState<boolean | undefined>();
+  // const [isApproved, setIsApproved] = useState<boolean | undefined>();
+  // const [detailsfilled, setdetailsfilled] = useState<boolean | undefined>();
 
   const userIdInitialized = useRef(false);
 
@@ -126,7 +129,7 @@ const InitialLayout = () => {
     }
 
     if (infoSubmitted !== undefined) {
-      setdetailsfilled(infoSubmitted);
+      setDetailsFilled(infoSubmitted);
     }
   }, [
     authLoaded,

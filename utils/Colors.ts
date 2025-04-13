@@ -15,4 +15,19 @@ export default {
     input: '#EEE9F0',
     selected: '#F7F2F9',
     dark: '#2F2D32',
-  };
+    PitchBlack: 'rgba(0,0,0,1)',
+    deepSkyBlue: '#00BFFF',   
+    neon: '#00FF00',
+    red: '#FF0000',
+    lightRed: '#ff4d4d',
+    lightGreen: '#99ff99',
+    lightBlue: '#9999ff',
+    lightYellow: '#ffff99',
+    lightOrange: '#ffcc99',
+    lightPurple: '#cc99ff',
+    white: '#FFFFFF',
+    test1 : "#539DF3",
+    test2 : "#676D75",
+    mainBlue : "#007AFF",
+    
+};

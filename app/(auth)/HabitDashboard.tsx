@@ -43,7 +43,6 @@ import type { Habit } from "~/utils/Interfaces";
 import type { Entry } from "~/utils/Interfaces";
 import type { HabitType } from "~/utils/Interfaces";
 import HabitDetail from "~/components/HabitDetail";
-import { useNavigation } from "@react-navigation/native";
 
 
 

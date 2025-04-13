@@ -1,7 +1,5 @@
-"use node";
 import { action, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import sharp from "sharp";
 import { Id } from "./_generated/dataModel";
 
 // Generate upload URL
@@ -52,7 +50,7 @@ export const getImageUrl = query({
 
 export const saveMediaFile = mutation({
   args: {
-    storageId: v.id("_storage"),
+    storageId: v.string(),
     mimeType: v.string(),
   },
   handler: async (ctx, args) => {
@@ -73,7 +71,7 @@ export const saveMediaFile = mutation({
 
     // Create new media entry
     await ctx.db.insert("media", {
-      storageId: args.storageId,
+      storageId: args.storageId as Id<"_storage">,
       mimeType: args.mimeType,
       authorId: user._id,
       createdAt: Date.now(),
@@ -81,58 +79,58 @@ export const saveMediaFile = mutation({
   },
 });
 
-export const processImageWithSharp = action({
-  args: {
-    originalStorageId: v.string(),
-    options: v.object({
-      maxWidth: v.number(),
-      quality: v.number(),
-      format: v.union(v.literal("webp"), v.literal("jpeg"), v.literal("png")),
-    }),
-  },
-  handler: async (ctx, args) => {
-    // 1. Get original image
-    const originalFile = await ctx.storage.getUrl(
-      args.originalStorageId as Id<"_storage">
-    );
-    if (!originalFile) throw new Error("Original image not found");
+// export const processImageWithSharp = action({
+//   args: {
+//     originalStorageId: v.string(),
+//     options: v.object({
+//       maxWidth: v.number(),
+//       quality: v.number(),
+//       format: v.union(v.literal("webp"), v.literal("jpeg"), v.literal("png")),
+//     }),
+//   },
+//   handler: async (ctx, args) => {
+//     // 1. Get original image
+//     const originalFile = await ctx.storage.getUrl(
+//       args.originalStorageId as Id<"_storage">
+//     );
+//     if (!originalFile) throw new Error("Original image not found");
 
-    // 2. Process with Sharp
-    const processor = sharp(await (await fetch(originalFile)).arrayBuffer())
-      .resize({
-        width: args.options.maxWidth,
-        withoutEnlargement: true,
-        fit: "inside",
-      })
-      .toFormat(args.options.format, {
-        quality: args.options.quality,
-        progressive: true,
-      });
+//     // 2. Process with Sharp
+//     const processor = sharp(await (await fetch(originalFile)).arrayBuffer())
+//       .resize({
+//         width: args.options.maxWidth,
+//         withoutEnlargement: true,
+//         fit: "inside",
+//       })
+//       .toFormat(args.options.format, {
+//         quality: args.options.quality,
+//         progressive: true,
+//       });
 
-    // 3. For PNG/JPG convert to webp if requested
-    if (args.options.format === "webp") {
-      processor.webp({ quality: args.options.quality });
-    }
+//     // 3. For PNG/JPG convert to webp if requested
+//     if (args.options.format === "webp") {
+//       processor.webp({ quality: args.options.quality });
+//     }
 
-    // 4. Process and store new image
-    const processedBuffer = await processor.toBuffer();
-    const blob = new Blob([processedBuffer], {
-      type: `image/${args.options.format}`,
-    });
-    const processedStorageId = await ctx.storage.store(blob);
+//     // 4. Process and store new image
+//     const processedBuffer = await processor.toBuffer();
+//     const blob = new Blob([processedBuffer], {
+//       type: `image/${args.options.format}`,
+//     });
+//     const processedStorageId = await ctx.storage.store(blob);
 
-    // 5. Optionally delete original
-    // await ctx.storage.delete(args.originalStorageId);
-    // 6. Get metadata
-    const metadata = await sharp(processedBuffer).metadata();
+//     // 5. Optionally delete original
+//     // await ctx.storage.delete(args.originalStorageId);
+//     // 6. Get metadata
+//     const metadata = await sharp(processedBuffer).metadata();
 
-    return {
-      storageId: processedStorageId,
-      mimeType: `image/${args.options.format}`,
-      dimensions: {
-        width: metadata.width,
-        height: metadata.height,
-      },
-    };
-  },
-});
+//     return {
+//       storageId: processedStorageId,
+//       mimeType: `image/${args.options.format}`,
+//       dimensions: {
+//         width: metadata.width,
+//         height: metadata.height,
+//       },
+//     };
+//   },
+// });

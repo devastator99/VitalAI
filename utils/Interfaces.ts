@@ -1,3 +1,5 @@
+import { Id } from "~/convex/_generated/dataModel";
+
 export enum Role {
     User = 0,
     Bot = 1,
@@ -7,12 +9,12 @@ export enum Role {
   export interface Message {
     id: string;
     content: string;
-    senderId: string;
+    senderId: Id<"users">;
     isAI: boolean;
     createdAt: number;
     role: Role;
-    imageUrl?: string;
-    prompt?: string;
+    type: 'text' | 'image' | 'file';
+    mediaUrl?: string;
   }
   
   export interface Chat {

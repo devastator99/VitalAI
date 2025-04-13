@@ -549,28 +549,28 @@ const Chat: FC<ChatProps> = ({ messages, loading, onLoadMore }) => {
   // // Remove chatId from dependencies to prevent loop
   // }, [currentUser?.userId]); // Only track these dependencies
 
-  const messagesData = useQuery(
-    api.messages.getMessages,
-    { chatId: id }
-  );
+  // const messagesData = useQuery(
+  //   api.messages.getMessages,
+  //   { chatId: id }
+  // );
 
-  useEffect(() => {
-    if (messagesData) {
-      setMessages(
-        messagesData.map((msg: any) => ({
-          id: msg._id,
-          content: msg.content,
-          senderId: msg.senderId,
-          isAi: Boolean(msg.isAi),
-          createdAt: msg._creationTime.toString(),
-          role: msg.isAi ? Role.Bot : Role.User,
-          isMessageRead: true,
-          imageUri: undefined,
-          prompt: undefined
-        }))
-      );
-    }
-  }, [messagesData]); 
+  // useEffect(() => {
+  //   if (messagesData) {
+  //     setMessages(
+  //       messagesData.map((msg: any) => ({
+  //         id: msg._id,
+  //         content: msg.content,
+  //         senderId: msg.senderId,
+  //         isAi: Boolean(msg.isAi),
+  //         createdAt: msg._creationTime.toString(),
+  //         role: msg.isAi ? Role.Bot : Role.User,
+  //         isMessageRead: true,
+  //         imageUri: undefined,
+  //         prompt: undefined
+  //       }))
+  //     );
+  //   }
+  // }, [messagesData]); 
   
 
   const handleSendMessage = async (message: string) => {

@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Colors from "~/constants/Colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Settings from '~/components/Settings';
 
 export default function SettingsScreen() {
   // State for toggles and selections
@@ -29,133 +30,13 @@ export default function SettingsScreen() {
   const toggleAutoUpdate = (value: any) => setAutoUpdateEnabled(value);
   const insets = useSafeAreaInsets();
 
-  // Simulated logout function
+  // Simulated logout functiona
   const handleLogout = () => {
     Alert.alert("Logout", "You have been logged out.", [{ text: "OK" }]);
   };
 
   return (
-    <LinearGradient
-      colors={["#4c669f", "#3b5998", "#192f6a"]}
-      style={[styles.gradient]}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Ionicons name="settings-outline" size={30} color="#fff" />
-          <Text style={styles.headerTitle}>Settings</Text>
-        </View>
-
-        {/* Account Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => Alert.alert("Edit Profile", "Edit Profile clicked!")}
-          >
-            <Text style={styles.rowTitle}>Edit Profile</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => router.push("/(auth)/ai")}
-          >
-            <Text style={styles.rowTitle}>Change Password</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Preferences Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.row}>
-            <Text style={styles.rowTitle}>Dark Mode</Text>
-            <Switch
-              value={isDarkMode}
-              onValueChange={toggleDarkMode}
-              thumbColor={isDarkMode ? "#fff" : "#f4f3f4"}
-              trackColor={{ false: "#767577", true: "#81b0ff" }}
-            />
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.rowTitle}>Notifications</Text>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={toggleNotifications}
-              thumbColor={notificationsEnabled ? "#fff" : "#f4f3f4"}
-              trackColor={{ false: "#767577", true: "#81b0ff" }}
-            />
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.rowTitle}>Auto-Update</Text>
-            <Switch
-              value={autoUpdateEnabled}
-              onValueChange={toggleAutoUpdate}
-              thumbColor={autoUpdateEnabled ? "#fff" : "#f4f3f4"}
-              trackColor={{ false: "#767577", true: "#81b0ff" }}
-            />
-          </View>
-        </View>
-
-        {/* Language & Region Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Language & Region</Text>
-          <View style={styles.row}>
-            <Text style={styles.rowTitle}>Language</Text>
-            <TouchableOpacity
-              onPress={() =>
-                Alert.alert("Edit Profile", "Edit Profile clicked!")
-              }
-            >
-              <Text style={styles.rowValue}>{selectedLanguage}</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.rowTitle}>Region</Text>
-            <TouchableOpacity
-              onPress={() =>
-                Alert.alert("Edit Profile", "Edit Profile clicked!")
-              }
-            >
-              <Text style={styles.rowValue}>United States</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* About Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => Alert.alert("Edit Profile", "Edit Profile clicked!")}
-          >
-            <Text style={styles.rowTitle}>App Version</Text>
-            <Text style={styles.rowValue}>v1.0.0</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => Alert.alert("Edit Profile", "Edit Profile clicked!")}
-          >
-            <Text style={styles.rowTitle}>Privacy Policy</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => Alert.alert("Edit Profile", "Edit Profile clicked!")}
-          >
-            <Text style={styles.rowTitle}>Terms of Service</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Logout Button */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutButtonText}>Log Out</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </LinearGradient>
+    <Settings />
   );
 }
 

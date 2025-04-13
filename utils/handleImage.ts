@@ -2,38 +2,29 @@ import * as ImagePicker from "expo-image-picker";
 import { useMutation } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import * as ImageManipulator from "expo-image-manipulator";
+import { Id } from "~/convex/_generated/dataModel";
 
-export const useImageUpload = () => {
+// Create a custom hook that contains the mutations
+export function useImageUpload() {
+  const useImgManipulator = ImageManipulator.ImageManipulator.manipulate;
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-//   const processImage = useAction(api.files.processImageWithSharp);
   const saveMediaFile = useMutation(api.files.saveMediaFile);
 
-  const handleImageUpload = async () => {
+  // Return the handler function that uses these mutations
+  return async (uri: string) => {
     try {
       // 1. Request permissions
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") throw new Error("Photo permission denied");
-
-      // 2. Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1, // Keep full quality for server processing
-      });
-
-      if (result.canceled || !result.assets?.[0]) return null;
-
-      // 3. Get image details
-      const { uri, type } = result.assets[0];
-      
-      // 4. Process image client-side
-      const context = ImageManipulator.useImageManipulator(uri);
-      context.resize({width:1200});
+      // const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      // if (status !== "granted") throw new Error("Photo permission denied");
+      const context = useImgManipulator(uri);
+      console.log("context : ",context);
+      context.resize({width:700});
       const image = await context.renderAsync();
+      console.log(image);
       const processedImage = await image.saveAsync({
         format: ImageManipulator.SaveFormat.JPEG,
       });
+      console.log("processedImage : ",processedImage);
     
       // 5. Upload processed image
       const postUrl = await generateUploadUrl();
@@ -47,22 +38,23 @@ export const useImageUpload = () => {
         body: blob,
       });
 
+      console.log("uploadResult : ",uploadResult);
+
       if (!uploadResult.ok) throw new Error("Upload failed");
       const { storageId } = await uploadResult.json();
-
+      console.log("storageId : ",storageId);
       // 7. Save processed image metadata (remove server-side processing)
       await saveMediaFile({
-        storageId,
+        storageId: storageId as Id<"_storage">,
         mimeType: "image/jpeg"
       });
 
-      return storageId;
+      console.log("saved media file");
 
+      return storageId;
     } catch (error) {
       console.error("Image upload error:", error);
       throw error;
     }
   };
-
-  return { handleImageUpload };
-};
+}
