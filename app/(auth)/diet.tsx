@@ -9,12 +9,13 @@ import ExerciseDetails from "../../components/ExerciseDetails";
 import Colors from "~/utils/Colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
-import { api, storage } from "~/convex/_generated/api";
+import { api } from "~/convex/_generated/api";
+import { useCallback } from "react";
 
 type Section = "diet" | "exercise";
 
 export default function Diet() {
-  const [selectedDay, setSelectedDay] = useState(0);
+  const [selectedDay, setSelectedDay] = useState<string>("");
   const [activeSection, setActiveSection] = useState<Section>("diet");
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(
@@ -22,6 +23,17 @@ export default function Diet() {
   );
   const router = useRouter();
   const threeDayPlan = useQuery(api.plans.getThreeDayPlan);
+  
+
+  const DEFAULT_IMAGE_URL="dddccdc";
+ 
+  const getMealImageUrl = useCallback((attachId:any) => {
+    if (!attachId) return DEFAULT_IMAGE_URL;
+    
+    // Use the imageUrl query to fetch the URL
+    const url = useQuery(api.files.getImageUrl, { storageId: attachId });
+    return url || DEFAULT_IMAGE_URL;
+  }, []);
 
   const handleMealPress = (mealId: string) => {
     setSelectedMealId(mealId);
@@ -91,12 +103,12 @@ export default function Diet() {
           onClose={handleCloseExerciseDetails}
         />
       ) : (
-        <View style={{ flex: 1}}>
-          <View style={{ marginVertical: 15}}>
-          <WeekdaySelector
-            selectedDay={selectedDay}
-            onSelectDay={setSelectedDay}
-          />
+        <View style={{ flex: 1 }}>
+          <View style={{ marginVertical: 15 }}>
+            <WeekdaySelector
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+            />
           </View>
 
           <View style={styles.sectionSelector}>
@@ -159,7 +171,9 @@ export default function Diet() {
                   <DietCard
                     key={meal._id}
                     title={meal.name}
-                    image={meal.attachId ? storage.getUrl(meal.attachId) ?? "" : ""}
+                    image={
+                      meal.attachId ?? getMealImageUrl 
+                    }
                     calories={meal.calories}
                     time={meal.time}
                     onPress={() => handleMealPress(meal._id)}
@@ -171,7 +185,11 @@ export default function Diet() {
                     <ExerciseCard
                       key={exercise._id}
                       title={exercise.name}
-                      image={exercise.attachId ? storage.getUrl(exercise.attachId) ?? "" : ""}
+                      image={
+                        exercise.attachId
+                          ? /* Add image URL logic if needed */ ""
+                          : ""
+                      }
                       duration={`${exercise.duration} min`}
                       sets={exercise.sets}
                       reps={exercise.reps}
