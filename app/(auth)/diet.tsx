@@ -9,7 +9,7 @@ import ExerciseDetails from "../../components/ExerciseDetails";
 import Colors from "~/utils/Colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
-import { api } from "~/convex/_generated/api";
+import { api, storage } from "~/convex/_generated/api";
 
 type Section = "diet" | "exercise";
 
@@ -161,7 +161,7 @@ export default function Diet() {
                     title={meal.name}
                     image={
                       meal.attachId
-                        ? /* Add image URL logic if needed */ ""
+                        ? storage.getUrl(meal.attachId)
                         : ""
                     }
                     calories={meal.calories}
