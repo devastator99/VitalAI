@@ -12,8 +12,8 @@ const BUTTON_HEIGHT = PILL_HEIGHT - PILL_PADDING * 2;
 const BUTTON_WIDTH = (PILL_WIDTH - PILL_PADDING * 2) / 3;
 
 interface WeekdaySelectorProps {
-  selectedDay: string; // YYYY-MM-DD format
-  onSelectDay: (date: string) => void;
+  selectedDate: string; // YYYY-MM-DD format
+  onSelectDate: (date: string) => void;
 }
 
 const DAYS = [
@@ -64,7 +64,7 @@ const DayButton = memo(({ day, index, isSelected, onPress }: { day: any, index: 
   );
 });
 
-export function WeekdaySelector({ selectedDay: selectedDate, onSelectDay: onSelectDate }: WeekdaySelectorProps) {
+export function WeekdaySelector({ selectedDate, onSelectDate }: WeekdaySelectorProps) {
   // Generate dates and format them
   const { dateStrings, selectedIndex } = useMemo(() => {
     const now = new Date();

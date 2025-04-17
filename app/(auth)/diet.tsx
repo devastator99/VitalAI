@@ -106,8 +106,8 @@ export default function Diet() {
         <View style={{ flex: 1 }}>
           <View style={{ marginVertical: 15 }}>
             <WeekdaySelector
-              selectedDay={selectedDay}
-              onSelectDay={setSelectedDay}
+              selectedDate={selectedDay}
+              onSelectDate={setSelectedDay}
             />
           </View>
 
