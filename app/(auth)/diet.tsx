@@ -159,7 +159,7 @@ export default function Diet() {
                   <DietCard
                     key={meal._id}
                     title={meal.name}
-                    image={storage.getUrl(meal.attachId) ?? ""}
+                    image={meal.attachId ? storage.getUrl(meal.attachId) ?? "" : ""}
                     calories={meal.calories}
                     time={meal.time}
                     onPress={() => handleMealPress(meal._id)}
@@ -171,7 +171,7 @@ export default function Diet() {
                     <ExerciseCard
                       key={exercise._id}
                       title={exercise.name}
-                      image={storage.getUrl(exercise.attachId) ?? ""}
+                      image={exercise.attachId ? storage.getUrl(exercise.attachId) ?? "" : ""}
                       duration={`${exercise.duration} min`}
                       sets={exercise.sets}
                       reps={exercise.reps}
