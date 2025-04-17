@@ -70,7 +70,7 @@ const AnimatedIntro = () => {
           content[newColorIndex.value].fontColor,
           content[currentIndex.value].fontColor,
         ],
-        "RGB"
+        "RGB",
       ),
       transform: [
         {

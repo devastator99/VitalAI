@@ -8,6 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import IconCircle from "./IconCircle";
+import { MotiView } from "moti";
 
 interface AnimHeaderProps {
   title: string;
@@ -20,6 +21,7 @@ interface AnimHeaderProps {
 
 const HEADER_EXPANDED_HEIGHT = 100;
 const HEADER_COLLAPSED_HEIGHT = 80;
+const SCROLL_RANGE = 100;
 
 const AnimHeader = React.memo(({
   title,
@@ -40,43 +42,54 @@ const AnimHeader = React.memo(({
     },
   });
 
-  // Direct interpolation without extra withSpring/withTiming smoothing.
   const headerStyle = useAnimatedStyle(() => {
     const height = interpolate(
       scrollY.value,
-      [0, 50],
+      [0, SCROLL_RANGE],
       [HEADER_EXPANDED_HEIGHT, HEADER_COLLAPSED_HEIGHT],
-      { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+      { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
     );
-    return { height };
+    return { 
+      height,
+      opacity: interpolate(scrollY.value, [0, SCROLL_RANGE], [1, 0.95], { extrapolateLeft: 'clamp' })
+    };
   });
 
   const titleStyle = useAnimatedStyle(() => {
     const fontSize = interpolate(
       scrollY.value,
-      [0, 50],
+      [0, SCROLL_RANGE],
       [30, 25],
-      { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+      { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
     );
-    return { fontSize };
+    const translateY = interpolate(
+      scrollY.value,
+      [0, SCROLL_RANGE],
+      [0, -5],
+      { extrapolateLeft: 'clamp' }
+    );
+    return { 
+      fontSize,
+      transform: [{ translateY }] 
+    };
   });
 
   const titleTransformStyle = useAnimatedStyle(() => {
-    const scaleY = interpolate(
+    const scale = interpolate(
       scrollY.value,
-      [0, 50],
+      [0, SCROLL_RANGE],
       [1, 1],
-      { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+      { extrapolateLeft: 'clamp' }
     );
     return {
-      transform: [{ scaleY }],
+      transform: [{ scale }],
     };
   });
 
   return (
     <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,1)" }}>
       <StatusBar backgroundColor="rgba(0,0,0,1)" />
-      <Animated.View style={[styles.header, headerStyle]}>
+      <MotiView style={[styles.header, headerStyle]}>
         {headerContent}
         <Animated.Text style={[styles.title, titleStyle, titleTransformStyle]}>
           {title}
@@ -115,16 +128,17 @@ const AnimHeader = React.memo(({
             </Pressable>
           ))}
         </View>
-      </Animated.View>
+      </MotiView>
 
       <Animated.ScrollView
         onScroll={scrollHandler}
-        scrollEventThrottle={16}
+        scrollEventThrottle={8}
         contentContainerStyle={{
-          paddingTop: HEADER_EXPANDED_HEIGHT + 10,
+          paddingTop: HEADER_EXPANDED_HEIGHT + 20,
           paddingHorizontal: 16,
           paddingBottom: 50,
         }}
+        showsVerticalScrollIndicator={false}
       >
         {children}
       </Animated.ScrollView>

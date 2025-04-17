@@ -17,6 +17,7 @@ import type * as chats from "../chats.js";
 import type * as files from "../files.js";
 import type * as messages from "../messages.js";
 import type * as orders from "../orders.js";
+import type * as plans from "../plans.js";
 import type * as razorpay from "../razorpay.js";
 import type * as users from "../users.js";
 
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   messages: typeof messages;
   orders: typeof orders;
+  plans: typeof plans;
   razorpay: typeof razorpay;
   users: typeof users;
 }>;

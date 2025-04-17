@@ -27,7 +27,7 @@ import {
 } from "react-native-reanimated";
 import Animated from "react-native-reanimated";
 import AnimatedButton from "~/components/AnimatedButton";
-import MagButton from "~/components/MagButton";
+
 export const Filter = () => {
   const image = useImage(require("../../assets/images/purple.jpeg"));
   if (!image) {
@@ -104,21 +104,21 @@ const Layout = () => {
       },
     },
     {
-      name: "settings",
-      label: "Settings",
+      name: "diet",
+      label: "Diet/Exercise",
       icon: {
         active: "settings",
         inactive: "settings-outline",
       },
     },
     {
-      name: "HabitHeatmap",
-      label: "heatmap",
+      name: "settings",
+      label: "Settings",
       icon: {
         active: "settings",
         inactive: "settings-outline",
       },
-    },
+    }
   ];
 
   return (
@@ -156,7 +156,7 @@ const Layout = () => {
             options={{
               headerShown: false,
               tabBarButton: (props: any) => (
-                <MagButton {...props} style={styles.tabButton}>
+                <AnimatedButton {...props} style={styles.tabButton} liquidColor={"red"}>
                   <View
                     style={[
                       styles.tabContent,
@@ -181,7 +181,7 @@ const Layout = () => {
                       <Text style={styles.activeLabel}>{label}</Text>
                     ) : null}
                   </View>
-                </MagButton>
+                </AnimatedButton>
               ),
             }}
           />
@@ -202,8 +202,6 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: "center",
     paddingVertical: 8,
-    width:10,
-    height:10
   },
   activeTab: {
     flexDirection: "row",
@@ -221,7 +219,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins",
     fontWeight: "500",
     marginLeft: 4,
-
   },
   inactiveLabel: {
     color: "#676D75",

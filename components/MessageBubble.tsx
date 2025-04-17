@@ -22,9 +22,8 @@ import UserVector from "./UserVector";
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { FontAwesome5 } from "@expo/vector-icons";
-// import { Galeria } from '@nandorojo/galeria'
 import {MotiPressable} from "moti/interactions";
-
+import Gallery from "react-native-awesome-gallery";
 type MessageBubbleProps = {
   content: string;
   role: Role;
@@ -41,6 +40,15 @@ const MemoizedAvatarImage = React.memo(
     <Image source={{ uri }} style={style} />
   )
 );
+
+const SingleImage = ({ style,url }: { style: any,url:string }) => (
+  <Gallery
+    data={[url]}
+    onIndexChange={(newIndex) => {
+      console.log(newIndex);
+    }}
+  />
+)
 
 const ProfileDetails = ({
   profileImage,
@@ -209,15 +217,16 @@ const MediaComponent = React.memo(({ mediaUrl, isMediaLoading }: {
         style={styles.loadingIndicator}
       />
     ) : (
-      // <Galeria urls={mediaUrl ? [mediaUrl] : []}>
-      //   <Galeria.Image>
-          <Image 
-            source={{ uri: mediaUrl || "skip" }} 
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-          />
-        // {/* </Galeria.Image>
-      // </Galeria> */}
+      <TouchableOpacity 
+        style={StyleSheet.absoluteFill}
+        onPress={() => SingleImage({ style: StyleSheet.absoluteFill, url: mediaUrl! })}
+      >
+        <Image 
+          source={{ uri: mediaUrl || "skip" }} 
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+      </TouchableOpacity>
     )}
   </View>
 ));

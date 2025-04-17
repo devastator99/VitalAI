@@ -6,11 +6,23 @@ interface AnimatedButtonProps {
   children: React.ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
-  liquidColor: string;
   contentContainerStyle?: ViewStyle;
+  pressInScale?: number;
+  pressInSpeed?: number;
+  pressOutScale?: number;
+  pressOutFriction?: number;
 }
 
-const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, contentContainerStyle }: AnimatedButtonProps) => {
+const AnimatedButton = React.memo(({ 
+  children, 
+  style, 
+  onPress, 
+  contentContainerStyle,
+  pressInScale = 0.85,
+  pressInSpeed = 40,
+  pressOutScale = 1,
+  pressOutFriction = 3
+}: AnimatedButtonProps) => {
   const scaleValue = useRef(new Animated.Value(1)).current;
   const liquidWidth = useRef(new Animated.Value(0)).current;
   const textColor = useRef(new Animated.Value(0)).current;
@@ -18,14 +30,9 @@ const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, cont
   const onPressIn = useCallback(() => {
     Animated.parallel([
       Animated.spring(scaleValue, {
-        toValue: 0.96,
-        speed: 50,
+        toValue: pressInScale,
+        speed: pressInSpeed,
         useNativeDriver: true,
-      }),
-      Animated.timing(liquidWidth, {
-        toValue: 100,
-        duration: 300,
-        useNativeDriver: false,
       }),
       Animated.timing(textColor, {
         toValue: 1,
@@ -33,19 +40,14 @@ const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, cont
         useNativeDriver: false,
       })
     ]).start();
-  }, [scaleValue, liquidWidth, textColor]);
+  }, [scaleValue, liquidWidth, textColor, pressInScale, pressInSpeed]);
 
   const onPressOut = useCallback(() => {
     Animated.parallel([
       Animated.spring(scaleValue, {
-        toValue: 1,
-        friction: 3,
+        toValue: pressOutScale,
+        friction: pressOutFriction,
         useNativeDriver: true,
-      }),
-      Animated.timing(liquidWidth, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: false,
       }),
       Animated.timing(textColor, {
         toValue: 0,
@@ -53,7 +55,7 @@ const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, cont
         useNativeDriver: false,
       })
     ]).start();
-  }, [scaleValue, liquidWidth, textColor]);
+  }, [scaleValue, liquidWidth, textColor, pressOutScale, pressOutFriction]);
 
   return (
     <TouchableOpacity 
@@ -73,7 +75,7 @@ const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, cont
         bottom: 0,
       }}>
         {/* Liquid background layer */}
-        <Animated.View
+        {/* <Animated.View
           style={{
             position: 'absolute',
             height: '100%',
@@ -88,7 +90,7 @@ const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, cont
             }),
             borderRadius: 25,
           }}
-        />
+        /> */}
         
         {/* Content container with customizable style */}
         <Animated.View style={[
@@ -102,7 +104,7 @@ const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, cont
           },
           contentContainerStyle
         ]}>
-          <Animated.Text style={{
+          {/* <Animated.Text style={{
             color: textColor.interpolate({
               inputRange: [0, 1],
               outputRange: [Colors.lightRed, '#fff']
@@ -111,7 +113,8 @@ const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, cont
             zIndex: 1,
           }}>
             {children}
-          </Animated.Text>
+          </Animated.Text> */}
+          {children}
         </Animated.View>
       </Animated.View>
     </TouchableOpacity>
@@ -119,3 +122,17 @@ const AnimatedButton = React.memo(({ children, style, onPress, liquidColor, cont
 });
 
 export default AnimatedButton;
+
+
+//   Animated.timing(liquidWidth, {
+    //     toValue: 100,
+    //     duration: 300,
+    //     useNativeDriver: false,
+    //   }),
+
+
+    // Animated.timing(liquidWidth, {
+    //     toValue: 0,
+    //     duration: 400,
+    //     useNativeDriver: false,
+    //   }),s

@@ -107,32 +107,46 @@ export default defineSchema({
     createdAt: v.number(), // Timestamp of creation
   }).index("by_orderId", ["orderId"]),
 
-  ai: defineTable({
-    messageId: v.id("messages"),
-    senderId: v.id("users"),
-    content: v.optional(v.string()),
-    mediaId: v.optional(v.id("media")),
-    type: v.union(
-      v.literal("text"),
-      v.literal("image"),
-      v.literal("video"),
-      v.literal("audio"),
-      v.literal("file")
-    ),
-    fileName: v.optional(v.string()),
-    metadata: v.optional(
-      v.object({
-        // Add metadata for additional details
-        width: v.optional(v.number()),
-        height: v.optional(v.number()),
-        duration: v.optional(v.number()),
-      })
-    ),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+  dailyplan: defineTable({
+    userId: v.id("users"), 
+    dietitianId: v.id("users"), 
+    date: v.string(),
+    meals: v.object({
+      breakfast: v.array(v.id("meals")),
+      lunch: v.array(v.id("meals")),
+      dinner: v.array(v.id("meals")),
+      snacks: v.array(v.id("meals")),
+    }),
+    exercises: v.array(v.id("exercises")),
   })
-    .index("by_messageId", ["messageId"])
-    .index("by_type", ["type"]),
+  .index("by_userId_and_date", ["userId", "date"]),
+
+  meals: defineTable({
+    name: v.string(),
+    description: v.string(),
+    calories: v.number(),
+    protein: v.number(),
+    carbs: v.number(),
+    fat: v.number(),
+    attachId: v.optional(v.id("_storage")),
+  }).index("by_name", ["name"]),
+
+
+  exercises: defineTable({
+    name: v.string(),
+    description: v.string(),
+    sets: v.number(),
+    reps: v.number(),
+    duration: v.number(),
+    attachId: v.optional(v.id("_storage")),
+  }).index("by_name", ["name"]),
+
+  completions: defineTable({
+    userId: v.id("users"),
+    date: v.string(), 
+    completedMeals: v.array(v.id("meals")), 
+    completedExercises: v.array(v.id("exercises")),
+  }) .index("by_userId_and_date", ["userId", "date"]),
 
   notifications: defineTable({
     notificationId: v.string(),

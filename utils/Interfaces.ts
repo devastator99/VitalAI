@@ -59,3 +59,9 @@ export enum Role {
   value: number | boolean | string;
   notes?: string;
 }
+
+
+export type NavParams = {
+  Home: undefined;
+  Photos: { images: string[]; index: number };
+};
