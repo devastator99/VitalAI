@@ -177,7 +177,7 @@ export default function Diet() {
                       title={exercise.name}
                       image={
                         exercise.attachId
-                          ? /* Add image URL logic if needed */ ""
+                          ? storage.getUrl(exercise.attachId)
                           : ""
                       }
                       duration={`${exercise.duration} min`}
