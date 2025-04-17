@@ -1,19 +1,19 @@
-import React, { useCallback, memo } from 'react';
+import React, { useCallback, memo, useMemo } from 'react';
 import { View, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { MotiView, MotiText } from 'moti';
 import { History, Sun, Calendar } from 'lucide-react-native';
 
 // Responsive sizing based on screen width
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const PILL_WIDTH = Math.min(SCREEN_WIDTH * 0.9, 400); // Cap max width
+const PILL_WIDTH = Math.min(SCREEN_WIDTH * 0.9, 400);
 const PILL_HEIGHT = Math.min(56, SCREEN_WIDTH * 0.11);
 const PILL_PADDING = 5;
 const BUTTON_HEIGHT = PILL_HEIGHT - PILL_PADDING * 2;
 const BUTTON_WIDTH = (PILL_WIDTH - PILL_PADDING * 2) / 3;
 
 interface WeekdaySelectorProps {
-  selectedDay: number;
-  onSelectDay: (day: number) => void;
+  selectedDate: string; // YYYY-MM-DD format
+  onSelectDate: (date: string) => void;
 }
 
 const DAYS = [
@@ -22,7 +22,6 @@ const DAYS = [
   { icon: Calendar, color: '#10B981', label: 'Tomorrow', key: 'tomorrow' },
 ];
 
-// Memoized button component for better performance
 const DayButton = memo(({ day, index, isSelected, onPress }: { day: any, index: number, isSelected: boolean, onPress: () => void }) => {
   const Icon = day.icon;
   
@@ -65,53 +64,69 @@ const DayButton = memo(({ day, index, isSelected, onPress }: { day: any, index: 
   );
 });
 
-export function WeekdaySelector({ selectedDay, onSelectDay }: WeekdaySelectorProps) {
-  const handlePress = useCallback((index:any) => {
-    onSelectDay(index);
-  }, [onSelectDay]);
+export function WeekdaySelector({ selectedDate, onSelectDate }: WeekdaySelectorProps) {
+  // Generate dates and format them
+  const { dateStrings, selectedIndex } = useMemo(() => {
+    const now = new Date();
+    const dates = {
+      yesterday: new Date(now),
+      today: new Date(now),
+      tomorrow: new Date(now),
+    };
+    dates.yesterday.setDate(now.getDate() - 1);
+    dates.tomorrow.setDate(now.getDate() + 1);
+
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+    const strings = [
+      formatDate(dates.yesterday),
+      formatDate(dates.today),
+      formatDate(dates.tomorrow),
+    ];
+
+    return {
+      dateStrings: strings,
+      selectedIndex: strings.indexOf(selectedDate)
+    };
+  }, [selectedDate]); // Regenerate when selectedDate changes
+
+  const handlePress = useCallback((index: number) => {
+    onSelectDate(dateStrings[index]);
+  }, [onSelectDate, dateStrings]);
 
   return (
+    <MotiView
+      style={[styles.pill, { width: PILL_WIDTH }]}
+      from={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'timing', duration: 300 }}
+    >
       <MotiView
-        style={[styles.pill, { width: PILL_WIDTH }]}
-        from={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'timing', duration: 300 }}
-      >
-        <MotiView
-          style={[styles.activeBackground, { width: BUTTON_WIDTH }]}
-          animate={{
-            translateX: selectedDay * BUTTON_WIDTH,
-          }}
-          transition={{ 
-            type: 'spring', 
-            damping: 20, 
-            stiffness: 300,
-            mass: 0.8, // Reduced mass for faster movement
-          }}
+        style={[styles.activeBackground, { width: BUTTON_WIDTH }]}
+        animate={{
+          translateX: selectedIndex * BUTTON_WIDTH,
+        }}
+        transition={{ 
+          type: 'spring', 
+          damping: 20, 
+          stiffness: 300,
+          mass: 0.8,
+        }}
+      />
+      {DAYS.map((day, index) => (
+        <DayButton
+          key={day.key}
+          day={day}
+          index={index}
+          isSelected={selectedIndex === index}
+          onPress={() => handlePress(index)}
         />
-        {DAYS.map((day, index) => (
-          <DayButton
-            key={day.key}
-            day={day}
-            index={index}
-            isSelected={selectedDay === index}
-            onPress={() => handlePress(index)}
-          />
-        ))}
-      </MotiView>
+      ))}
+    </MotiView>
   );
 }
 
+// Keep the same styles as before
 const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     padding: 0,
-//     margin: 0,
-//     height: PILL_HEIGHT + 2,
-    
-//   },
   pill: {
     height: PILL_HEIGHT,
     width: '80%',
