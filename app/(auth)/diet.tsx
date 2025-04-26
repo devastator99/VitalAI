@@ -15,7 +15,10 @@ import { useCallback } from "react";
 type Section = "diet" | "exercise";
 
 export default function Diet() {
-  const [selectedDay, setSelectedDay] = useState<string>("");
+  const [selectedDay, setSelectedDay] = useState<any>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [activeSection, setActiveSection] = useState<Section>("diet");
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(
@@ -27,13 +30,14 @@ export default function Diet() {
 
   const DEFAULT_IMAGE_URL="dddccdc";
  
-  const getMealImageUrl = useCallback((attachId:any) => {
-    if (!attachId) return DEFAULT_IMAGE_URL;
+  // const getMealImageUrl = useCallback((attachId:any) => {
+  //   if (!attachId) return DEFAULT_IMAGE_URL;
     
-    // Use the imageUrl query to fetch the URL
-    const url = useQuery(api.files.getImageUrl, { storageId: attachId });
-    return url || DEFAULT_IMAGE_URL;
-  }, []);
+  //   // Use the imageUrl query to fetch the URL
+  //   const url = useQuery(api.files.getImageUrl, { storageId: attachId });
+  //   console.log("attach id url : " , url);
+  //   return url || DEFAULT_IMAGE_URL;
+  // }, []);
 
   const handleMealPress = (mealId: string) => {
     setSelectedMealId(mealId);
@@ -59,7 +63,13 @@ export default function Diet() {
     );
   }
 
-  const selectedDayData = threeDayPlan[selectedDay];
+  
+
+  // const selectedDayData = threeDayPlan?.[selectedDay];
+  const selectedDayData = threeDayPlan.find(obj => obj.date === selectedDay);
+  console.log("selectedDayData: ",selectedDay)
+  console.log("threedayplan: ",threeDayPlan)
+  console.log("yo",selectedDayData)
 
   const mealsForDay = selectedDayData?.exists
     ? [
@@ -94,7 +104,6 @@ export default function Diet() {
           headerShadowVisible: false,
         }}
       />
-
       {selectedMealId ? (
         <MealDetails id={selectedMealId} onClose={handleCloseMealDetails} />
       ) : selectedExerciseId ? (
@@ -172,7 +181,7 @@ export default function Diet() {
                     key={meal._id}
                     title={meal.name}
                     image={
-                      meal.attachId ?? getMealImageUrl 
+                      meal?.attachId ? meal?.attachId : null
                     }
                     calories={meal.calories}
                     time={meal.time}

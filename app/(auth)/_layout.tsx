@@ -105,7 +105,7 @@ const Layout = () => {
     },
     {
       name: "diet",
-      label: "Diet/Exercise",
+      label: "Plans",
       icon: {
         active: "settings",
         inactive: "settings-outline",

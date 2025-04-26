@@ -113,3 +113,11 @@ export const getThreeDayPlan = query({
 //       }
 //     },
 //   });
+
+
+export const getMealById = query({
+  args: { mealId: v.id("meals") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.mealId);
+  },
+});

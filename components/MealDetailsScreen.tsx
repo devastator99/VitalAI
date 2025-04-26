@@ -1,87 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, type StyleProp, type ViewStyle, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, SlideInDown, ZoomIn, useSharedValue, useAnimatedStyle, withTiming, withDelay } from 'react-native-reanimated';
 import { ContextMenuSeparator } from '~/components/context-menu';
 import Colors from '~/utils/Colors';
-
-const MEAL_DETAILS = {
-  '1': {
-    title: 'Overnight Oats with Berries',
-    image: 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?w=800',
-    calories: 350,
-    time: 'Breakfast',
-    ingredients: [
-      '1 cup rolled oats',
-      '1 cup almond milk',
-      '1 tbsp chia seeds',
-      '1 tbsp honey',
-      'Mixed berries',
-      'Sliced almonds',
-    ],
-    instructions: [
-      'Mix oats, almond milk, and chia seeds in a jar',
-      'Add honey and stir well',
-      'Cover and refrigerate overnight',
-      'Top with fresh berries and almonds before serving',
-    ],
-    nutritionFacts: {
-      protein: '12g',
-      carbs: '45g',
-      fats: '9g',
-      fiber: '8g',
-    },
-  },
-  '2': {
-    title: 'Quinoa Salad',
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-    calories: 250,
-    time: 'Lunch',
-    ingredients: [
-      '1 cup cooked quinoa',
-      '1/2 cup cherry tomatoes, halved',
-      '1/2 cucumber, diced',
-      '1/4 cup feta cheese, crumbled',
-      '2 tbsp olive oil',
-      'Salt and pepper to taste',
-    ],
-    instructions: [
-      'In a large bowl, combine quinoa, tomatoes, cucumber, and feta.',
-      'Drizzle with olive oil and season with salt and pepper.',
-      'Toss to combine and serve chilled.',
-    ],
-    nutritionFacts: {
-      protein: '8g',
-      carbs: '30g',
-      fats: '10g',
-      fiber: '5g',
-    },
-  },
-  '3': {
-    title: 'Grilled Chicken Tacos',
-    image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800',
-    calories: 400,
-    time: 'Dinner',
-    ingredients: [
-      '2 chicken breasts, grilled and sliced',
-      '4 corn tortillas',
-      '1 avocado, sliced',
-      '1/2 cup salsa',
-      '1/4 cup cilantro, chopped',
-    ],
-    instructions: [
-      'Grill chicken breasts until cooked through and slice.',
-      'Warm tortillas in a skillet.',
-      'Assemble tacos with chicken, avocado, salsa, and cilantro.',
-      'Serve immediately.',
-    ],
-    nutritionFacts: {
-      protein: '30g',
-      carbs: '40g',
-      fats: '15g',
-      fiber: '3g',
-    },
-  },
-};
+import { api } from '~/convex/_generated/api';
+import { useQuery } from 'convex/react';
+import { Id } from '~/convex/_generated/dataModel';
+import { ActivityIndicator } from 'react-native';
 
 const AnimatedImage = Animated.Image;
 const AnimatedView = Animated.View;
@@ -92,21 +17,69 @@ interface MealDetailsProps {
   onClose: () => void;
 }
 
+// New component to encapsulate animation logic
+const AnimatedNutritionItem = ({ 
+  itemKey, 
+  value, 
+  index 
+}: { 
+  itemKey: string; 
+  value: number; 
+  index: number 
+}) => {
+  // These hooks are now stable within a single component instance
+  const itemOpacity = useSharedValue(0);
+  const itemScale = useSharedValue(0.8);
+
+  useEffect(() => {
+    itemOpacity.value = withDelay(index * 100, withTiming(1, { duration: 300 }));
+    itemScale.value = withDelay(index * 100, withTiming(1, { duration: 300 }));
+  }, [index]);
+
+  const itemStyle = useAnimatedStyle(() => ({
+    opacity: itemOpacity.value,
+    transform: [{ scale: itemScale.value }]
+  }));
+
+  return (
+    <AnimatedView
+      key={itemKey}
+      style={[styles.nutritionItem, itemStyle]}
+    >
+      <Text style={styles.nutritionValue}>{value}</Text>
+      <Text style={styles.nutritionLabel}>{itemKey}</Text>
+    </AnimatedView>
+  );
+};
+
 export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
-  const meal = MEAL_DETAILS[id as keyof typeof MEAL_DETAILS];
+  const meal = useQuery(api.plans.getMealById,{mealId:id as Id<"meals">});
+  const defaultImageId = 'kg2bwrayksc02bmjwark74y71x7eee6j';
+
+  const imageId = meal?.attachId ||  defaultImageId;;
+  // Only query for image URL when we have a valid storage ID
+  const imgurl = useQuery(api.files.getImageUrl, 
+    imageId ? { storageId: imageId as Id<"_storage"> } : 'skip'
+  );
+  
+  const isLoading = !meal || (imageId && !imgurl);
+
+  // const meal = MEAL_DETAILS[id as keyof typeof MEAL_DETAILS];
   const fadeAnim = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
   const contentTranslateY = useSharedValue(50);
-
+  console.log("imgurl",imgurl);
   console.log(meal);
   console.log(id);
   console.log("MEAL_DETAILS");
 
   useEffect(() => {
-    fadeAnim.value = withTiming(1, { duration: 500 });
-    contentOpacity.value = withDelay(200, withTiming(1, { duration: 500 }));
-    contentTranslateY.value = withDelay(200, withTiming(0, { duration: 500 }));
-  }, []);
+    if (!isLoading) {
+      fadeAnim.value = withTiming(1, { duration: 500 });
+      contentOpacity.value = withDelay(200, withTiming(1, { duration: 500 }));
+      contentTranslateY.value = withDelay(200, withTiming(0, { duration: 500 }));
+    }
+  }, [isLoading]); // Reset animations when loading state changes
 
   const imageAnimatedStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim.value
@@ -117,15 +90,35 @@ export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
     transform: [{ translateY: contentTranslateY.value }]
   }));
 
+  // // Create arrays of animated values at the component level
+  // const itemOpacities = Object.entries(meal?.nutritionFacts || {}).map(() => useSharedValue(0));
+  // const itemScales = Object.entries(meal?.nutritionFacts || {}).map(() => useSharedValue(0.8));
+
+  // // Single useEffect to handle all animations
+  // useEffect(() => {
+  //   Object.entries(meal?.nutritionFacts || {}).forEach((_, index) => {
+  //     itemOpacities[index].value = withDelay(index * 100, withTiming(1, { duration: 300 }));
+  //     itemScales[index].value = withDelay(index * 100, withTiming(1, { duration: 300 }));
+  //   });
+  // }, []);
+
+   // Show loading state
+   if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={Colors.mainBlue} />
+      </View>
+    );
+  }
+
   if (!meal) return null;
 
   return (
     <ScrollView style={[styles.container, style]}>
       <AnimatedImage
-        source={{ uri: meal.image }}
+        source={{ uri: imgurl as string}}
         style={[styles.image, imageAnimatedStyle]}
       />
-      
       <AnimatedView 
         style={styles.closeButton}
         entering={FadeInDown.delay(200).duration(500)}
@@ -139,31 +132,15 @@ export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
         <Text style={styles.title}>{meal.title}</Text>
         
         <View style={styles.nutritionGrid}>
-          {Object.entries(meal.nutritionFacts).map(([key, value], index) => {
-            const itemOpacity = useSharedValue(0);
-            const itemScale = useSharedValue(0.8);
-            
-            useEffect(() => {
-              itemOpacity.value = withDelay(index * 100, withTiming(1, { duration: 300 }));
-              itemScale.value = withDelay(index * 100, withTiming(1, { duration: 300 }));
-            }, []);
-
-            const itemStyle = useAnimatedStyle(() => ({
-              opacity: itemOpacity.value,
-              transform: [{ scale: itemScale.value }]
-            }));
-
-            return (
-              <AnimatedView
-                key={key}
-                style={[styles.nutritionItem, itemStyle]}
-              >
-                <Text style={styles.nutritionValue}>{value}</Text>
-                <Text style={styles.nutritionLabel}>{key}</Text>
-              </AnimatedView>
-            );
-          })}
-        </View>
+          {Object.entries(meal.nutritionFacts).map(([key, value], index) => (
+            <AnimatedNutritionItem
+              key={key}
+              itemKey={key}
+              value={value}
+              index={index}
+            />
+          ))}
+        </View> 
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ingredients</Text>
@@ -174,7 +151,7 @@ export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Instructions</Text>
-          {meal.instructions.map((instruction, index) => (
+          {meal.description.map((instruction:any, index:any) => (
             <Text key={index} style={styles.listItem}>
               {index + 1}. {instruction}
             </Text>
@@ -186,6 +163,10 @@ export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#000000',

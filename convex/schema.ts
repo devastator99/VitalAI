@@ -66,7 +66,7 @@ export default defineSchema({
   })
     .index("by_chatId", ["chatId"])
     .index("by_senderId", ["senderId"])
-    .index("by_attachId",["attachId"]),
+    .index("by_attachId", ["attachId"]),
 
   contacts: defineTable({
     userId: v.id("users"), // Reference to the user , convex id
@@ -75,7 +75,7 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   media: defineTable({
-    storageId : v.id("_storage"),
+    storageId: v.id("_storage"),
     mimeType: v.string(),
     authorId: v.id("users"),
     // type: v.union(
@@ -97,8 +97,7 @@ export default defineSchema({
         bitRate: v.optional(v.number()),
       })
     ),
-  })
-    .index("by_messageId", ["messageId"]),
+  }).index("by_messageId", ["messageId"]),
 
   orders: defineTable({
     orderId: v.string(), // Razorpay order ID
@@ -108,8 +107,8 @@ export default defineSchema({
   }).index("by_orderId", ["orderId"]),
 
   dailyplan: defineTable({
-    userId: v.id("users"), 
-    dietitianId: v.id("users"), 
+    userId: v.id("users"),
+    dietitianId: v.id("users"),
     date: v.string(),
     meals: v.object({
       breakfast: v.array(v.id("meals")),
@@ -118,19 +117,24 @@ export default defineSchema({
       snacks: v.array(v.id("meals")),
     }),
     exercises: v.array(v.id("exercises")),
-  })
-  .index("by_userId_and_date", ["userId", "date"]),
+  }).index("by_userId_and_date", ["userId", "date"]),
 
   meals: defineTable({
-    name: v.string(),
-    description: v.string(),
+    title: v.string(),
+    description: v.array(v.string()),
     calories: v.number(),
-    protein: v.number(),
-    carbs: v.number(),
-    fat: v.number(),
+    time: v.string(),
+    ingredients: v.array(v.string()),
+    instructions: v.array(v.string()),
+    nutritionFacts: v.object({
+      protein: v.number(),
+      carbs: v.number(),
+      fats: v.number(),
+      fiber: v.number(),
+    }),
     attachId: v.optional(v.id("_storage")),
-  }).index("by_name", ["name"]),
-
+  })
+    .index("by_title", ["title"]),
 
   exercises: defineTable({
     name: v.string(),
@@ -143,10 +147,10 @@ export default defineSchema({
 
   completions: defineTable({
     userId: v.id("users"),
-    date: v.string(), 
-    completedMeals: v.array(v.id("meals")), 
+    date: v.string(),
+    completedMeals: v.array(v.id("meals")),
     completedExercises: v.array(v.id("exercises")),
-  }) .index("by_userId_and_date", ["userId", "date"]),
+  }).index("by_userId_and_date", ["userId", "date"]),
 
   notifications: defineTable({
     notificationId: v.string(),
@@ -191,7 +195,6 @@ export default defineSchema({
     familyHistory: v.optional(v.array(v.string())), // Family disease history
   }).index("by_userId", ["userId"]),
 
-
   appointments: defineTable({
     appointmentId: v.string(),
     userId: v.id("users"), // Foreign key reference
@@ -206,5 +209,4 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_doctorId", ["consultantId"]),
-
 });
