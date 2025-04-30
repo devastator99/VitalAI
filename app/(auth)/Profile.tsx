@@ -21,7 +21,7 @@ import ScreenTransitionView from "~/components/ScreenTransitionView";
 export default function Profile() {
   const user = useQuery(api.users.getCurrentUser);
   const profilePicture = user?.profileDetails?.picture;
-  const imageUrl = useQuery(api.files.getImageUrl, 
+  const imageUrl = useQuery(api.files.getImageUrl,
     profilePicture ? { storageId: profilePicture } : "skip"
   );
 

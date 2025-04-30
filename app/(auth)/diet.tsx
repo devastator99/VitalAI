@@ -92,6 +92,34 @@ export default function Diet() {
       ]
     : [];
 
+  const exercisesForDay = selectedDayData?.exists && selectedDayData?.exercises
+    ? selectedDayData.exercises.map((exercise: any) => ({
+        ...exercise,
+        // You can add any additional properties here if needed
+        // For example, if you want to add a time property, you can do so
+        // time: "Some Time", // Adjust this based on your data structure
+      }))
+    : [];
+
+  const EmptyState = ({ section }: { section: Section }) => (
+    <View style={styles.emptyContainer}>
+      <MaterialCommunityIcons
+        name={section === 'diet' ? 'food-off' : 'weight-lifter'}
+        size={64}
+        color={Colors.mainBlue}
+        style={styles.emptyIcon}
+      />
+      <Text style={styles.emptyTitle}>
+        No {section} plan for this day
+      </Text>
+      <Text style={styles.emptyText}>
+        {section === 'diet' 
+          ? 'Your nutrition plan will appear here once assigned'
+          : 'Your exercise routine will show up here when created'}
+      </Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Stack.Screen
@@ -172,41 +200,44 @@ export default function Diet() {
 
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              (mealsForDay.length === 0 || exercisesForDay.length === 0) && styles.centerContent
+            ]}
             showsVerticalScrollIndicator={false}
           >
-            {activeSection === "diet"
-              ? mealsForDay.map((meal, index) => (
+            {activeSection === "diet" ? (
+              mealsForDay.length === 0 ? (
+                <EmptyState section="diet" />
+              ) : (
+                mealsForDay.map((meal, index) => (
                   <DietCard
-                    key={meal._id}
+                    key={`${meal._id}-${index}`}
                     title={meal.name}
-                    image={
-                      meal?.attachId ? meal?.attachId : null
-                    }
+                    image={meal?.attachId ? meal?.attachId : null}
                     calories={meal.calories}
                     time={meal.time}
                     onPress={() => handleMealPress(meal._id)}
                     index={index}
                   />
                 ))
-              : selectedDayData?.exercises?.map(
-                  (exercise: any, index: number) => (
-                    <ExerciseCard
-                      key={exercise._id}
-                      title={exercise.name}
-                      image={
-                        exercise.attachId
-                          ? /* Add image URL logic if needed */ ""
-                          : ""
-                      }
-                      duration={`${exercise.duration} min`}
-                      sets={exercise.sets}
-                      reps={exercise.reps}
-                      onPress={() => handleExercisePress(exercise._id)}
-                      index={index}
-                    />
-                  )
-                )}
+              )
+            ) : exercisesForDay.length === 0 ? (
+              <EmptyState section="exercise" />
+            ) : (
+              exercisesForDay.map((exercise: any, index: number) => (
+                <ExerciseCard
+                  key={`${exercise._id}-${index}`}
+                  title={exercise.name}
+                  attachId={exercise.attachId}
+                  duration={`${exercise.duration} min`}
+                  sets={exercise.sets}
+                  reps={exercise.reps}
+                  onPress={() => handleExercisePress(exercise._id)}
+                  index={index}
+                />
+              ))
+            )}
           </ScrollView>
         </View>
       )}
@@ -253,5 +284,34 @@ const styles = StyleSheet.create({
   },
   activeSectionButtonText: {
     color: Colors.mainBlue,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    minHeight: 300,
+  },
+  emptyIcon: {
+    marginBottom: 16,
+    opacity: 0.8,
+  },
+  emptyTitle: {
+    color: Colors.white,
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyText: {
+    color: Colors.white,
+    opacity: 0.7,
+    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 24,
+    paddingHorizontal: 24,
+  },
+  centerContent: {
+    justifyContent: 'center',
   },
 });

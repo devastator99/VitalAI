@@ -22,8 +22,7 @@ export function DietCard({ title, image, calories, time, onPress, index }: DietC
 
   const effectiveImageId = image || defaultImageId;
   const imgurl = useQuery(api.files.getImageUrl, 
-    effectiveImageId ? { storageId: effectiveImageId as Id<"_storage"> } : 'skip'
-    );
+    effectiveImageId ? { storageId: effectiveImageId as Id<"_storage"> } : 'skip');
 
 
   return (

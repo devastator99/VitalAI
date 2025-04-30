@@ -3,6 +3,7 @@ import { View, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { MotiView, MotiText } from 'moti';
 import { History, Sun, Calendar } from 'lucide-react-native';
 
+
 // Responsive sizing based on screen width
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PILL_WIDTH = Math.min(SCREEN_WIDTH * 0.9, 400);

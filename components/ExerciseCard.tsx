@@ -1,11 +1,14 @@
-import React from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
-import { MotiView } from 'moti';
-import Colors from '~/utils/Colors';
+import React from "react";
+import { View, Text, Image, Pressable, StyleSheet } from "react-native";
+import { MotiView } from "moti";
+import Colors from "~/utils/Colors";
+import { useQuery } from "convex/react";
+import { api } from "~/convex/_generated/api";
+import { Id } from "~/convex/_generated/dataModel";
 
 interface ExerciseCardProps {
   title: string;
-  image: string;
+  attachId: string;
   duration: string;
   sets: number;
   reps: number;
@@ -13,15 +16,24 @@ interface ExerciseCardProps {
   index: number;
 }
 
-export function ExerciseCard({ 
-  title, 
-  image, 
-  duration, 
-  sets, 
-  reps, 
-  onPress, 
-  index 
+const defaultImageId = "kg2eywbhh87nypgy9eqrw12qa57erkxp";
+
+export function ExerciseCard({
+  title,
+  attachId,
+  duration,
+  sets,
+  reps,
+  onPress,
+  index,
 }: ExerciseCardProps) {
+  const effectiveImageId = attachId || defaultImageId;
+  const imgurl = useQuery(
+    api.files.getImageUrl,
+    effectiveImageId
+      ? { storageId: effectiveImageId as Id<"_storage"> }
+      : "skip"
+  );
   return (
     <MotiView
       from={{
@@ -35,17 +47,13 @@ export function ExerciseCard({
         scale: 1,
       }}
       transition={{
-        type: 'timing',
+        type: "timing",
         duration: 500,
         delay: index * 100,
-      }}>
-      <Pressable
-        onPress={onPress}
-        style={styles.card}>
-        <Image
-          source={{ uri: image }}
-          style={styles.image}
-        />
+      }}
+    >
+      <Pressable onPress={onPress} style={styles.card}>
+        <Image source={{ uri: imgurl as string }} style={styles.image} />
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
           <View style={styles.details}>
@@ -70,48 +78,48 @@ export function ExerciseCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgb(26, 26, 26)',
+    backgroundColor: "rgb(26, 26, 26)",
     borderRadius: 16,
     marginHorizontal: 16,
     marginVertical: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 160,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   content: {
     padding: 16,
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.white,
     marginBottom: 12,
   },
   details: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   detailItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   detailValue: {
     fontSize: 16,
-    fontWeight: '600',
-    color: 'rgb(0, 99, 175)',
+    fontWeight: "600",
+    color: "rgb(0, 99, 175)",
     marginBottom: 4,
   },
   detailLabel: {
     fontSize: 12,
-    color: '#6B7280',
-    textTransform: 'uppercase',
+    color: "#6B7280",
+    textTransform: "uppercase",
   },
 });

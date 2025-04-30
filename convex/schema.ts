@@ -137,13 +137,13 @@ export default defineSchema({
     .index("by_title", ["title"]),
 
   exercises: defineTable({
-    name: v.string(),
+    title: v.string(),
     description: v.string(),
     sets: v.number(),
     reps: v.number(),
     duration: v.number(),
     attachId: v.optional(v.id("_storage")),
-  }).index("by_name", ["name"]),
+  }).index("title", ["title"]),
 
   completions: defineTable({
     userId: v.id("users"),
