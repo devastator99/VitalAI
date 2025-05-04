@@ -101,6 +101,7 @@ export const sendMessage = mutation({
       type: args.type,
       attachId: args.attachId,
       createdAt: Date.now(),
+      readBy: [],
       updatedAt: Date.now(),
     });
 
@@ -258,5 +259,58 @@ export const getRecentMessagesByUser = query({
     );
 
     return results;
+  },
+});
+
+export const markMessagesAsRead = mutation({
+  args: {
+    messageIds: v.array(v.id("messages")),
+  },
+  handler: async (ctx, { messageIds }) => {
+    // Check if the user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Fetch the user based on their identity subject
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const userId = user._id;
+
+    // Process each message ID
+    for (const messageId of messageIds) {
+      const message = await ctx.db.get(messageId);
+      if (
+        message && // Ensure the message exists
+        message.senderId !== userId && // Don't mark the user's own messages
+        !message.readBy.includes(userId) // Avoid duplicate reads
+      ) {
+        await ctx.db.patch(messageId, {
+          readBy: [...message.readBy, userId],
+        });
+      }
+    }
+  },
+});
+
+export const getMessageById = query({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const message = await ctx.db.get(args.messageId);
+    
+    if (!message) {
+      throw new Error("Message not found");
+    }
+    
+    return message;
   },
 });

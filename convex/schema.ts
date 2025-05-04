@@ -62,6 +62,7 @@ export default defineSchema({
     attachId: v.optional(v.id("_storage")),
     replyTo: v.optional(v.id("users")),
     createdAt: v.number(),
+    readBy: v.array(v.id("users")),
     updatedAt: v.number(),
   })
     .index("by_chatId", ["chatId"])

@@ -43,6 +43,9 @@ import type { Habit } from "~/utils/Interfaces";
 import type { Entry } from "~/utils/Interfaces";
 import type { HabitType } from "~/utils/Interfaces";
 import HabitDetail from "~/components/HabitDetail";
+import { SliderSelector } from '../../components/SliderSelector';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Colors from "~/constants/Colors";
 
 
 
@@ -310,7 +313,7 @@ const HeaderWithButtons = ({
   return (
     <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,1)" }}>
       <StatusBar style="dark" />
-
+      
       {/* Header */}
       <Animated.View style={[styles1.header, headerStyle]}>
         <Animated.Text style={[styles1.title, titleStyle]}>
@@ -326,50 +329,57 @@ const HeaderWithButtons = ({
         </View>
       </Animated.View>
 
-      {/* Buttons */}
-      <Animated.View style={[styles1.buttonRowContainer, buttonRowStyle]}>
-        <View style={styles1.buttonRow}>
-          <ViewSelectorButton
-            label="Daily"
-            selected={selectedButton === "Daily"}
-            onPress={() => {
-              setSelectedButton("Daily");
-              setIsLoadingView("Daily");
-              setTimeout(() => {
-                setSelectedView("Daily");
-                setIsLoadingView(null);
-              }, 1000);
-            }}
-            isLoading={isLoadingView === "Daily"}
-          />
-          <ViewSelectorButton
-            label="Weekly"
-            selected={selectedButton === "Weekly"}
-            onPress={() => {
-              setSelectedButton("Weekly");
-              setIsLoadingView("Weekly");
-              setTimeout(() => {
-                setSelectedView("Weekly");
-                setIsLoadingView(null);
-              }, 1000);
-            }}
-            isLoading={isLoadingView === "Weekly"}
-          />
-          <ViewSelectorButton
-            label="Overall"
-            selected={selectedButton === "Overall"}
-            onPress={() => {
-              setSelectedButton("Overall");
-              setIsLoadingView("Overall");
-              setTimeout(() => {
-                setSelectedView("Overall");
-                setIsLoadingView(null);
-              },1000);
-            }}
-            isLoading={isLoadingView === "Overall"}
-          />
-        </View>
-      </Animated.View>
+      {/* SliderSelector with proper spacing */}
+      <View style={{ marginTop: HEADER_EXPANDED_HEIGHT }}>
+        <SliderSelector
+          buttons={[
+            {
+              icon: (props) => (
+                <MaterialCommunityIcons 
+                  name="calendar-today" 
+                  size={props.size} 
+                  color={props.color} 
+                />
+              ),
+              color: Colors.white,
+              label: "Daily"
+            },
+            {
+              icon: (props) => (
+                <MaterialCommunityIcons 
+                  name="calendar-week" 
+                  size={props.size} 
+                  color={props.color} 
+                />
+              ),
+              color: Colors.white,
+              label: "Weekly"
+            },
+            {
+              icon: (props) => (
+                <MaterialCommunityIcons 
+                  name="chart-arc" 
+                  size={props.size} 
+                  color={props.color} 
+                />
+              ),
+              color: Colors.white,
+              label: "Overall"
+            }
+          ]}
+          selectedIndex={["Daily", "Weekly", "Overall"].indexOf(selectedButton)}
+          onSelect={(index) => {
+            const views = ["Daily", "Weekly", "Overall"] as const;
+            const selectedView = views[index] as "Daily" | "Weekly" | "Overall";
+            setSelectedButton(selectedView);
+            setIsLoadingView(selectedView);
+            setTimeout(() => {
+              setSelectedView(selectedView);
+              setIsLoadingView(null);
+            }, 1000);
+          }}
+        />
+      </View>
     </View>
   );
 };
@@ -946,43 +956,5 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 });
-
-// Memoize habit components to prevent unnecessary re-renders
-const ViewSelectorButton = React.memo(
-  ({
-    label,
-    selected,
-    onPress,
-    isLoading,
-  }: {
-    label: string;
-    selected: boolean;
-    onPress: () => void;
-    isLoading?: boolean;
-  }) => {
-    // Replace Animated.View with simpler implementation
-    const scale = useSharedValue(1);
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: withSpring(selected ? 1.05 : 1) }],
-    }));
-
-    return (
-      <TouchableOpacity
-        style={[styles1.button, selected && styles1.selectedButton]}
-        onPress={onPress}
-        activeOpacity={0.6}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Animated.Text style={[styles1.buttonText, animatedStyle]}>
-            {label}
-          </Animated.Text>
-        )}
-      </TouchableOpacity>
-    );
-  }
-);
 
 export default HabitDashboard;

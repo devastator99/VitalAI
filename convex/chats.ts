@@ -496,7 +496,7 @@ export const deleteChat = mutation({
 
     await Promise.all(
       messages.map(async (message) => {
-        if (message.type !== "text" && message.mediaUrl) {
+        if (message.type !== "text" && message.attachId) {
           const mediaDoc = await ctx.db
             .query("media")
             .filter((q) => q.eq(q.field("messageId"), message._id))
@@ -515,6 +515,29 @@ export const deleteChat = mutation({
     return {
       success: true,
       message: "Chat and associated data deleted successfully",
+    };
+  },
+});
+
+export const getChatWithParticipants = query({
+  args: { chatId: v.id("chats") },
+  handler: async (ctx, args) => {
+    const chat = await ctx.db.get(args.chatId);
+    if (!chat) throw new Error("Chat not found");
+
+    const participantsWithRoles = await Promise.all(
+      chat.participants.map(async (participantId) => {
+        const user = await ctx.db.get(participantId);
+        return {
+          id: participantId,
+          role: user?.role
+        };
+      })
+    );
+
+    return {
+      ...chat,
+      participants: participantsWithRoles,
     };
   },
 });

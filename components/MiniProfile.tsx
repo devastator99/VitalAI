@@ -1,113 +1,97 @@
 import { View, Image, Text, StyleSheet, Pressable } from "react-native";
-import {
-  ContextMenuRoot,
-  ContextMenuTrigger,
-  ContextMenuItem,
-  ContextMenuItemTitle,
-  ContextMenuContent,
-  ContextMenuLabel,
-  ContextMenuArrow,
-  ContextMenuGroup,
-  ContextMenuCheckboxItem,
-  ContextMenuSubTrigger,
-  ContextMenuPreview,
-  ContextMenuItemIndicator,
-  ContextMenuSubContent,
-  ContextMenuSub,
-  ContextMenuSeparator,
-} from './context-menu'
+import * as ContextMenu from "zeego/context-menu";
 
 // Dummy user data (replace with your actual data source)
 const user = {
-  avatar: "https://example.com/avatar.jpg",
+  avatar: "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?q=80&w=3072&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   name: "Jane Doe",
   username: "@janedoe",
 };
 
-export const MiniProfile = (props:any) => {
+export const MiniProfile = (props: any) => {
   return (
-    <ContextMenuRoot>
+    <ContextMenu.Root>
       {/* Trigger: A button to open the context menu */}
-      <ContextMenuTrigger>
+      <ContextMenu.Trigger>
         <Pressable style={styles.triggerButton}>
           <Text style={styles.triggerText}>Open Profile Menu</Text>
         </Pressable>
-      </ContextMenuTrigger>
+      </ContextMenu.Trigger>
 
       {/* Content: The context menu with preview and items */}
-      <ContextMenuContent>
+      <ContextMenu.Content>
         {/* Mini profile preview */}
         {/* <ContextMenuPreview>{() => <Preview />}</ContextMenuPreview> */}
 
         {/* Label for menu section */}
-        <ContextMenuLabel>
+        <ContextMenu.Label>
           <Text style={styles.label}>Actions</Text>
-        </ContextMenuLabel>
+        </ContextMenu.Label>
 
         {/* Individual menu item */}
-        <ContextMenuItem key="Profile">
-          <ContextMenuItemTitle style={styles.itemTitle}>
+        <ContextMenu.Item key="Profile" onSelect={() => { /* Handle view profile */ }}>
+          <ContextMenu.ItemTitle style={styles.itemTitle}>
             View Profile
-          </ContextMenuItemTitle>
-        </ContextMenuItem>
+          </ContextMenu.ItemTitle>
+        </ContextMenu.Item>
 
         {/* Group of related items */}
-        <ContextMenuGroup>
-          <ContextMenuItem key="send-message">
-            <ContextMenuItemTitle style={styles.itemTitle}>
+        <ContextMenu.Group>
+          <ContextMenu.Item key="send-message" onSelect={() => { /* Handle send message */ }}>
+            <ContextMenu.ItemTitle style={styles.itemTitle}>
               Send Message
-            </ContextMenuItemTitle>
-          </ContextMenuItem>
-          <ContextMenuItem key="Follow">
-            <ContextMenuItemTitle style={styles.itemTitle}>
+            </ContextMenu.ItemTitle>
+          </ContextMenu.Item>
+          <ContextMenu.Item key="Follow" onSelect={() => { /* Handle follow */ }}>
+            <ContextMenu.ItemTitle style={styles.itemTitle}>
               Follow
-            </ContextMenuItemTitle>
-          </ContextMenuItem>
-        </ContextMenuGroup>
+            </ContextMenu.ItemTitle>
+          </ContextMenu.Item>
+        </ContextMenu.Group>
 
         {/* Checkbox item for toggleable options */}
-        <ContextMenuCheckboxItem key="mute" value={false}>
-          <ContextMenuItemTitle style={styles.itemTitle}>
+        <ContextMenu.CheckboxItem key="mute" value={false}>
+          <ContextMenu.ItemTitle style={styles.itemTitle}>
             Mute Notifications
-          </ContextMenuItemTitle>
-          <ContextMenuItemIndicator />
-        </ContextMenuCheckboxItem>
+          </ContextMenu.ItemTitle>
+          <ContextMenu.ItemIndicator />
+        </ContextMenu.CheckboxItem>
 
         {/* Submenu for additional options */}
-        <ContextMenuSub>
-          <ContextMenuSubTrigger key="more">
-            <ContextMenuItemTitle style={styles.itemTitle}>
+        <ContextMenu.Sub>
+          <ContextMenu.SubTrigger key="more">
+            <ContextMenu.ItemTitle style={styles.itemTitle}>
               More Options
-            </ContextMenuItemTitle>
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent style={styles.menuContent}>
-            <ContextMenuItem key="Profile">
-              <ContextMenuItemTitle style={styles.itemTitle}>
+            </ContextMenu.ItemTitle>
+          </ContextMenu.SubTrigger>
+          <ContextMenu.SubContent style={styles.menuContent}>
+            <ContextMenu.Item key="Block" onSelect={() => { /* Handle block user */ }}>
+              <ContextMenu.ItemTitle style={styles.itemTitle}>
                 Block User
-              </ContextMenuItemTitle>
-            </ContextMenuItem>
-            <ContextMenuItem key="Report">
-              <ContextMenuItemTitle style={styles.itemTitle}>
+              </ContextMenu.ItemTitle>
+            </ContextMenu.Item>
+            <ContextMenu.Item key="Report" onSelect={() => { /* Handle report */ }}>
+              <ContextMenu.ItemTitle style={styles.itemTitle}>
                 Report
-              </ContextMenuItemTitle>
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
+              </ContextMenu.ItemTitle>
+            </ContextMenu.Item>
+          </ContextMenu.SubContent>
+        </ContextMenu.Sub>
 
         {/* Separator for visual distinction */}
-        <ContextMenuSeparator />
+        <ContextMenu.Separator />
 
         {/* Additional item */}
-        <ContextMenuItem key="Share">
-          <ContextMenuItemTitle style={styles.itemTitle}>
+        <ContextMenu.Item key="Share" onSelect={() => { /* Handle share profile */ }}>
+          <ContextMenu.ItemTitle style={styles.itemTitle}>
             Share Profile
-          </ContextMenuItemTitle>
-        </ContextMenuItem>
+          </ContextMenu.ItemTitle>
+        </ContextMenu.Item>
 
         {/* Arrow (web-specific, optional) */}
-        <ContextMenuArrow />
-      </ContextMenuContent>
-    </ContextMenuRoot>
+        <ContextMenu.Arrow />
+      </ContextMenu.Content>
+    </ContextMenu.Root>
   );
 };
 
