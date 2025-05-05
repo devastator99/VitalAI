@@ -107,8 +107,8 @@ const Layout = () => {
       name: "diet",
       label: "Plans",
       icon: {
-        active: "settings",
-        inactive: "settings-outline",
+        active: "trail-sign",
+        inactive: "trail-sign-outline",
       },
     },
     {

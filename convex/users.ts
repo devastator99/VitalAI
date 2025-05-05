@@ -971,3 +971,17 @@ export const infoStatus = query({
   },
 });
 
+export const getUsersByIds = query({
+  args: {
+    userIds: v.array(v.id("users"))
+  },
+  handler: async (ctx, args) => {
+    const users = await Promise.all(
+      args.userIds.map(id => ctx.db.get(id))
+    );
+    return users.filter(user => user !== null);
+  }
+});
+
+
+

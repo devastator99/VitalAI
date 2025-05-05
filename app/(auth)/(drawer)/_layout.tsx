@@ -55,16 +55,20 @@ import BirdVector from "~/components/BirdVector";
 import { useAppStore } from "~/store";
 import AnimatedButton from "~/components/AnimatedButton";
 import MagButton from "~/components/MagButton";
+import ChatDetailsModal from "~/components/ChatDetailsModal";
+import { Id } from "~/convex/_generated/dataModel";
+import { Drawer } from "expo-router/drawer";
 
 // Add type for navigation prop
 type NavigationProp = DrawerNavigationProp<Record<string, object>>;
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const AnimatedHeader = () => {
+const AnimatedHeader = ({ chatId }: { chatId: string }) => {
   const progress = useSharedValue(0);
   const pathLength = 2730; // Roughly calculated from the path coordinates
   const fullWidth = 200; // Matches SVG width for the underline
+  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
 
   useEffect(() => {
     progress.value = withTiming(1, {
@@ -98,11 +102,25 @@ const AnimatedHeader = () => {
           { backgroundColor: "rgb(0, 0, 0)" },
         ]}
       >
-        <DrawerToggleButton tintColor={Colors.primary} />
+        <DrawerToggleButton tintColor={"rgb(71, 123, 211)"}  />
         <View style={styles3.container}>
           <BirdVector width={100} height={35} />
         </View>
+        <TouchableOpacity 
+          onPress={() => setIsDetailsModalVisible(true)}
+          style={styles3.optionsButton}
+        >
+          <Ionicons name="ellipsis-horizontal-circle-sharp" size={28} color={"rgb(130, 164, 223)"} />
+        </TouchableOpacity>
       </View>
+
+      {isDetailsModalVisible && (
+        <ChatDetailsModal
+          isVisible={isDetailsModalVisible}
+          onClose={() => setIsDetailsModalVisible(false)}
+          chatId={chatId as Id<"chats">}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -113,14 +131,16 @@ const styles3 = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical:10,
+    paddingHorizontal: 16,
+    height: 60,
   },
   container: {
+    flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 90,
-    paddingBottom:5,
+  },
+  optionsButton: {
+    padding: 8,
+    marginLeft: "auto",
   }
 });
 
@@ -453,7 +473,7 @@ const Layout = () => {
         name="(ai-chat)/[id]"
         initialParams={{ id: chatId }}
         options={{
-          header: () => <AnimatedHeader />,
+          header: () => <AnimatedHeader chatId={chatId} />,
         }}
         component={ChatPage}
       />

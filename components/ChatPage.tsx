@@ -27,6 +27,7 @@ import MessageBubble from "~/components/MessageBubble";
 import MessageIdeas from "~/components/MessageIdeas";
 import ScrollToBottomButton from "./ScrollToBottomButton";
 import FilePreview from "~/components/FilePreview";
+import { LinearGradient } from "expo-linear-gradient";
 
 // Utilities
 import { fetchGeminiResponse } from "~/utils/openRouterApi";
@@ -94,9 +95,12 @@ const DateSeparator = React.memo(({ timestamp }: { timestamp: number }) => {
   return (
     <View style={styles.dateSeparatorContainer}>
       <View style={styles.dateSeparatorLine} />
-      <View style={styles.dateSeparatorBadge}>
+      <LinearGradient
+        colors={[Colors.mainBlue, '#00254d']}
+        style={styles.dateSeparatorBadge}
+      >
         <Text style={styles.dateSeparatorText}>{formattedDate}</Text>
-      </View>
+      </LinearGradient>
       <View style={styles.dateSeparatorLine} />
     </View>
   );
@@ -459,7 +463,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   dateSeparatorBadge: {
-    backgroundColor: Colors.mainBlue,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,

@@ -1,16 +1,17 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { WeekdaySelector } from "../../components/WeekdaySelector";
 import { DietCard } from "../../components/DietCard";
 import { ExerciseCard } from "../../components/ExerciseCard";
-import MealDetails from "../../components/MealDetailsScreen";
+import MealDetailsScreen from "../../components/MealDetailsScreen";
 import ExerciseDetails from "../../components/ExerciseDetails";
 import Colors from "~/utils/Colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { useCallback } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 type Section = "diet" | "exercise";
 
@@ -124,122 +125,130 @@ export default function Diet() {
     <View style={styles.container}>
       <Stack.Screen
         options={{
-          headerTitle: "Your Daily Plan",
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row' }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 20 }}>Your Daily </Text>
+              <Text style={{ color: Colors.mainBlue, fontSize: 20 }}>Plans</Text>
+            </View>
+          ),
           headerShown: true,
           headerStyle: {
             backgroundColor: "#000000",
           },
           headerShadowVisible: false,
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 16 }}>
+              <Ionicons name="chevron-back-circle-outline" size={30} color="#FFFFFF" />
+            </TouchableOpacity>
+          ),
+          headerTintColor: "#FFFFFF",
         }}
       />
-      {selectedMealId ? (
-        <MealDetails id={selectedMealId} onClose={handleCloseMealDetails} />
-      ) : selectedExerciseId ? (
-        <ExerciseDetails
-          id={selectedExerciseId}
-          onClose={handleCloseExerciseDetails}
-        />
-      ) : (
-        <View style={{ flex: 1 }}>
-          <View style={{ marginVertical: 15 }}>
-            <WeekdaySelector
-              selectedDate={selectedDay}
-              onSelectDate={setSelectedDay}
-            />
-          </View>
+      <View style={{ flex: 1 }}>
+        <View style={{ marginVertical: 15 }}>
+          <WeekdaySelector
+            selectedDate={selectedDay}
+            onSelectDate={setSelectedDay}
+          />
+        </View>
 
-          <View style={styles.sectionSelector}>
-            <Pressable
-              style={[
-                styles.sectionButton,
-                activeSection === "diet" && styles.activeSectionButton,
-              ]}
-              onPress={() => setActiveSection("diet")}
-            >
-              <MaterialCommunityIcons
-                name="food-fork-drink"
-                size={20}
-                color={
-                  activeSection === "diet" ? Colors.mainBlue : Colors.white
-                }
-              />
-              <Text
-                style={[
-                  styles.sectionButtonText,
-                  activeSection === "diet" && styles.activeSectionButtonText,
-                ]}
-              >
-                Diet Plan
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.sectionButton,
-                activeSection === "exercise" && styles.activeSectionButton,
-              ]}
-              onPress={() => setActiveSection("exercise")}
-            >
-              <MaterialCommunityIcons
-                name="dumbbell"
-                size={20}
-                color={
-                  activeSection === "exercise" ? Colors.mainBlue : Colors.white
-                }
-              />
-              <Text
-                style={[
-                  styles.sectionButtonText,
-                  activeSection === "exercise" &&
-                    styles.activeSectionButtonText,
-                ]}
-              >
-                Exercise Plan
-              </Text>
-            </Pressable>
-          </View>
-
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[
-              styles.scrollContent,
-              (mealsForDay.length === 0 || exercisesForDay.length === 0) && styles.centerContent
+        <View style={styles.sectionSelector}>
+          <Pressable
+            style={[
+              styles.sectionButton,
+              activeSection === "diet" && styles.activeSectionButton,
             ]}
-            showsVerticalScrollIndicator={false}
+            onPress={() => setActiveSection("diet")}
           >
-            {activeSection === "diet" ? (
-              mealsForDay.length === 0 ? (
-                <EmptyState section="diet" />
-              ) : (
-                mealsForDay.map((meal, index) => (
-                  <DietCard
-                    key={`${meal._id}-${index}`}
-                    title={meal.name}
-                    image={meal?.attachId ? meal?.attachId : null}
-                    calories={meal.calories}
-                    time={meal.time}
-                    onPress={() => handleMealPress(meal._id)}
-                    index={index}
-                  />
-                ))
-              )
-            ) : exercisesForDay.length === 0 ? (
-              <EmptyState section="exercise" />
+            <MaterialCommunityIcons
+              name="food-fork-drink"
+              size={20}
+              color={
+                activeSection === "diet" ? Colors.mainBlue : Colors.white
+              }
+            />
+            <Text
+              style={[
+                styles.sectionButtonText,
+                activeSection === "diet" && styles.activeSectionButtonText,
+              ]}
+            >
+              Diet Plan
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.sectionButton,
+              activeSection === "exercise" && styles.activeSectionButton,
+            ]}
+            onPress={() => setActiveSection("exercise")}
+          >
+            <MaterialCommunityIcons
+              name="dumbbell"
+              size={20}
+              color={
+                activeSection === "exercise" ? Colors.mainBlue : Colors.white
+              }
+            />
+            <Text
+              style={[
+                styles.sectionButtonText,
+                activeSection === "exercise" &&
+                  styles.activeSectionButtonText,
+              ]}
+            >
+              Exercise Plan
+            </Text>
+          </Pressable>
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
+            (mealsForDay.length === 0 || exercisesForDay.length === 0) && styles.centerContent
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {activeSection === "diet" ? (
+            mealsForDay.length === 0 ? (
+              <EmptyState section="diet" />
             ) : (
-              exercisesForDay.map((exercise: any, index: number) => (
-                <ExerciseCard
-                  key={`${exercise._id}-${index}`}
-                  title={exercise.name}
-                  attachId={exercise.attachId}
-                  duration={`${exercise.duration} min`}
-                  sets={exercise.sets}
-                  reps={exercise.reps}
-                  onPress={() => handleExercisePress(exercise._id)}
+              mealsForDay.map((meal, index) => (
+                <DietCard
+                  key={`${meal._id}-${index}`}
+                  title={meal.name}
+                  image={meal?.attachId ? meal?.attachId : null}
+                  calories={meal.calories}
+                  time={meal.time}
+                  onPress={() => handleMealPress(meal._id)}
                   index={index}
                 />
               ))
-            )}
-          </ScrollView>
-        </View>
+            )
+          ) : exercisesForDay.length === 0 ? (
+            <EmptyState section="exercise" />
+          ) : (
+            exercisesForDay.map((exercise: any, index: number) => (
+              <ExerciseCard
+                key={`${exercise._id}-${index}`}
+                title={exercise.name}
+                attachId={exercise.attachId}
+                duration={`${exercise.duration} min`}
+                sets={exercise.sets}
+                reps={exercise.reps}
+                onPress={() => handleExercisePress(exercise._id)}
+                index={index}
+              />
+            ))
+          )}
+        </ScrollView>
+      </View>
+      {selectedMealId && (
+        <MealDetailsScreen 
+          id={selectedMealId} 
+          style={StyleSheet.absoluteFill} 
+        />
       )}
     </View>
   );

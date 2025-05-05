@@ -1,4 +1,4 @@
-import React from "react";
+import React,{Fragment} from "react";
 import {
   View,
   Text,
@@ -44,30 +44,12 @@ type MessageBubbleProps = {
   participants: { id: Id<"users">; role: string }[];
 };
 
-const MemoizedAvatarImage = React.memo(
-  ({ uri, style }: { uri: string; style: any }) => {
-    const [isLoading, setIsLoading] = React.useState(true);
-    
-    return (
-      <View style={[style, { justifyContent: 'center', alignItems: 'center' }]}>
-        {isLoading && (
-          <ActivityIndicator 
-            size="small" 
-            color={Colors.mainBlue}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-        <Image 
-          source={{ uri }} 
-          style={[style, { opacity: isLoading ? 0 : 1 }]}
-          onLoadStart={() => setIsLoading(true)}
-          onLoadEnd={() => setIsLoading(false)}
-        />
-      </View>
-    );
-  },
-  (prevProps, nextProps) => prevProps.uri === nextProps.uri
-);
+const MemoizedAvatarImage = React.memo(({ uri, style }: { uri: string; style: any }) => (
+  <Image 
+    source={{ uri }} 
+    style={style}
+  />
+), (prevProps, nextProps) => prevProps.uri === nextProps.uri);
 
 const SingleImage = ({ style, url }: { style: any; url: string }) => (
   <Gallery
@@ -89,7 +71,7 @@ const ProfileDetails = ({
   isVisible,
   onClose,
 }: {
-  imageurl?: string | null;
+  imageurl: string | null;
   userName?: string;
   userRole?: string;
   email?: string;
@@ -131,15 +113,20 @@ const ProfileDetails = ({
               {userRole === "ai" ? (
                 <BirdVector width={80} height={80} />
               ) : imageurl ? (
-                <>
-                  {loading && <ActivityIndicator size="large" color={Colors.mainBlue} />}
-                  <Image
-                    source={{ uri: imageurl }}
-                    style={styles.profileImage}
-                    onLoadEnd={() => setLoading(false)}
-                    onLoadStart={() => setLoading(true)}
-                  />
-                </>
+                <View style={styles.imageContainer}>
+                  <React.Suspense
+                    fallback={
+                      <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center' }]}>
+                        <ActivityIndicator size="large" color={Colors.mainBlue} />
+                      </View>
+                    }
+                  >
+                    <MemoizedAvatarImage
+                      uri={imageurl}
+                      style={styles.profileImage}
+                    />
+                  </React.Suspense>
+                </View>
               ) : (
                 <View style={styles.profileImagePlaceholder}>
                   <UserVector height={40} width={40} />
@@ -380,7 +367,7 @@ const MessageBubble = React.memo(
         <ProfileDetails
           isVisible={isProfileVisible}
           onClose={handleProfileClose}
-          imageurl={imageUrl}
+          imageurl={imageUrl || null}
           userName={senderUser?.name}
           userRole={senderUser?.role}
           email={senderUser?.profileDetails?.email}
@@ -431,7 +418,9 @@ const MessageBubble = React.memo(
                           timestamp={timestamp}
                         />
                       )}
-                      <Text style={styles.timeTooltip}>{formattedDateTime}</Text>
+                      {!isCurrentUser && (
+                        <Text style={styles.timeTooltip}>{formattedDateTime}</Text>
+                      )}
                     </View>
                   </Animated.View>
                 )}
@@ -629,7 +618,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: "rgba(255, 0, 0, 0)",
   },
   modalContent: {
     width: "90%",
@@ -799,12 +788,9 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: 100,
     height: 100,
-    justifyContent: "center",
     borderRadius: 50,
-    borderWidth: 0,
-    borderColor: "rgba(244, 193, 10, 0.1)",
-    overflow: "hidden",
-    marginBottom: 12,
+    overflow: 'hidden',
+    position: 'relative',
   },
   messageFooter: {
     flexDirection: 'column',

@@ -7,6 +7,8 @@ import { api } from '~/convex/_generated/api';
 import { useQuery } from 'convex/react';
 import { Id } from '~/convex/_generated/dataModel';
 import { ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
+import NutrientCard from './NutrientCard';
 
 const AnimatedImage = Animated.Image;
 const AnimatedView = Animated.View;
@@ -14,7 +16,6 @@ const AnimatedView = Animated.View;
 interface MealDetailsProps {
   id: string;
   style?: StyleProp<ViewStyle>;
-  onClose: () => void;
 }
 
 // New component to encapsulate animation logic
@@ -52,7 +53,9 @@ const AnimatedNutritionItem = ({
   );
 };
 
-export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
+
+export default function MealDetails({ id, style }: MealDetailsProps) {
+  const router = useRouter();
   const meal = useQuery(api.plans.getMealById,{mealId:id as Id<"meals">});
   const defaultImageId = 'kg2bwrayksc02bmjwark74y71x7eee6j';
 
@@ -113,6 +116,10 @@ export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
 
   if (!meal) return null;
 
+  const handleClose = () => {
+    router.back();
+  };
+
   return (
     <ScrollView style={[styles.container, style]}>
       <AnimatedImage
@@ -123,7 +130,7 @@ export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
         style={styles.closeButton}
         entering={FadeInDown.delay(200).duration(500)}
       >
-        <TouchableOpacity onPress={onClose}>
+        <TouchableOpacity onPress={handleClose}>
           <Text style={styles.closeText}>×</Text>
         </TouchableOpacity>
       </AnimatedView>
@@ -132,14 +139,12 @@ export default function MealDetails({ id, style, onClose }: MealDetailsProps) {
         <Text style={styles.title}>{meal.title}</Text>
         
         <View style={styles.nutritionGrid}>
-          {Object.entries(meal.nutritionFacts).map(([key, value], index) => (
-            <AnimatedNutritionItem
-              key={key}
-              itemKey={key}
-              value={value}
-              index={index}
-            />
-          ))}
+          <NutrientCard
+            carbs={meal.nutritionFacts.carbs}
+            protein={meal.nutritionFacts.protein}
+            fats={meal.nutritionFacts.fats}
+            calories={meal.nutritionFacts.fiber}
+          />
         </View> 
 
         <View style={styles.section}>
@@ -193,8 +198,8 @@ const styles = StyleSheet.create({
   nutritionGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#1E1E1E',
-    padding: 16,
+    backgroundColor: 'rgba(48, 48, 48, 0.31)',
+    padding: 5,
     borderRadius: 12,
     marginBottom: 24,
   },
