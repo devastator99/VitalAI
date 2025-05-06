@@ -1,4 +1,4 @@
-import React, { useState ,useRef} from "react";
+import React, { useState, useRef } from "react";
 import {
   ScrollView,
   View,
@@ -10,6 +10,7 @@ import {
   FlatList,
   ActivityIndicator,
   PanResponder,
+  ListRenderItemInfo,
 } from "react-native";
 import {
   ProgressBar,
@@ -45,10 +46,11 @@ import type { HabitType } from "~/utils/Interfaces";
 import HabitDetail from "~/components/HabitDetail";
 import { SliderSelector } from "../../components/SliderSelector";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import Colors from "~/constants/Colors";
+import Colors from "~/utils/Colors";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import {Swiper} from "rn-swiper-list";
-import { SwiperCardRefType } from "rn-swiper-list";
+import { SwipeListView } from "react-native-swipe-list-view";
+import { Stack, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 // TO ADD: // Precompute lightened colors in habit creation
 //habit name and frequency in header in weekdays with right icons for edit delete and share
 //display  total , score percent ,in a card
@@ -450,15 +452,12 @@ const styles1 = StyleSheet.create({
 });
 
 const HabitDashboard = () => {
+  const router = useRouter();
   const [habits, setHabits] = useState<Habit[]>(mockHabits);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [showCreatePage, setShowCreatePage] = useState(false);
-  const [selectedView, setSelectedView] = useState<
-    "Daily" | "Weekly" | "Overall"
-  >("Daily");
-  const [isLoadingView, setIsLoadingView] = useState<
-    "Daily" | "Weekly" | "Overall" | null
-  >(null);
+  const [selectedView, setSelectedView] = useState<"Daily" | "Weekly" | "Overall">("Daily");
+  const [isLoadingView, setIsLoadingView] = useState<"Daily" | "Weekly" | "Overall" | null>(null);
 
   const handleCreateHabit = (
     newHabit: Omit<Habit, "_id" | "entries" | "streak" | "progress">
@@ -476,6 +475,29 @@ const HabitDashboard = () => {
     setHabits((prev) => [...prev, habit]);
     setShowCreatePage(false);
   };
+
+  const HiddenRow = ({
+    onComplete,
+    onSkip,
+  }: {
+    onComplete: () => void;
+    onSkip: () => void;
+  }) => (
+    <View style={styles3.hiddenContainer}>
+      <TouchableOpacity
+        style={[styles3.hiddenButton, styles3.skipButton]}
+        onPress={onSkip}
+      >
+        <MaterialCommunityIcons name="close" size={24} color="#fff" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles3.hiddenButton, styles3.completeButton]}
+        onPress={onComplete}
+      >
+        <MaterialCommunityIcons name="check" size={24} color="#fff" />
+      </TouchableOpacity>
+    </View>
+  );
 
   const handleLogEntry = (
     habitId: string,
@@ -502,11 +524,42 @@ const HabitDashboard = () => {
       })
     );
   };
-  const swiperRef = useRef<SwiperCardRefType>(null);
 
   return (
     <Provider>
       <View style={{ flex: 1, backgroundColor: "black" }}>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTitle: () => (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: Colors.white, fontSize: 20, fontWeight: '600' }}>Your </Text>
+                <Text style={{ color: Colors.mainBlue, fontSize: 20, fontWeight: '600' }}>Habits</Text>
+              </View>
+            ),
+            headerStyle: {
+              backgroundColor: Colors.PitchBlack,
+            },
+            headerShadowVisible: false,
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 16 ,paddingEnd: 10}}>
+                <IconCircle name="chevron-back-sharp" size={17} />
+              </TouchableOpacity>
+            ),
+            headerRight: () => (
+              <View style={{ flexDirection: 'row', gap: 15, marginRight: 16 }}>
+                <TouchableOpacity onPress={() => setShowCreatePage(true)}>
+                  <IconCircle name="add" size={17} />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <IconCircle name="settings" size={17} />
+                </TouchableOpacity>
+              </View>
+            ),
+            headerTintColor: Colors.white,
+          }}
+        />
+
         {showCreatePage ? (
           <HabitCreationScreen
             onCreate={handleCreateHabit}
@@ -519,67 +572,92 @@ const HabitDashboard = () => {
           />
         ) : (
           <>
-            <HeaderWithButtons
-              habits={habits}
-              showCreatePage={showCreatePage}
-              setShowCreatePage={setShowCreatePage}
-              selectedView={selectedView}
-              setSelectedView={setSelectedView}
-              setSelectedHabit={setSelectedHabit}
-              isLoadingView={isLoadingView}
-              setIsLoadingView={setIsLoadingView}
-            />
+            <View style={{ marginTop: 15 }}>
+              <SliderSelector
+                buttons={[
+                  {
+                    icon: (props) => (
+                      <MaterialCommunityIcons
+                        name="calendar-today"
+                        size={props.size}
+                        color={props.color}
+                      />
+                    ),
+                    color: Colors.white,
+                    label: "Daily",
+                  },
+                  {
+                    icon: (props) => (
+                      <MaterialCommunityIcons
+                        name="calendar-week"
+                        size={props.size}
+                        color={props.color}
+                      />
+                    ),
+                    color: Colors.white,
+                    label: "Weekly",
+                  },
+                  {
+                    icon: (props) => (
+                      <MaterialCommunityIcons
+                        name="chart-arc"
+                        size={props.size}
+                        color={props.color}
+                      />
+                    ),
+                    color: Colors.white,
+                    label: "Overall",
+                  },
+                ]}
+                selectedIndex={["Daily", "Weekly", "Overall"].indexOf(selectedView)}
+                onSelect={(index) => {
+                  const views = ["Daily", "Weekly", "Overall"] as const;
+                  const newView = views[index];
+                  setIsLoadingView(newView);
+                  setTimeout(() => {
+                    setSelectedView(newView);
+                    setIsLoadingView(null);
+                  }, 1000);
+                }}
+              />
+            </View>
 
             {isLoadingView ? (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: "center",
-                  backgroundColor: "black",
-                  alignItems: "center",
-                  marginBottom: 120,
-                }}
-              >
+              <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#fff" />
               </View>
             ) : (
-              <GestureHandlerRootView style={styles.container}>
-                <Swiper
-                  ref={swiperRef}
-                  data={habits}
-                  renderCard={(habit, index) => (
-                    <View key={habit._id}>
-                      {selectedView === "Overall" ? (
-                        isLoadingView === "Overall" ? (
-                          <View style={styles.loadingCard}>
-                            <ActivityIndicator size="large" color="#fff" />
-                          </View>
-                        ) : (
-                          <ContributionGrid habit={habit} />
-                        )
-                      ) : (
-                        <HabitCard
-                          habit={habit}
-                          onPress={() => setSelectedHabit(habit)}
-                          selectedView={selectedView}
-                          handleLogEntry={handleLogEntry}
-                        />
-                      )}
-                    </View>
-                  )}
-                  cardStyle={styles.cardStyle}
-                  onSwipeRight={(i) => {
-                    const h = habits[i];
-                    handleLogEntry(h._id, true, "Completed via swipe");
-                  }}
-                  onSwipeLeft={(i) => {
-                    const h = habits[i];
-                    handleLogEntry(h._id, false, "Skipped via swipe");
-                  }}
-                  onSwipeEnd={() => console.log("Swipe ended")}
-                  disableTopSwipe
-                />
-              </GestureHandlerRootView>
+              <SwipeListView<Habit>
+                data={habits}
+                keyExtractor={(item: Habit) => item._id}
+                renderItem={({ item: habit }: ListRenderItemInfo<Habit>) =>
+                  selectedView === "Overall" ? (
+                    <ContributionGrid habit={habit} />
+                  ) : (
+                    <HabitCard
+                      habit={habit}
+                      onPress={() => setSelectedHabit(habit)}
+                      selectedView={selectedView}
+                      handleLogEntry={handleLogEntry}
+                    />
+                  )
+                }
+                renderHiddenItem={({ item }: ListRenderItemInfo<Habit>) => (
+                  <HiddenRow
+                    onComplete={() => handleLogEntry(item._id, true, "Completed via swipe")}
+                    onSkip={() => handleLogEntry(item._id, false, "Skipped via swipe")}
+                  />
+                )}
+                leftOpenValue={50}
+                rightOpenValue={-50}
+                disableLeftSwipe={false}
+                disableRightSwipe={false}
+                previewRowKey={"1"}
+                previewOpenValue={-40}
+                previewOpenDelay={3000}
+                contentContainerStyle={{ paddingVertical: 10 }}
+                style={{ marginTop: 10 }}
+              />
             )}
           </>
         )}
@@ -661,7 +739,7 @@ const HabitCard = React.memo(
             colors={[habit.color, lighterColor1, lighterColor2]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={[styles.card, { borderRadius: 25 }]}
+            style={[styles.card, {marginTop:-10, borderRadius: 25 }]}
           >
             <View style={styles.cardHeader}>
               <IconCircle name={habit.icon} size={24} iconColor="#fff" />
@@ -762,7 +840,7 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH - 40,
     borderRadius: 25,
     padding: 16,
-    marginVertical: 0,
+    marginVertical: -5,
     alignSelf: "center",
     elevation: 1,
   },
@@ -977,16 +1055,137 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 25,
     marginVertical: 10,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   loadingCard: {
     width: CARD_WIDTH - 40,
     height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'black',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "black",
     borderRadius: 25,
-  }
+  },
+  rowBack: {
+    alignItems: "center",
+    backgroundColor: "black",
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingLeft: 15,
+    width: CARD_WIDTH - 40,
+    alignSelf: "center",
+  },
+  backRightBtn: {
+    alignItems: "center",
+    bottom: 0,
+    justifyContent: "center",
+    position: "absolute",
+    top: 0,
+    width: 75,
+    borderRadius: 25,
+  },
+  backRightBtnRight: {
+    backgroundColor: "green",
+    right: 0,
+  },
+  backLeftBtn: {
+    backgroundColor: "red",
+    left: 0,
+    width: 75,
+    borderRadius: 25,
+    alignItems: "center",
+    bottom: 0,
+    justifyContent: "center",
+    position: "absolute",
+    top: 0,
+  },
+  backTextWhite: {
+    color: "#FFF",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "black",
+    alignItems: "center",
+    marginBottom: 120,
+  },
 });
+
+// Add a separate StyleSheet for swipe-related styles
+const swipeStyles = StyleSheet.create({
+  rowBack: {
+    alignItems: "center",
+    backgroundColor: "black",
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingLeft: 15,
+    width: CARD_WIDTH - 40,
+    alignSelf: "center",
+  },
+  backRightBtn: {
+    alignItems: "center",
+    bottom: 0,
+    justifyContent: "center",
+    position: "absolute",
+    top: 0,
+    width: 75,
+    backgroundColor: "red",
+    borderRadius: 25,
+  },
+  backRightBtnRight: {
+    backgroundColor: "green",
+    right: 0,
+  },
+  backLeftBtn: {
+    backgroundColor: "red",
+    left: 0,
+    width: 75,
+    borderRadius: 25,
+    alignItems: "center",
+    bottom: 0,
+    justifyContent: "center",
+    position: "absolute",
+    top: 0,
+  },
+  backTextWhite: {
+    color: "#FFF",
+  },
+});
+
+const btnSize = 60;
+const btnRadius = 12;
+const cardMargin = 20;
+
+const styles3 = StyleSheet.create({
+  // ... your existing styles
+
+  hiddenContainer: {
+    width: CARD_WIDTH - 2 * cardMargin,   // match your card width
+    height: btnSize+10,
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: cardMargin,
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  hiddenButton: {
+    width: "49%",
+    height: btnSize,
+    borderRadius: btnRadius,
+    justifyContent: 'flex-start',
+    alignItems:'center',
+    elevation: 2,
+  },
+  skipButton: {
+    backgroundColor: '#E74C3C',  // red
+  },
+  completeButton: {
+    backgroundColor: '#27AE60',  // green
+  },
+});
+
 
 export default HabitDashboard;

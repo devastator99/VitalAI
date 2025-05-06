@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity } from "react-native";
+import React, { useState, Suspense } from "react";
+import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { WeekdaySelector } from "../../components/WeekdaySelector";
 import { DietCard } from "../../components/DietCard";
@@ -12,65 +12,51 @@ import { useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import IconCircle from "~/components/IconCircle";
 
 type Section = "diet" | "exercise";
 
-export default function Diet() {
-  const [selectedDay, setSelectedDay] = useState<any>(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
-  const [activeSection, setActiveSection] = useState<Section>("diet");
-  const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(
-    null
-  );
-  const router = useRouter();
+const LoadingIndicator = () => (
+  <View style={[styles.container, styles.loadingContainer]}>
+    <ActivityIndicator size="large" color={Colors.mainBlue} />
+    <Text style={styles.loadingText}>Loading your meal plan...</Text>
+  </View>
+);
+
+// Add EmptyState component before DietContent
+const EmptyState = ({ section }: { section: Section }) => (
+  <View style={styles.emptyContainer}>
+    <MaterialCommunityIcons
+      name={section === 'diet' ? 'food-off' : 'weight-lifter'}
+      size={64}
+      color={Colors.mainBlue}
+      style={styles.emptyIcon}
+    />
+    <Text style={styles.emptyTitle}>
+      No {section} plan for this day
+    </Text>
+    <Text style={styles.emptyText}>
+      {section === 'diet' 
+        ? 'Your nutrition plan will appear here once assigned'
+        : 'Your exercise routine will show up here when created'}
+    </Text>
+  </View>
+);
+
+// Update DietContent to handle undefined threeDayPlan
+const DietContent = ({ selectedDay, activeSection, onMealPress, onExercisePress }: {
+  selectedDay: string;
+  activeSection: Section;
+  onMealPress: (id: string) => void;
+  onExercisePress: (id: string) => void;
+}) => {
   const threeDayPlan = useQuery(api.plans.getThreeDayPlan);
   
-
-  const DEFAULT_IMAGE_URL="dddccdc";
- 
-  // const getMealImageUrl = useCallback((attachId:any) => {
-  //   if (!attachId) return DEFAULT_IMAGE_URL;
-    
-  //   // Use the imageUrl query to fetch the URL
-  //   const url = useQuery(api.files.getImageUrl, { storageId: attachId });
-  //   console.log("attach id url : " , url);
-  //   return url || DEFAULT_IMAGE_URL;
-  // }, []);
-
-  const handleMealPress = (mealId: string) => {
-    setSelectedMealId(mealId);
-  };
-
-  const handleCloseMealDetails = () => {
-    setSelectedMealId(null);
-  };
-
-  const handleExercisePress = (exerciseId: string) => {
-    setSelectedExerciseId(exerciseId);
-  };
-
-  const handleCloseExerciseDetails = () => {
-    setSelectedExerciseId(null);
-  };
-
-  if (threeDayPlan === undefined) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ color: "white" }}>Loading plan...</Text>
-      </View>
-    );
+  if (!threeDayPlan) {
+    return <LoadingIndicator />;
   }
-
   
-
-  // const selectedDayData = threeDayPlan?.[selectedDay];
   const selectedDayData = threeDayPlan.find(obj => obj.date === selectedDay);
-  console.log("selectedDayData: ",selectedDay)
-  console.log("threedayplan: ",threeDayPlan)
-  console.log("yo",selectedDayData)
 
   const mealsForDay = selectedDayData?.exists
     ? [
@@ -96,160 +82,171 @@ export default function Diet() {
   const exercisesForDay = selectedDayData?.exists && selectedDayData?.exercises
     ? selectedDayData.exercises.map((exercise: any) => ({
         ...exercise,
-        // You can add any additional properties here if needed
-        // For example, if you want to add a time property, you can do so
-        // time: "Some Time", // Adjust this based on your data structure
       }))
     : [];
 
-  const EmptyState = ({ section }: { section: Section }) => (
-    <View style={styles.emptyContainer}>
-      <MaterialCommunityIcons
-        name={section === 'diet' ? 'food-off' : 'weight-lifter'}
-        size={64}
-        color={Colors.mainBlue}
-        style={styles.emptyIcon}
-      />
-      <Text style={styles.emptyTitle}>
-        No {section} plan for this day
-      </Text>
-      <Text style={styles.emptyText}>
-        {section === 'diet' 
-          ? 'Your nutrition plan will appear here once assigned'
-          : 'Your exercise routine will show up here when created'}
-      </Text>
-    </View>
+  return (
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={[
+        styles.scrollContent,
+        (mealsForDay.length === 0 || exercisesForDay.length === 0) && styles.centerContent
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
+      {activeSection === "diet" ? (
+        mealsForDay.length === 0 ? (
+          <EmptyState section="diet" />
+        ) : (
+          mealsForDay.map((meal, index) => (
+            <DietCard
+              key={`${meal._id}-${index}`}
+              title={meal.name}
+              image={meal?.attachId ? meal?.attachId : null}
+              calories={meal.calories}
+              time={meal.time}
+              onPress={() => onMealPress(meal._id)}
+              index={index}
+            />
+          ))
+        )
+      ) : exercisesForDay.length === 0 ? (
+        <EmptyState section="exercise" />
+      ) : (
+        exercisesForDay.map((exercise: any, index: number) => (
+          <ExerciseCard
+            key={`${exercise._id}-${index}`}
+            title={exercise.name}
+            attachId={exercise.attachId}
+            duration={`${exercise.duration} min`}
+            sets={exercise.sets}
+            reps={exercise.reps}
+            onPress={() => onExercisePress(exercise._id)}
+            index={index}
+          />
+        ))
+      )}
+    </ScrollView>
   );
+};
+
+export default function Diet() {
+  const [selectedDay, setSelectedDay] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [activeSection, setActiveSection] = useState<Section>("diet");
+  const router = useRouter();
+
+  const DEFAULT_IMAGE_URL="dddccdc";
+ 
+  // const getMealImageUrl = useCallback((attachId:any) => {
+  //   if (!attachId) return DEFAULT_IMAGE_URL;
+    
+  //   // Use the imageUrl query to fetch the URL
+  //   const url = useQuery(api.files.getImageUrl, { storageId: attachId });
+  //   console.log("attach id url : " , url);
+  //   return url || DEFAULT_IMAGE_URL;
+  // }, []);
+
+  const handleMealPress = (mealId: string) => {
+    router.push(`/(details)/meal?id=${mealId}`);
+  };
+
+  const handleExercisePress = (exerciseId: string) => {
+    router.push(`/(details)/exercise?id=${exerciseId}`);
+  };
 
   return (
     <View style={styles.container}>
       <Stack.Screen
         options={{
+          headerShown: true,
           headerTitle: () => (
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 20 }}>Your Daily </Text>
-              <Text style={{ color: Colors.mainBlue, fontSize: 20 }}>Plans</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: Colors.white, fontSize: 20, fontWeight: '400' }}>Your Daily </Text>
+              <Text style={{ color: Colors.mainBlue, fontSize: 20, fontWeight: '400' }}>Plans</Text>
             </View>
           ),
-          headerShown: true,
           headerStyle: {
-            backgroundColor: "#000000",
+            backgroundColor: Colors.PitchBlack,
+
           },
           headerShadowVisible: false,
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 16 }}>
-              <Ionicons name="chevron-back-circle-outline" size={30} color="#FFFFFF" />
+            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 16 ,paddingEnd: 10}}>
+              <IconCircle name="chevron-back-sharp" size={17} />
             </TouchableOpacity>
           ),
-          headerTintColor: "#FFFFFF",
+          headerTintColor: Colors.white,
         }}
       />
-      <View style={{ flex: 1 }}>
-        <View style={{ marginVertical: 15 }}>
-          <WeekdaySelector
-            selectedDate={selectedDay}
-            onSelectDate={setSelectedDay}
-          />
-        </View>
-
-        <View style={styles.sectionSelector}>
-          <Pressable
-            style={[
-              styles.sectionButton,
-              activeSection === "diet" && styles.activeSectionButton,
-            ]}
-            onPress={() => setActiveSection("diet")}
-          >
-            <MaterialCommunityIcons
-              name="food-fork-drink"
-              size={20}
-              color={
-                activeSection === "diet" ? Colors.mainBlue : Colors.white
-              }
-            />
-            <Text
-              style={[
-                styles.sectionButtonText,
-                activeSection === "diet" && styles.activeSectionButtonText,
-              ]}
-            >
-              Diet Plan
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.sectionButton,
-              activeSection === "exercise" && styles.activeSectionButton,
-            ]}
-            onPress={() => setActiveSection("exercise")}
-          >
-            <MaterialCommunityIcons
-              name="dumbbell"
-              size={20}
-              color={
-                activeSection === "exercise" ? Colors.mainBlue : Colors.white
-              }
-            />
-            <Text
-              style={[
-                styles.sectionButtonText,
-                activeSection === "exercise" &&
-                  styles.activeSectionButtonText,
-              ]}
-            >
-              Exercise Plan
-            </Text>
-          </Pressable>
-        </View>
-
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            (mealsForDay.length === 0 || exercisesForDay.length === 0) && styles.centerContent
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          {activeSection === "diet" ? (
-            mealsForDay.length === 0 ? (
-              <EmptyState section="diet" />
-            ) : (
-              mealsForDay.map((meal, index) => (
-                <DietCard
-                  key={`${meal._id}-${index}`}
-                  title={meal.name}
-                  image={meal?.attachId ? meal?.attachId : null}
-                  calories={meal.calories}
-                  time={meal.time}
-                  onPress={() => handleMealPress(meal._id)}
-                  index={index}
-                />
-              ))
-            )
-          ) : exercisesForDay.length === 0 ? (
-            <EmptyState section="exercise" />
-          ) : (
-            exercisesForDay.map((exercise: any, index: number) => (
-              <ExerciseCard
-                key={`${exercise._id}-${index}`}
-                title={exercise.name}
-                attachId={exercise.attachId}
-                duration={`${exercise.duration} min`}
-                sets={exercise.sets}
-                reps={exercise.reps}
-                onPress={() => handleExercisePress(exercise._id)}
-                index={index}
-              />
-            ))
-          )}
-        </ScrollView>
-      </View>
-      {selectedMealId && (
-        <MealDetailsScreen 
-          id={selectedMealId} 
-          style={StyleSheet.absoluteFill} 
+      
+      <View style={{ marginVertical: 15 }}>
+        <WeekdaySelector
+          selectedDate={selectedDay}
+          onSelectDate={setSelectedDay}
         />
-      )}
+      </View>
+
+      <View style={styles.sectionSelector}>
+        <Pressable
+          style={[
+            styles.sectionButton,
+            activeSection === "diet" && styles.activeSectionButton,
+          ]}
+          onPress={() => setActiveSection("diet")}
+        >
+          <MaterialCommunityIcons
+            name="food-fork-drink"
+            size={20}
+            color={
+              activeSection === "diet" ? Colors.mainBlue : Colors.white
+            }
+          />
+          <Text
+            style={[
+              styles.sectionButtonText,
+              activeSection === "diet" && styles.activeSectionButtonText,
+            ]}
+          >
+            Diet Plan
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.sectionButton,
+            activeSection === "exercise" && styles.activeSectionButton,
+          ]}
+          onPress={() => setActiveSection("exercise")}
+        >
+          <MaterialCommunityIcons
+            name="dumbbell"
+            size={20}
+            color={
+              activeSection === "exercise" ? Colors.mainBlue : Colors.white
+            }
+          />
+          <Text
+            style={[
+              styles.sectionButtonText,
+              activeSection === "exercise" &&
+                styles.activeSectionButtonText,
+            ]}
+          >
+            Exercise Plan
+          </Text>
+        </Pressable>
+      </View>
+
+      <Suspense fallback={<LoadingIndicator />}>
+        <DietContent 
+          selectedDay={selectedDay}
+          activeSection={activeSection}
+          onMealPress={handleMealPress}
+          onExercisePress={handleExercisePress}
+        />
+      </Suspense>
     </View>
   );
 }
@@ -257,7 +254,7 @@ export default function Diet() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: Colors.PitchBlack,
   },
   scrollView: {
     flex: 1,
@@ -266,11 +263,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   sectionSelector: {
-    flexDirection: "row",
-    padding: 8,
-    backgroundColor: "#1F1F1F",
-    borderBottomWidth: 1,
-    borderBottomColor: "#333333",
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   sectionButton: {
     flex: 1,
@@ -322,5 +317,14 @@ const styles = StyleSheet.create({
   },
   centerContent: {
     justifyContent: 'center',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: Colors.white,
+    marginTop: 16,
+    fontSize: 16,
   },
 });

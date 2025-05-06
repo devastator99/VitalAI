@@ -125,6 +125,7 @@ const Layout = () => {
     <Authenticated>
       <Tabs
         screenOptions={{
+          headerShown: false,
           tabBarShowLabel: false,
           tabBarStyle: {
             backgroundColor: "rgba(19, 22, 28,0.4)",

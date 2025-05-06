@@ -44,7 +44,7 @@ const IconCircle: React.FC<IconCircleProps> = ({
 
 const styles = StyleSheet.create({
   circle: {
-    borderWidth: 1,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },

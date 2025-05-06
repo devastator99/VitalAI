@@ -34,7 +34,7 @@ import { fetchGeminiResponse } from "~/utils/openRouterApi";
 import { usePaginatedQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
-import { fetchOpenAIStreamingResponse } from "~/utils/OpenaiApi";
+import { fetchOpenAIResponse, fetchOpenAIStreamingResponse } from "~/utils/OpenaiApi";
 
 const AI_USER_ID = "j576bezhm29ycwx1bh4mf7db3s7bpy6q" as Id<"users">;
 
@@ -188,7 +188,7 @@ const ChatPage = () => {
         // Call the streaming response function
         await fetchOpenAIStreamingResponse(
           recentMessages,
-          (text) => {
+          (text: any) => {
             // Handle text updates
             console.log("Streaming text:", text);
             // You can update the state here to display the streaming text in the UI
