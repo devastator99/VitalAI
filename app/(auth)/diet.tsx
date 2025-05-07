@@ -13,6 +13,7 @@ import { api } from "~/convex/_generated/api";
 import { useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import IconCircle from "~/components/IconCircle";
+import { Id } from "~/convex/_generated/dataModel";
 
 type Section = "diet" | "exercise";
 
@@ -42,6 +43,22 @@ const EmptyState = ({ section }: { section: Section }) => (
     </Text>
   </View>
 );
+
+interface ExerciseCardProps {
+  id: Id<"exercises">;
+  title: string;
+  imageId?: Id<"_storage">;
+  category: "strength" | "cardio" | "flexibility" | "balance";
+  difficulty: "beginner" | "intermediate" | "advanced";
+  muscleGroups: string[]; // Renamed from targetedMuscleGroups
+  equipment: string[];
+  sets?: number;
+  reps?: number;
+  duration?: number;
+  durationUnit?: "seconds" | "minutes";
+  onPress: () => void;
+  index: number;
+}
 
 // Update DietContent to handle undefined threeDayPlan
 const DietContent = ({ selectedDay, activeSection, onMealPress, onExercisePress }: {
@@ -101,7 +118,7 @@ const DietContent = ({ selectedDay, activeSection, onMealPress, onExercisePress 
           mealsForDay.map((meal, index) => (
             <DietCard
               key={`${meal._id}-${index}`}
-              title={meal.name}
+              title={meal.title}
               image={meal?.attachId ? meal?.attachId : null}
               calories={meal.calories}
               time={meal.time}
@@ -113,18 +130,25 @@ const DietContent = ({ selectedDay, activeSection, onMealPress, onExercisePress 
       ) : exercisesForDay.length === 0 ? (
         <EmptyState section="exercise" />
       ) : (
-        exercisesForDay.map((exercise: any, index: number) => (
-          <ExerciseCard
-            key={`${exercise._id}-${index}`}
-            title={exercise.name}
-            attachId={exercise.attachId}
-            duration={`${exercise.duration} min`}
-            sets={exercise.sets}
-            reps={exercise.reps}
-            onPress={() => onExercisePress(exercise._id)}
-            index={index}
-          />
-        ))
+        <Suspense fallback={<LoadingIndicator />}>
+          {exercisesForDay.map((exercise: any, index: number) => (
+            <ExerciseCard
+              key={`${exercise._id}-${index}`}
+              title={exercise.title}
+              imageId={exercise.attachId}
+              category={exercise.category}
+              difficulty={exercise.difficulty}
+              targetedMuscleGroups={exercise.targetedMuscleGroups || []}
+              equipment={exercise.equipment || []}
+              sets={exercise.sets}
+              reps={exercise.reps}
+              duration={exercise.duration}
+              durationUnit={exercise.durationUnit || 'minutes'}
+              onPress={() => onExercisePress(exercise._id)}
+              index={index}
+            />
+          ))}
+        </Suspense>
       )}
     </ScrollView>
   );

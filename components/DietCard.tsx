@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
-import { MotiView } from 'moti';
-import Colors from '~/utils/Colors';
-import { useCallback } from 'react';
-import { useQuery } from 'convex/react';
-import { api } from '~/convex/_generated/api';
-import { Id } from '~/convex/_generated/dataModel';
+import React, { useEffect } from "react";
+import { View, Text, Image, Pressable, StyleSheet } from "react-native";
+import { MotiView } from "moti";
+import Colors from "~/utils/Colors";
+import { useCallback } from "react";
+import { useQuery } from "convex/react";
+import { api } from "~/convex/_generated/api";
+import { Id } from "~/convex/_generated/dataModel";
 
 interface DietCardProps {
   title: string;
@@ -16,14 +16,23 @@ interface DietCardProps {
   index: number;
 }
 
-const defaultImageId = 'kg2bwrayksc02bmjwark74y71x7eee6j';
+const defaultImageId = "kg2bwrayksc02bmjwark74y71x7eee6j";
 
-export function DietCard({ title, image, calories, time, onPress, index }: DietCardProps) {
-
+export function DietCard({
+  title,
+  image,
+  calories,
+  time,
+  onPress,
+  index,
+}: DietCardProps) {
   const effectiveImageId = image || defaultImageId;
-  const imgurl = useQuery(api.files.getImageUrl, 
-    effectiveImageId ? { storageId: effectiveImageId as Id<"_storage"> } : 'skip');
-
+  const imgurl = useQuery(
+    api.files.getImageUrl,
+    effectiveImageId
+      ? { storageId: effectiveImageId as Id<"_storage"> }
+      : "skip"
+  );
 
   return (
     <MotiView
@@ -38,21 +47,22 @@ export function DietCard({ title, image, calories, time, onPress, index }: DietC
         scale: 1,
       }}
       transition={{
-        type: 'timing',
+        type: "timing",
         duration: 500,
         delay: index * 100,
-      }}>
-      <Pressable
-        onPress={onPress}
-        style={styles.card}>
-        <Image
-          source={{ uri: imgurl as string}}
-          style={styles.image}
-        />
+      }}
+    >
+      <Pressable onPress={onPress} style={styles.card}>
+        <Image source={{ uri: imgurl as string }} style={styles.image} />
         <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title}>
+            {title.split(" ").slice(0, -1).join(" ")}{" "}
+            <Text style={styles.titleBlue}>{title.split(" ").slice(-1)}</Text>
+          </Text>
           <View style={styles.details}>
-            <Text style={styles.calories}>{calories} kcal</Text>
+            <Text style={styles.calories}>
+              <Text style={styles.kcal}>{calories}</Text> kcal
+            </Text>
             <Text style={styles.time}>{time}</Text>
           </View>
         </View>
@@ -63,43 +73,52 @@ export function DietCard({ title, image, calories, time, onPress, index }: DietC
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgb(26, 26, 26)',
+    backgroundColor: "rgb(26, 26, 26)",
     borderRadius: 16,
     marginHorizontal: 16,
     marginVertical: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 160,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   content: {
     padding: 16,
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: "400",
+    color: "white",
     marginBottom: 8,
   },
+  titleBlue: {
+    color: Colors.mainBlue,
+    fontWeight: "600",
+  },
   details: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   calories: {
     fontSize: 14,
+    color: Colors.white,
+    fontWeight: "400",
+  },
+  kcal: {
+    fontSize: 14,
     color: Colors.mainBlue,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   time: {
     fontSize: 14,
-    color: '#D1D5DB',
+    color: "#D1D5DB",
   },
 });

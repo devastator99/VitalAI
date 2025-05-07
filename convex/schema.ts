@@ -123,28 +123,93 @@ export default defineSchema({
   meals: defineTable({
     title: v.string(),
     description: v.array(v.string()),
+    mealType: v.union(
+      v.literal("breakfast"),
+      v.literal("lunch"),
+      v.literal("dinner"),
+      v.literal("snack")
+    ),
+    cuisine: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    servings: v.number(),
+    portionSize: v.object({
+      amount: v.number(),
+      unit: v.string(),
+    }),
+    prepTime: v.number(),
+    cookTime: v.number(),
+    totalTime: v.number(),
     calories: v.number(),
-    time: v.string(),
-    ingredients: v.array(v.string()),
-    instructions: v.array(v.string()),
     nutritionFacts: v.object({
       protein: v.number(),
       carbs: v.number(),
       fats: v.number(),
       fiber: v.number(),
+      sugar: v.optional(v.number()),
+      sodium: v.optional(v.number()),
+      cholesterol: v.optional(v.number()),
     }),
+    micronutrients: v.optional(
+      v.object({
+        vitaminA: v.optional(v.number()),
+        vitaminC: v.optional(v.number()),
+        calcium: v.optional(v.number()),
+        iron: v.optional(v.number()),
+      })
+    ),
+    ingredients: v.array(v.string()),
+    instructions: v.array(v.string()),
+    isVegetarian: v.boolean(),
+    isVegan: v.boolean(),
+    isGlutenFree: v.boolean(),
+    allergens: v.optional(v.array(v.string())),
+    costPerServing: v.optional(v.number()),
+    sourceUrl: v.optional(v.string()),
+    imageIds: v.optional(v.array(v.id("_storage"))),
+    videoUrl: v.optional(v.string()),
+    rating: v.optional(v.number()),
+    timesCooked: v.optional(v.number()),
+    favoriteCount: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
     attachId: v.optional(v.id("_storage")),
   })
-    .index("by_title", ["title"]),
+    .index("by_title", ["title"])
+    .index("by_mealType", ["mealType"])
+    .index("by_tag", ["tags"]),
 
   exercises: defineTable({
     title: v.string(),
     description: v.string(),
-    sets: v.number(),
-    reps: v.number(),
-    duration: v.number(),
+    category: v.union(
+      v.literal("strength"),
+      v.literal("cardio"),
+      v.literal("flexibility"),
+      v.literal("balance")
+    ),
+    difficulty: v.union(
+      v.literal("beginner"),
+      v.literal("intermediate"),
+      v.literal("advanced")
+    ),
+    targetedMuscleGroups: v.array(v.string()),
+    equipment: v.array(v.string()),
+    sets: v.optional(v.number()),
+    reps: v.optional(v.number()),
+    duration: v.optional(v.number()),
+    durationUnit: v.optional(
+      v.union(v.literal("seconds"), v.literal("minutes"))
+    ),
+    restPeriod: v.optional(v.number()),
+    videoUrl: v.optional(v.string()),
     attachId: v.optional(v.id("_storage")),
-  }).index("title", ["title"]),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_title", ["title"])
+    .index("by_category", ["category"])
+    .index("by_muscle", ["targetedMuscleGroups"])
+    .index("by_description", ["description"]),
 
   completions: defineTable({
     userId: v.id("users"),

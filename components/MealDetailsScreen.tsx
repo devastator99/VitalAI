@@ -162,8 +162,23 @@ export default function MealDetails({ id, style }: MealDetailsProps) {
             carbs={meal.nutritionFacts.carbs}
             protein={meal.nutritionFacts.protein}
             fats={meal.nutritionFacts.fats}
-            calories={meal.nutritionFacts.fiber}
+            calories={meal.calories}
           />
+        </View>
+
+        <View style={styles.mealInfo}>
+          <Text style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Prep time: </Text>
+            {meal.prepTime} min
+          </Text>
+          <Text style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Cook time: </Text>
+            {meal.cookTime} min
+          </Text>
+          <Text style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Servings: </Text>
+            {meal.servings}
+          </Text>
         </View>
 
         <View style={styles.section}>
@@ -177,11 +192,38 @@ export default function MealDetails({ id, style }: MealDetailsProps) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Instructions</Text>
-          {meal.description.map((instruction: any, index: any) => (
+          {meal.instructions.map((instruction, index) => (
             <Text key={index} style={styles.listItem}>
               {index + 1}. {instruction}
             </Text>
           ))}
+        </View>
+
+        {meal.allergens && meal.allergens.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Allergens</Text>
+            <Text style={styles.listItem}>
+              {meal.allergens.join(", ")}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.dietaryTags}>
+          {meal.isVegetarian && (
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>Vegetarian</Text>
+            </View>
+          )}
+          {meal.isVegan && (
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>Vegan</Text>
+            </View>
+          )}
+          {meal.isGlutenFree && (
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>Gluten Free</Text>
+            </View>
+          )}
         </View>
       </AnimatedView>
     </ScrollView>
@@ -270,5 +312,38 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     lineHeight: 40,
     marginTop: -4,
+  },
+  mealInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    flexWrap: 'wrap',
+  },
+  infoItem: {
+    color: '#E0E0E0',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  infoLabel: {
+    color: Colors.mainBlue,
+    fontWeight: '500',
+  },
+  dietaryTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  tag: {
+    backgroundColor: 'rgba(67, 83, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    color: Colors.mainBlue,
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

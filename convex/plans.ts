@@ -121,3 +121,10 @@ export const getMealById = query({
     return await ctx.db.get(args.mealId);
   },
 });
+
+export const getExerciseById = query({
+  args: { exerciseId: v.id("exercises") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.exerciseId);
+  },
+});
