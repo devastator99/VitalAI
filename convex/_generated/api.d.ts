@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as chats from "../chats.js";
 import type * as files from "../files.js";
+import type * as habits from "../habits.js";
 import type * as messages from "../messages.js";
 import type * as orders from "../orders.js";
 import type * as plans from "../plans.js";
@@ -32,6 +33,7 @@ import type * as users from "../users.js";
 declare const fullApi: ApiFromModules<{
   chats: typeof chats;
   files: typeof files;
+  habits: typeof habits;
   messages: typeof messages;
   orders: typeof orders;
   plans: typeof plans;

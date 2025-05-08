@@ -11,6 +11,8 @@ import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import Colors from "~/utils/Colors";
 import AnimHeader from "./AnimHeader";
 import MagButton from "./MagButton";
+import { Stack, useRouter } from "expo-router";
+import IconCircle from "./IconCircle";
 
 const Settings = () => {
   const settingsSections = [
@@ -43,67 +45,71 @@ const Settings = () => {
     },
   ];
 
+  const router = useRouter();
+
   return (
     <LinearGradient
       colors={[Colors.PitchBlack, "#001a33", Colors.PitchBlack]}
       style={styles.container}
     >
-      <AnimHeader
-        title="Settings"
-        rightIcons={[
-          { icon: "cog", onPress: () => console.log("Settings pressed") },
-        ]}
-      >
-        <ScrollView contentContainerStyle={styles.content}>
-          {settingsSections.map((section, index) => (
-            <LinearGradient
-              key={index}
-              colors={["#ffffff08", "#00254d33"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.sectionCard}
-            >
-              <View style={styles.sectionHeader}>
-                <FontAwesome5
-                  name={section.icon}
-                  size={18}
-                  color={Colors.mainBlue}
-                />
-                <Text style={styles.sectionTitle}>{section.title}</Text>
-              </View>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginLeft: 16, paddingEnd: 10 }}
+        >
+          <IconCircle name="chevron-back-sharp" size={17} />
+        </TouchableOpacity>
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleWhite}>Your </Text>
+          <Text style={styles.titleBlue}>Settings</Text>
+        </View>
+        <View style={{ width: 50 }} />
+      </View>
+      <ScrollView contentContainerStyle={styles.content}>
+        {settingsSections.map((section, index) => (
+          <LinearGradient
+            key={index}
+            colors={["#ffffff08", "#00254d33"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.sectionCard}
+          >
+            <View style={styles.sectionHeader}>
+              <FontAwesome5
+                name={section.icon}
+                size={18}
+                color={Colors.mainBlue}
+              />
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+            </View>
 
-              {section.items.map((item, itemIndex) => (
-                <TouchableOpacity
-                  key={itemIndex}
-                  style={styles.settingItem}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.itemContent}>
-                    <FontAwesome5 name={item.icon} size={16} color="white" />
-                    <Text style={styles.itemLabel}>{item.label}</Text>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color="#ffffff66"
-                  />
-                </TouchableOpacity>
-              ))}
-            </LinearGradient>
-          ))}
-            <LinearGradient
-              colors={[Colors.mainBlue + "dd", "#00254d"]}
-              style={styles.logoutButton}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <MagButton buttonStyle={styles.logoutTouchable}>
-                <Text style={styles.logoutText}>Log Out</Text>
-                <Ionicons name="log-out" size={20} color="white" />
-              </MagButton>
-            </LinearGradient>
-        </ScrollView>
-      </AnimHeader>
+            {section.items.map((item, itemIndex) => (
+              <TouchableOpacity
+                key={itemIndex}
+                style={styles.settingItem}
+                activeOpacity={0.7}
+              >
+                <View style={styles.itemContent}>
+                  <FontAwesome5 name={item.icon} size={16} color="white" />
+                  <Text style={styles.itemLabel}>{item.label}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#ffffff66" />
+              </TouchableOpacity>
+            ))}
+          </LinearGradient>
+        ))}
+        <LinearGradient
+          colors={[Colors.mainBlue + "dd", "#00254d"]}
+          style={styles.logoutButton}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <MagButton buttonStyle={styles.logoutTouchable}>
+            <Text style={styles.logoutText}>Log Out</Text>
+            <Ionicons name="log-out" size={20} color="white" />
+          </MagButton>
+        </LinearGradient>
+      </ScrollView>
     </LinearGradient>
   );
 };
@@ -175,6 +181,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    backgroundColor: Colors.PitchBlack,
+  },
+  titleContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  titleWhite: {
+    color: Colors.white,
+    fontSize: 20,
+    fontWeight: "400",
+  },
+  titleBlue: {
+    color: Colors.mainBlue,
+    fontSize: 20,
+    fontWeight: "400",
+  },
 });
-
 export default Settings;

@@ -218,6 +218,24 @@ export default defineSchema({
     completedExercises: v.array(v.id("exercises")),
   }).index("by_userId_and_date", ["userId", "date"]),
 
+  habits: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    type: v.union(v.literal("boolean"), v.literal("numeric"), v.literal("categorical")),
+    target: v.optional(v.number()),
+    unit: v.optional(v.string()),
+    frequency: v.array(v.string()),
+    color: v.string(),
+    icon: v.string()
+  }).index("by_user", ["userId"]),
+
+  habitEntries: defineTable({
+    habitId: v.id("habits"),
+    date: v.string(),
+    value: v.union(v.boolean(), v.number(), v.string()),
+    notes: v.optional(v.string())
+  }).index("by_habit_date", ["habitId", "date"]),
+
   notifications: defineTable({
     notificationId: v.string(),
     userId: v.id("users"), // Clerk user ID

@@ -17,6 +17,7 @@ import { api } from "~/convex/_generated/api";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AnimHeader from "~/components/AnimHeader";
 import ScreenTransitionView from "~/components/ScreenTransitionView";
+import { router } from "expo-router";
 
 export default function Profile() {
   const user = useQuery(api.users.getCurrentUser);
@@ -73,7 +74,7 @@ export default function Profile() {
         rightIcons={[
           { 
             icon: "settings-outline", 
-            onPress: () => console.log("Open settings") 
+            onPress: () => router.push("/(auth)/settings")
           }
         ]}
       >

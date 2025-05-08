@@ -12,7 +12,7 @@ import AnimHeader from "./AnimHeader";
 import ScreenTransitionView from "./ScreenTransitionView";
 import { COLOR_PALETTE } from "./habit_components/habit_icons";
 import { Provider } from "react-native-paper";
-import LinearGradient from 'react-native-linear-gradient';
+import {LinearGradient} from 'expo-linear-gradient';
 import { Calendar } from 'react-native-calendars';
 
 interface HabitDetailProps {
@@ -58,12 +58,6 @@ const entriesForSelectedDates = habit.entries.filter(entry =>
   return (
     <Provider>
       <ScreenTransitionView style={{ flex: 1 ,marginTop:10}}>
-        <AnimHeader
-          title={habit.name}
-          buttons={[]}
-          onButtonSelect={() => {}}
-          rightIcons={[{ icon: "close", onPress: onClose }]}
-        >
           <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.content}>
               {/* Summary Section */}
@@ -221,7 +215,6 @@ const entriesForSelectedDates = habit.entries.filter(entry =>
               </LinearGradient>
             </ScrollView>
           </View>
-        </AnimHeader>
       </ScreenTransitionView>
     </Provider>
   );

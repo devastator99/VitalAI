@@ -14,15 +14,8 @@ import { useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import IconCircle from "~/components/IconCircle";
 import { Id } from "~/convex/_generated/dataModel";
-
+import LoadingIndicator from "~/components/LoadingIndicator";
 type Section = "diet" | "exercise";
-
-const LoadingIndicator = () => (
-  <View style={[styles.container, styles.loadingContainer]}>
-    <ActivityIndicator size="large" color={Colors.mainBlue} />
-    <Text style={styles.loadingText}>Loading your meal plan...</Text>
-  </View>
-);
 
 // Add EmptyState component before DietContent
 const EmptyState = ({ section }: { section: Section }) => (
@@ -341,14 +334,5 @@ const styles = StyleSheet.create({
   },
   centerContent: {
     justifyContent: 'center',
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: Colors.white,
-    marginTop: 16,
-    fontSize: 16,
-  },
+  }
 });
