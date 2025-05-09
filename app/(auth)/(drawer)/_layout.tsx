@@ -87,12 +87,6 @@ const AnimatedHeader = ({ chatId }: { chatId: string }) => {
     width: fullWidth * progress.value,
   }));
 
-  // <ImageBackground
-  //     source={require("~/assets/images/blakk.jpg")}
-  //     style={{ paddingTop: 30 }}
-  //     resizeMode="stretch"
-  //   ></ImageBackground>
-
   return (
     <SafeAreaView style={{ backgroundColor: "rgb(0, 0, 0)" }}>
       <StatusBar backgroundColor="rgb(0, 0, 0)" style="dark" />

@@ -1,35 +1,55 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import Questionnaire from '~/components/Questionnaire';
 import { useMutation } from 'convex/react';
 import { api } from '~/convex/_generated/api';
-import Colors from '~/utils/Colors';
+import { useRouter } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
 
 export default function QuestionnaireScreen() {
+  const [isLoading, setIsLoading] = useState(false);
+  const saveUserInfo = useMutation(api.users.updateProfileDetails);
+  const saveQuestionnaire = useMutation(api.users.updateUserProfile);
   const router = useRouter();
-  const updateUserProfile = useMutation(api.users.updateUserProfile);
+  const { user } = useUser();
 
-  const handleQuestionnaireComplete = async (data: any) => {
+  const handleComplete = async (data: any) => {
     try {
-      // Save questionnaire data to user profile
-      await updateUserProfile({
-        questionnaire: {
-          ...data,
-          completedAt: new Date().toISOString()
+      setIsLoading(true);
+      
+      // First, save the profile details
+      const profileData = {
+        name: data.name,
+        profileDetails: {
+          picture: data.profilePicture,
+          height: parseFloat(data.height),
+          weight: parseFloat(data.weight),
         }
+      };
+      
+      await saveUserInfo(profileData);
+      
+      // Then save the questionnaire data
+      await saveQuestionnaire({ 
+        questionnaire: data 
       });
       
       // Navigate to waiting screen
-      router.replace('/waiting');
+      router.replace("/(onboarding)/waiting");
     } catch (error) {
-      console.error('Error saving questionnaire data:', error);
+      console.error('Error saving data:', error);
+      alert('There was an error saving your information. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Questionnaire onComplete={handleQuestionnaireComplete} />
+      <Questionnaire 
+        onComplete={handleComplete}
+        isLoading={isLoading}
+      />
     </SafeAreaView>
   );
 }
@@ -37,6 +57,6 @@ export default function QuestionnaireScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.PitchBlack,
+    backgroundColor: '#1a1a1a',
   },
 }); 

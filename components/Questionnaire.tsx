@@ -13,6 +13,7 @@ import {
   Animated,
   ActivityIndicator,
   SafeAreaView,
+  Image,
 } from "react-native";
 import {
   useSharedValue,
@@ -23,14 +24,22 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "../utils/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import {TimePickerModal} from "react-native-paper-dates";
+import { TimePickerModal } from "react-native-paper-dates";
 import CustomPicker from "./CustomPicker";
 import useLocation from "~/utils/useLocation";
+import * as ImagePicker from "expo-image-picker";
+import { Id } from "~/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "~/convex/_generated/api";
+import { useUser } from "@clerk/clerk-expo";
+import UserVector from "./UserVector";
 // import * as Location from 'expo-location';
 // import * as Device from 'expo-device';
 
 // Define the FormData interface
 interface FormData {
+  name: string;
+  profilePicture?: Id<"_storage">;
   gender: string;
   age: string;
   height: string;
@@ -46,15 +55,15 @@ interface FormData {
   texturePreferences: string[];
   foodsToAvoid: string[];
   cookingLevel: string;
-  wakeUpTime: Date | null;
-  sleepTime: Date | null;
-  mealTimes: { [key: string]: Date | null };
+  wakeUpTime: string | null;
+  sleepTime: string | null;
+  mealTimes: Record<"breakfast" | "lunch" | "snack" | "dinner", string | null>;
   heaviestMeal: string;
   activityLevel: string;
   workouts: {
     doWorkouts: boolean;
     days: string[];
-    time: Date | null;
+    time: string | null;
     type: string;
     duration: string;
   };
@@ -62,6 +71,7 @@ interface FormData {
   homeCuisine: string;
   otherCuisines: string[];
   primaryGoal: string;
+  completedAt?: string;
 }
 
 // Define the MultiSelectProps interface
@@ -74,8 +84,8 @@ interface MultiSelectProps {
 
 // Define the TimePickerProps interface
 interface TimePickerProps {
-  value: Date | null;
-  onChange: (date: Date) => void;
+  value: string | null;
+  onChange: (time: string) => void;
   label: string;
 }
 
@@ -262,7 +272,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ffffff33",
     marginBottom: 15,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   pickerLabel: {
     color: Colors.white,
@@ -362,12 +372,12 @@ const styles = StyleSheet.create({
   locButton: {
     marginLeft: 12,
     padding: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   locationInput: {
@@ -375,7 +385,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   locationError: {
-    color: '#ff6b6b',
+    color: "#ff6b6b",
     fontSize: 14,
     marginTop: 4,
     marginBottom: 16,
@@ -386,24 +396,24 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: Colors.white,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
   },
   goalsList: {
     gap: 8,
   },
   goalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#ffffff08',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#ffffff08",
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ffffff33',
+    borderColor: "#ffffff33",
   },
   goalOptionSelected: {
-    backgroundColor: '#ffffff15',
+    backgroundColor: "#ffffff15",
     borderColor: Colors.mainBlue,
   },
   goalText: {
@@ -412,20 +422,20 @@ const styles = StyleSheet.create({
   },
   goalTextSelected: {
     color: Colors.mainBlue,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   summarySection: {
-    backgroundColor: '#ffffff08',
+    backgroundColor: "#ffffff08",
     borderRadius: 12,
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#ffffff33',
+    borderColor: "#ffffff33",
   },
   summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   summaryLabel: {
     color: Colors.white,
@@ -435,9 +445,9 @@ const styles = StyleSheet.create({
   summaryValue: {
     color: Colors.white,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   summaryList: {
     color: Colors.white,
@@ -448,13 +458,75 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.mainBlue,
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
   },
   approveButtonText: {
     color: Colors.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
+  },
+  profileImageContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+    position: "relative",
+    width: 120,
+    height: 120,
+    alignSelf: "center",
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: Colors.mainBlue,
+  },
+  emptyProfileContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: Colors.mainBlue,
+    backgroundColor: "#ffffff08",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uploadButton: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: Colors.mainBlue,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  bmiContainer: {
+    backgroundColor: "#ffffff08",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ffffff33",
+  },
+  bmiLabel: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  bmiValue: {
+    color: Colors.mainBlue,
+    fontSize: 20,
+    fontWeight: "700",
   },
 });
 
@@ -537,7 +609,14 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 // Reusable TimePicker Component
 const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, label }) => {
   const [show, setShow] = useState(false);
-  const currentValue = value || new Date();
+  const currentValue = value ? new Date(value) : new Date();
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <View style={styles.timePickerContainer}>
@@ -547,10 +626,7 @@ const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, label }) => {
         onPress={() => setShow(true)}
       >
         <Text style={styles.timePickerButtonText}>
-          {currentValue.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {formatTime(currentValue)}
         </Text>
         <Ionicons name="time-outline" size={24} color={Colors.white} />
       </TouchableOpacity>
@@ -561,11 +637,11 @@ const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, label }) => {
         onConfirm={({ hours, minutes }: { hours: number; minutes: number }) => {
           const selected = new Date();
           selected.setHours(hours, minutes);
-          onChange(selected);
+          onChange(selected.toISOString());
           setShow(false);
         }}
-        hours={value ? value.getHours() : 0}
-        minutes={value ? value.getMinutes() : 0}
+        hours={currentValue.getHours()}
+        minutes={currentValue.getMinutes()}
         label="Pick time"
         uppercase={false}
         cancelLabel="Cancel"
@@ -628,7 +704,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   errors,
 }) => {
   const genderOptions = ["Male", "Female", "Other"];
-  
+
   return (
     <View>
       <Text style={styles.subtitle}>Personal Details</Text>
@@ -730,7 +806,9 @@ const HealthAndGoals: React.FC<StepComponentProps> = ({
   return (
     <View>
       <Text style={styles.title}>Health and Goals</Text>
-      <Text style={{color: Colors.mainBlue, fontSize: 16, marginBottom: 8}}>Nutrition Goals (Select one or more)</Text>
+      <Text style={{ color: Colors.mainBlue, fontSize: 16, marginBottom: 8 }}>
+        Nutrition Goals (Select one or more)
+      </Text>
       <MultiSelect
         options={goalsList}
         selected={formData.goals}
@@ -823,13 +901,17 @@ const DietPreferences: React.FC<StepComponentProps> = ({
       <CustomPicker
         options={dietStyles}
         selectedValue={formData.dietStyle}
-        onValueChange={(value) => setFormData({ ...formData, dietStyle: value })}
+        onValueChange={(value) =>
+          setFormData({ ...formData, dietStyle: value })
+        }
       />
       <Text style={styles.label}>Spice Tolerance</Text>
       <CustomPicker
         options={spiceLevels}
         selectedValue={formData.spiceLevel}
-        onValueChange={(value) => setFormData({ ...formData, spiceLevel: value })}
+        onValueChange={(value) =>
+          setFormData({ ...formData, spiceLevel: value })
+        }
       />
       <Text style={styles.label}>Texture Preferences</Text>
       <MultiSelect
@@ -860,6 +942,13 @@ const Lifestyle: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
   ];
   const meals: string[] = ["Breakfast", "Lunch", "Dinner"];
 
+  const updateMealTime = (meal: "breakfast" | "lunch" | "snack" | "dinner", time: string) => {
+    setFormData({
+      ...formData,
+      mealTimes: { ...formData.mealTimes, [meal]: time },
+    });
+  };
+
   return (
     <View>
       <Text style={styles.title}>Lifestyle</Text>
@@ -867,7 +956,9 @@ const Lifestyle: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
       <CustomPicker
         options={cookingLevels}
         selectedValue={formData.cookingLevel}
-        onValueChange={(value) => setFormData({ ...formData, cookingLevel: value })}
+        onValueChange={(value) =>
+          setFormData({ ...formData, cookingLevel: value })
+        }
       />
       <TimePicker
         label="Wake Up Time"
@@ -880,24 +971,21 @@ const Lifestyle: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
         onChange={(time) => setFormData({ ...formData, sleepTime: time })}
       />
       <Text style={styles.label}>Meal Times</Text>
-      {["breakfast", "lunch", "snack", "dinner"].map((meal) => (
+      {(["breakfast", "lunch", "snack", "dinner"] as const).map((meal) => (
         <TimePicker
           key={meal}
           label={meal.charAt(0).toUpperCase() + meal.slice(1)}
           value={formData.mealTimes[meal]}
-          onChange={(time) =>
-            setFormData({
-              ...formData,
-              mealTimes: { ...formData.mealTimes, [meal]: time },
-            })
-          }
+          onChange={(time) => updateMealTime(meal, time)}
         />
       ))}
       <Text style={styles.label}>Heaviest Meal of the Day</Text>
       <CustomPicker
         options={meals}
         selectedValue={formData.heaviestMeal}
-        onValueChange={(value) => setFormData({ ...formData, heaviestMeal: value })}
+        onValueChange={(value) =>
+          setFormData({ ...formData, heaviestMeal: value })
+        }
       />
     </View>
   );
@@ -934,7 +1022,9 @@ const Activity: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
       <CustomPicker
         options={activityLevels}
         selectedValue={formData.activityLevel}
-        onValueChange={(value) => setFormData({ ...formData, activityLevel: value })}
+        onValueChange={(value) =>
+          setFormData({ ...formData, activityLevel: value })
+        }
       />
       <Text style={styles.label}>Do you work out?</Text>
       <Switch
@@ -1003,50 +1093,50 @@ const Activity: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
 
 // Cuisines Component
 const Cuisines: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
-//   const [location, setLocation] = useState<Location.LocationObject | null>(null);
-//   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  //   const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  //   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-//   const getCurrentLocation = async () => {
-//     setLoading(true);
-//     try {
-//       if (Platform.OS === 'android' && !Device.isDevice) {
-//         setErrorMsg('This will not work on an Android Emulator. Try it on your device!');
-//         return;
-//       }
+  //   const getCurrentLocation = async () => {
+  //     setLoading(true);
+  //     try {
+  //       if (Platform.OS === 'android' && !Device.isDevice) {
+  //         setErrorMsg('This will not work on an Android Emulator. Try it on your device!');
+  //         return;
+  //       }
 
-//       let { status } = await Location.requestForegroundPermissionsAsync();
-//       if (status !== 'granted') {
-//         setErrorMsg('Permission to access location was denied');
-//         return;
-//       }
+  //       let { status } = await Location.requestForegroundPermissionsAsync();
+  //       if (status !== 'granted') {
+  //         setErrorMsg('Permission to access location was denied');
+  //         return;
+  //       }
 
-//     //   const location = await Location.getCurrentPositionAsync({});
-//     //   setLocation(location);
+  //     //   const location = await Location.getCurrentPositionAsync({});
+  //     //   setLocation(location);
 
-//       // Get the address from coordinates
-//     //   const [placemark] = await Location.reverseGeocodeAsync({
-//     //     latitude: location.coords.latitude,
-//     //     longitude: location.coords.longitude,
-//     //   });
+  //       // Get the address from coordinates
+  //     //   const [placemark] = await Location.reverseGeocodeAsync({
+  //     //     latitude: location.coords.latitude,
+  //     //     longitude: location.coords.longitude,
+  //     //   });
 
-//       if (placemark) {
-//         const address = [
-//           placemark.name,
-//           placemark.street,
-//           placemark.city,
-//           placemark.region
-//         ].filter(Boolean).join(', ');
-        
-//         setFormData(prev => ({ ...prev, location: address }));
-//       }
-//     } catch (error) {
-//       setErrorMsg('Error getting location');
-//       console.error(error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+  //       if (placemark) {
+  //         const address = [
+  //           placemark.name,
+  //           placemark.street,
+  //           placemark.city,
+  //           placemark.region
+  //         ].filter(Boolean).join(', ');
+
+  //         setFormData(prev => ({ ...prev, location: address }));
+  //       }
+  //     } catch (error) {
+  //       setErrorMsg('Error getting location');
+  //       console.error(error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
   const homeCuisines: string[] = [
     "Punjabi, Mahja Style",
@@ -1087,21 +1177,18 @@ const Cuisines: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
           placeholderTextColor="#ffffff66"
           placeholder="Enter your location"
         />
-        <TouchableOpacity 
-          style={[
-            styles.locButton,
-            loading && styles.disabledButton
-          ]} 
+        <TouchableOpacity
+          style={[styles.locButton, loading && styles.disabledButton]}
           onPress={() => {}} //get location
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color={Colors.white} size="small" />
           ) : (
-            <Ionicons 
-              name="navigate-circle-outline" 
-              size={28} 
-              color={Colors.mainBlue} 
+            <Ionicons
+              name="navigate-circle-outline"
+              size={28}
+              color={Colors.mainBlue}
             />
           )}
         </TouchableOpacity>
@@ -1114,7 +1201,9 @@ const Cuisines: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
       <CustomPicker
         options={homeCuisines}
         selectedValue={formData.homeCuisine}
-        onValueChange={(value) => setFormData({ ...formData, homeCuisine: value })}
+        onValueChange={(value) =>
+          setFormData({ ...formData, homeCuisine: value })
+        }
       />
       <Text style={styles.label}>Other Cuisines You Like</Text>
       <MultiSelect
@@ -1138,16 +1227,18 @@ interface ConfirmationProps extends StepComponentProps {
 const getStepDescription = (step: number): string => {
   switch (step) {
     case 0:
-      return "Tell us about yourself";
+      return "Setup your profile";
     case 1:
-      return "Your health goals";
+      return "Tell us about yourself";
     case 2:
-      return "Dietary preferences";
+      return "Your health goals";
     case 3:
-      return "Daily routine";
+      return "Dietary preferences";
     case 4:
-      return "Activity level";
+      return "Daily routine";
     case 5:
+      return "Activity level";
+    case 6:
       return "Location and cuisine";
     default:
       return "";
@@ -1165,10 +1256,10 @@ const convertDatesToTimestamps = (data: any): any => {
   }
 
   if (Array.isArray(data)) {
-    return data.map(item => convertDatesToTimestamps(item));
+    return data.map((item) => convertDatesToTimestamps(item));
   }
 
-  if (typeof data === 'object') {
+  if (typeof data === "object") {
     const converted: { [key: string]: any } = {};
     for (const key in data) {
       converted[key] = convertDatesToTimestamps(data[key]);
@@ -1186,6 +1277,7 @@ const Questionnaire: React.FC<{
 }> = ({ onComplete, isLoading = false }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [formData, setFormData] = useState<FormData>({
+    name: "",
     gender: "",
     age: "",
     height: "",
@@ -1224,6 +1316,11 @@ const Questionnaire: React.FC<{
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const steps: JSX.Element[] = [
+    <ProfileInfo
+      formData={formData}
+      setFormData={setFormData}
+      errors={errors}
+    />,
     <PersonalDetails
       formData={formData}
       setFormData={setFormData}
@@ -1306,9 +1403,9 @@ const Questionnaire: React.FC<{
     const stepErrors: Record<string, string> = {};
 
     switch (step) {
-      case 0: // Personal Details
-        if (!formData.gender) {
-          stepErrors.gender = "Please select your gender";
+      case 0: // Profile Info
+        if (!formData.name.trim()) {
+          stepErrors.name = "Please enter your name";
         }
         const age = parseInt(formData.age as string, 10);
         if (!formData.age || isNaN(age) || age < 13) {
@@ -1322,18 +1419,24 @@ const Questionnaire: React.FC<{
         if (!formData.weight || isNaN(weight) || weight < 30 || weight > 300) {
           stepErrors.weight = "Please enter a valid weight (30-300 kg)";
         }
+        if (!formData.gender) {
+          stepErrors.gender = "Please select your gender";
+        }
+        break;
+
+      case 1: // Personal Details
         if (!formData.occupation || formData.occupation.trim().length < 2) {
           stepErrors.occupation = "Please enter your occupation";
         }
         break;
 
-      case 1: // Health and Goals
+      case 2: // Health and Goals
         if (!formData.goals || formData.goals.length === 0) {
           stepErrors.goals = "Please select at least one goal";
         }
         break;
 
-      case 2: // Diet Preferences
+      case 3: // Diet Preferences
         if (!formData.dietStyle) {
           stepErrors.dietStyle = "Please select your diet style";
         }
@@ -1342,7 +1445,7 @@ const Questionnaire: React.FC<{
         }
         break;
 
-      case 3: // Daily Routine
+      case 4: // Daily Routine
         if (!formData.cookingLevel) {
           stepErrors.cookingLevel =
             "Please select your cooking experience level";
@@ -1355,13 +1458,13 @@ const Questionnaire: React.FC<{
         }
         break;
 
-      case 4: // Activity Level
+      case 5: // Activity Level
         if (!formData.activityLevel) {
           stepErrors.activityLevel = "Please select your activity level";
         }
         break;
 
-      case 5: // Location and Cuisine
+      case 6: // Location and Cuisine
         if (!formData.location || formData.location.trim().length < 2) {
           stepErrors.location = "Please enter your location";
         }
@@ -1381,10 +1484,10 @@ const Questionnaire: React.FC<{
       return;
     }
 
-    const convertedData = convertDatesToTimestamps({
+    const convertedData = {
       ...formData,
-      completedAt: new Date()
-    });
+      completedAt: new Date().toISOString(),
+    };
     onComplete(convertedData);
   };
 
@@ -1398,114 +1501,118 @@ const Questionnaire: React.FC<{
   }
 
   return (
-  <View style={{flex: 1,backgroundColor: "#1a1a1a"}}>
-    <SafeAreaView style={{ flex: 1 ,marginTop: 20}}>
-      <LinearGradient
-        colors={["#1a1a1a", "#000000"]}
-        style={styles.gradientContainer}
-      >
-        <View style={styles.container}>
-          <View style={styles.progressBarContainer}>
-            <Animated.View
-              style={[
-                styles.progressBar,
-                {
-                  width: progressAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ["0%", "100%"],
-                  }),
-                },
-              ]}
-            />
-          </View>
-
-          <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>
-              Step {currentStep + 1} of {steps.length}
-            </Text>
-            <Text style={styles.stepDescription}>
-              {getStepDescription(currentStep)}
-            </Text>
-          </View>
-
-          <ScrollView
-            style={styles.scrollView}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ flexGrow: 1 }}
-          >
-            <Animated.View
-              style={[
-                styles.stepContainer,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ translateX: shakeAnim }],
-                },
-              ]}
-            >
-              {steps[currentStep]}
-            </Animated.View>
-
-            {Object.keys(errors).length > 0 && (
+    <View style={{ flex: 1, backgroundColor: "#1a1a1a" }}>
+      <SafeAreaView style={{ flex: 1, marginTop: 20 }}>
+        <LinearGradient
+          colors={["#1a1a1a", "#000000"]}
+          style={styles.gradientContainer}
+        >
+          <View style={styles.container}>
+            <View style={styles.progressBarContainer}>
               <Animated.View
                 style={[
-                  styles.errorContainer,
+                  styles.progressBar,
+                  {
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ["0%", "100%"],
+                    }),
+                  },
+                ]}
+              />
+            </View>
+
+            <View style={styles.stepIndicator}>
+              <Text style={styles.stepText}>
+                Step {currentStep + 1} of {steps.length}
+              </Text>
+              <Text style={styles.stepDescription}>
+                {getStepDescription(currentStep)}
+              </Text>
+            </View>
+
+            <ScrollView
+              style={styles.scrollView}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ flexGrow: 1 }}
+            >
+              <Animated.View
+                style={[
+                  styles.stepContainer,
                   {
                     opacity: fadeAnim,
                     transform: [{ translateX: shakeAnim }],
                   },
                 ]}
               >
-                {Object.entries(errors).map(([field, message]) => (
-                  <Text key={field} style={styles.errorText}>
-                    {message}
-                  </Text>
-                ))}
+                {steps[currentStep]}
               </Animated.View>
-            )}
 
-            <View style={styles.navigation}>
-              {currentStep > 0 && (
-                <TouchableOpacity
-                  style={[styles.navButton, styles.backButton]}
-                  onPress={() => handleStepChange(currentStep - 1)}
+              {Object.keys(errors).length > 0 && (
+                <Animated.View
+                  style={[
+                    styles.errorContainer,
+                    {
+                      opacity: fadeAnim,
+                      transform: [{ translateX: shakeAnim }],
+                    },
+                  ]}
                 >
-                  <Ionicons name="arrow-back" size={20} color={Colors.white} />
-                  <Text style={styles.buttonText}>Back</Text>
-                </TouchableOpacity>
+                  {Object.entries(errors).map(([field, message]) => (
+                    <Text key={field} style={styles.errorText}>
+                      {message}
+                    </Text>
+                  ))}
+                </Animated.View>
               )}
 
-              <TouchableOpacity
-                style={[
-                  styles.navButton,
-                  styles.nextButton,
-                  isLoading && styles.disabledButton,
-                ]}
-                onPress={() =>
-                  currentStep === steps.length - 1
-                    ? handleSubmit()
-                    : handleStepChange(currentStep + 1)
-                }
-                disabled={isLoading}
-              >
-                <Text style={styles.buttonText}>
-                  {currentStep === steps.length - 1 ? "Complete" : "Next"}
-                </Text>
-                <Ionicons
-                  name={
+              <View style={styles.navigation}>
+                {currentStep > 0 && (
+                  <TouchableOpacity
+                    style={[styles.navButton, styles.backButton]}
+                    onPress={() => handleStepChange(currentStep - 1)}
+                  >
+                    <Ionicons
+                      name="arrow-back"
+                      size={20}
+                      color={Colors.white}
+                    />
+                    <Text style={styles.buttonText}>Back</Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={[
+                    styles.navButton,
+                    styles.nextButton,
+                    isLoading && styles.disabledButton,
+                  ]}
+                  onPress={() =>
                     currentStep === steps.length - 1
-                      ? "checkmark"
-                      : "arrow-forward"
+                      ? handleSubmit()
+                      : handleStepChange(currentStep + 1)
                   }
-                  size={20}
-                  color={Colors.white}
-                />
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </LinearGradient>
-    </SafeAreaView>
+                  disabled={isLoading}
+                >
+                  <Text style={styles.buttonText}>
+                    {currentStep === steps.length - 1 ? "Complete" : "Next"}
+                  </Text>
+                  <Ionicons
+                    name={
+                      currentStep === steps.length - 1
+                        ? "checkmark"
+                        : "arrow-forward"
+                    }
+                    size={20}
+                    color={Colors.white}
+                  />
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
     </View>
   );
 };
@@ -1528,18 +1635,18 @@ const Confirmation: React.FC<ConfirmationProps> = ({
   };
 
   const getBMICategory = (bmi: number) => {
-    if (bmi < 18.5) return 'Underweight';
-    if (bmi < 25) return 'Normal';
-    if (bmi < 30) return 'Overweight';
-    return 'Obese';
+    if (bmi < 18.5) return "Underweight";
+    if (bmi < 25) return "Normal";
+    if (bmi < 30) return "Overweight";
+    return "Obese";
   };
 
   const handleSubmit = () => {
-    const convertedData = convertDatesToTimestamps({
+    const convertedData = {
       ...formData,
       primaryGoal,
-      completedAt: new Date()
-    });
+      completedAt: new Date().toISOString(),
+    };
     onSubmit(convertedData);
   };
 
@@ -1567,7 +1674,11 @@ const Confirmation: React.FC<ConfirmationProps> = ({
                   {goal}
                 </Text>
                 {primaryGoal === goal && (
-                  <Ionicons name="checkmark-circle" size={24} color={Colors.mainBlue} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={24}
+                    color={Colors.mainBlue}
+                  />
                 )}
               </TouchableOpacity>
             ))
@@ -1623,7 +1734,7 @@ const Confirmation: React.FC<ConfirmationProps> = ({
           {formData.healthConditions.length > 0 && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Health Conditions</Text>
-              <Text style={[styles.summaryValue, { color: '#ff6b6b' }]}>
+              <Text style={[styles.summaryValue, { color: "#ff6b6b" }]}>
                 {formData.healthConditions.join(", ")}
               </Text>
             </View>
@@ -1645,12 +1756,177 @@ const Confirmation: React.FC<ConfirmationProps> = ({
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.approveButton}
-        onPress={handleSubmit}
-      >
+      <TouchableOpacity style={styles.approveButton} onPress={handleSubmit}>
         <Text style={styles.approveButtonText}>Confirm & Continue</Text>
       </TouchableOpacity>
+    </View>
+  );
+};
+
+// Add new image upload component
+interface ProfileInfoProps extends StepComponentProps {
+  errors: Record<string, string>;
+}
+
+const ProfileInfo: React.FC<ProfileInfoProps> = ({
+  formData,
+  setFormData,
+  errors,
+}) => {
+  const [bmi, setBmi] = useState<number | null>(null);
+  const saveImage = useMutation(api.files.saveProfilePicture);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const { user } = useUser();
+  const curruser = useQuery(api.users.getCurrentUser);
+  const profilePicture =
+    curruser?.profileDetails?.picture || formData.profilePicture;
+  const imageUrl = useQuery(
+    api.files.getImageUrl,
+    profilePicture ? { storageId: profilePicture } : "skip"
+  );
+
+  useEffect(() => {
+    // Calculate BMI when height or weight changes
+    const height = parseFloat(formData.height);
+    const weight = parseFloat(formData.weight);
+    if (height > 0 && weight > 0) {
+      const heightInMeters = height / 100;
+      const calculatedBmi = weight / (heightInMeters * heightInMeters);
+      setBmi(parseFloat(calculatedBmi.toFixed(1))); // Round to 1 decimal place
+    } else {
+      setBmi(null);
+    }
+  }, [formData.height, formData.weight]);
+
+  const handleSelectImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const uri = asset.uri;
+
+      try {
+        const postUrl = await generateUploadUrl();
+        const fileData = await fetch(uri);
+        if (!fileData.ok) {
+          console.error("Error loading file from URI:", fileData);
+          throw new Error("Failed to load image from URI");
+        }
+        const blob = await fileData.blob();
+        const uploadResult = await fetch(postUrl, {
+          method: "POST",
+          headers: { "Content-Type": "image/jpeg" },
+          body: blob,
+        });
+
+        if (!uploadResult.ok) {
+          throw new Error("Failed to upload image to Convex");
+        }
+
+        const { storageId } = await uploadResult.json();
+        await saveImage({ picastorageId: storageId });
+        setFormData({ ...formData, profilePicture: storageId });
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        alert("Error uploading image. Please try again.");
+      }
+    }
+  };
+
+  return (
+    <View>
+      <Text style={styles.title}>Let's get to know you</Text>
+
+      <View style={styles.profileImageContainer}>
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} style={styles.profileImage} />
+        ) : (
+          <View style={styles.emptyProfileContainer}>
+            <UserVector size={200} color={Colors.white} />
+          </View>
+        )}
+        <TouchableOpacity
+          style={styles.uploadButton}
+          onPress={handleSelectImage}
+        >
+          <Ionicons name="camera" size={24} color={Colors.white} />
+        </TouchableOpacity>
+      </View>
+
+      <FormField
+        label="Your Name"
+        value={formData.name}
+        onChangeText={(text) => setFormData({ ...formData, name: text })}
+        error={errors.name}
+        placeholder="Enter your full name"
+      />
+
+      <View style={styles.pickerContainer}>
+        <Text style={styles.pickerLabel}>Gender</Text>
+        <CustomPicker
+          label="Select Gender"
+          options={["Male", "Female", "Other"]}
+          selectedValue={formData.gender}
+          onValueChange={(value) => setFormData({ ...formData, gender: value })}
+        />
+      </View>
+
+      <FormField
+        label="Age"
+        value={formData.age}
+        onChangeText={(text) => setFormData({ ...formData, age: text })}
+        error={errors.age}
+        keyboardType="numeric"
+        maxLength={3}
+        placeholder="Enter your age"
+      />
+
+      <FormField
+        label="Height (cm)"
+        value={formData.height}
+        onChangeText={(text) => setFormData({ ...formData, height: text })}
+        error={errors.height}
+        keyboardType="numeric"
+        maxLength={3}
+        placeholder="Enter your height in cm"
+      />
+
+      <FormField
+        label="Weight (kg)"
+        value={formData.weight}
+        onChangeText={(text) => setFormData({ ...formData, weight: text })}
+        error={errors.weight}
+        keyboardType="decimal-pad"
+        maxLength={5}
+        placeholder="Enter your weight in kg"
+      />
+
+      {bmi !== null && (
+        <View style={styles.bmiContainer}>
+          <Text style={styles.bmiLabel}>Your BMI</Text>
+          <Text style={styles.bmiValue}>{bmi}</Text>
+        </View>
+      )}
+
+      <FormField
+        label="Occupation"
+        value={formData.occupation}
+        onChangeText={(text) => setFormData({ ...formData, occupation: text })}
+        error={errors.occupation}
+        placeholder="Enter your occupation"
+      />
     </View>
   );
 };

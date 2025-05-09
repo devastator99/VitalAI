@@ -9,6 +9,7 @@ import {
   View,
   ActivityIndicator,
   Text,
+  Animated,
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery } from "convex/react";
@@ -28,13 +29,14 @@ import MessageIdeas from "~/components/MessageIdeas";
 import ScrollToBottomButton from "./ScrollToBottomButton";
 import FilePreview from "~/components/FilePreview";
 import { LinearGradient } from "expo-linear-gradient";
+import BirdVector from "~/components/BirdVector";
 
 // Utilities
 import { fetchGeminiResponse } from "~/utils/openRouterApi";
 import { usePaginatedQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
-import { fetchOpenAIResponse, fetchOpenAIStreamingResponse } from "~/utils/OpenaiApi";
+import { fetchOpenAIResponse } from "~/utils/OpenaiApi";
 
 const AI_USER_ID = "j576bezhm29ycwx1bh4mf7db3s7bpy6q" as Id<"users">;
 
@@ -168,80 +170,47 @@ const ChatPage = () => {
     markAsRead();
   }, [chatId, currentUser, queryMsgs, markMessagesAsRead]);
 
-  // Inside the ChatPage component, add this function to handle AI responses
-  const getAIResponse = useCallback(
-    async (userMessage: string) => {
-      if (!chatId || !currentUser) return;
-
-      // Build "last 5" including the new user message
-      const recentMessages = [
-        ...queryMsgs.map((m) => ({ isAi: m.isAi, content: m.content })),
-        { isAi: false, content: userMessage },
-      ].slice(-5);
-
-      // Set loading state
-      setLoading(true);
-
-      try {
-        const model = gptVersion === "4" ? "gpt-4.1" : "gpt-3.5-turbo"; // Adjust model as needed
-
-        // Call the streaming response function
-        await fetchOpenAIStreamingResponse(
-          recentMessages,
-          (text: any) => {
-            // Handle text updates
-            console.log("Streaming text:", text);
-            // You can update the state here to display the streaming text in the UI
-          },
-          () => {
-            // Handle start of the response
-            console.log("Streaming started");
-          },
-          () => {
-            // Handle completion of the response
-            console.log("Streaming completed");
-            setLoading(false); // Stop loading when done
-          },
-          (error) => {
-            // Handle errors
-            console.error("Streaming error:", error);
-            Alert.alert("Error", error);
-            setLoading(false); // Stop loading on error
-          },
-          model
-        );
-      } catch (error) {
-        console.error("Error getting AI response:", error);
-        Alert.alert("Error", "Failed to get AI response");
-        setLoading(false);
-      }
-    },
-    [chatId, currentUser, gptVersion, queryMsgs, handleMessageSubmit]
-  );
-
   // Message Handling
-  const handleSend = useCallback(
-    async (content: string) => {
-      if (!content.trim() || !chatId || !currentUser) return;
-      setLoading(true);
-      try {
+  const handleSendMessage = async (content: string) => {
+    if (!content.trim() || !chatId || !currentUser) return;
+
+    try {
+      // Send user message
+      await handleMessageSubmit({
+        content,
+        chatId: chatId as Id<"chats">,
+        senderId: currentUser._id,
+        isAi: false,
+        type: "text",
+      });
+
+      // Format messages for OpenAI
+      const formattedMessages = queryMsgs.map(msg => ({
+        isAi: msg.isAi,
+        content: msg.content
+      }));
+      formattedMessages.push({ isAi: false, content });
+
+      // Get AI response
+      const response = await fetchOpenAIResponse(formattedMessages);
+      
+      if (response.success && response.data) {
         await handleMessageSubmit({
-          content,
+          content: response.data,
           chatId: chatId as Id<"chats">,
-          senderId: currentUser._id,
-          isAi: false,
+          senderId: AI_USER_ID,
+          isAi: true,
           type: "text",
         });
-
-        await getAIResponse(content);
-      } catch (error) {
-        Alert.alert("Error", "Failed to send message");
-      } finally {
-        setLoading(false);
+      } else {
+        console.error("AI response error:", response.error);
+        Alert.alert("Error", "Failed to get AI response");
       }
-    },
-    [chatId, currentUser]
-  );
+    } catch (error) {
+      console.error("Error in message handling:", error);
+      Alert.alert("Error", "Failed to process message");
+    }
+  };
 
   // Media Handling
   const handleMedia = useCallback(
@@ -261,7 +230,7 @@ const ChatPage = () => {
           attachId: attachId as Id<"_storage">,
         });
 
-        await getAIResponse(content || "Media shared");
+        await handleSendMessage(content || "Media shared");
       } catch (error) {
         Alert.alert("Error", "Failed to upload media");
       } finally {
@@ -324,7 +293,7 @@ const ChatPage = () => {
         { backgroundColor: "rgba(0, 0, 0, 0.2)" },
       ]}
     >
-      <Stack.Screen
+      {/* <Stack.Screen
         options={{
           headerTitle: () => (
             <HeaderDropDown
@@ -338,7 +307,7 @@ const ChatPage = () => {
             />
           ),
         }}
-      />
+      /> */}
 
       <View
         style={[
@@ -398,7 +367,7 @@ const ChatPage = () => {
         keyboardVerticalOffset={63}
         style={styles.inputContainer}
       >
-        {!queryMsgs?.length && <MessageIdeas onSelectCard={handleSend} />}
+        {!queryMsgs?.length && <MessageIdeas onSelectCard={handleSendMessage} />}
         {loading && (
           <ActivityIndicator
             size="small"
@@ -406,20 +375,49 @@ const ChatPage = () => {
             style={styles.loadingIndicator}
           />
         )}
-        <MessageInput onShouldSend={handleSend} />
+        <MessageInput onShouldSend={handleSendMessage} />
       </KeyboardAvoidingView>
     </View>
   );
 };
 
-const EmptyState = () => (
-  <View style={styles.emptyContainer}>
-    <Image
-      source={require("~/assets/images/ring-103.gif")}
-      style={styles.emptyImage}
-    />
-  </View>
-);
+const EmptyState = () => {
+  const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
+  const opacityAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 10,
+        friction: 2
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true
+      })
+    ]).start();
+  }, []);
+
+  return (
+    <View style={styles.emptyContainer}>
+      <Animated.View style={[
+        styles.birdContainer,
+        {
+          transform: [{ scale: scaleAnim }],
+          opacity: opacityAnim
+        }
+      ]}>
+        <BirdVector width={100} height={100} />
+      </Animated.View>
+      <Animated.Text style={[styles.emptyText, { opacity: opacityAnim }]}>
+        Start a new conversation
+      </Animated.Text>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   gradient: {
@@ -440,7 +438,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: "50%",
+    marginTop: "70%",
+  },
+  birdContainer: {
+    marginBottom: 20,
+  },
+  emptyText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+    marginTop: 16,
+    opacity: 0.8,
   },
   emptyImage: {
     width: 60,

@@ -161,8 +161,8 @@ const InitialLayout = () => {
       } else {
         console.log("infoSubmitted-->");
         console.log(infoSubmitted);
-        if (!infoSubmitted && pathname !== "/(onboarding)/InfoForm") {
-          router.replace("/(onboarding)/InfoForm");
+        if (!infoSubmitted && pathname !== "/(onboarding)/Questionnaire") {
+          router.replace("/(onboarding)/Questionnaire");
         } else {
           // Handle regular user routing
           const targetRoute = isApproved
