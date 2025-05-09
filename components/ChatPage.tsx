@@ -382,28 +382,28 @@ const ChatPage = () => {
 };
 
 const EmptyState = () => {
-  const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
-  const opacityAnim = React.useRef(new Animated.Value(0)).current;
+  // const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
+  // const opacityAnim = React.useRef(new Animated.Value(0)).current;
 
-  React.useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 10,
-        friction: 2
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true
-      })
-    ]).start();
-  }, []);
+  // React.useEffect(() => {
+  //   Animated.parallel([
+  //     Animated.spring(scaleAnim, {
+  //       toValue: 1,
+  //       useNativeDriver: true,
+  //       tension: 10,
+  //       friction: 2
+  //     }),
+  //     Animated.timing(opacityAnim, {
+  //       toValue: 1,
+  //       duration: 800,
+  //       useNativeDriver: true
+  //     })
+  //   ]).start();
+  // }, []);
 
   return (
     <View style={styles.emptyContainer}>
-      <Animated.View style={[
+      {/* <Animated.View style={[
         styles.birdContainer,
         {
           transform: [{ scale: scaleAnim }],
@@ -414,7 +414,9 @@ const EmptyState = () => {
       </Animated.View>
       <Animated.Text style={[styles.emptyText, { opacity: opacityAnim }]}>
         Start a new conversation
-      </Animated.Text>
+      </Animated.Text> */}
+      <Image source={require("~/assets/images/icon.png")} style={styles.emptyImage} />
+      <Text style={styles.emptyText}>Start a new conversation</Text>
     </View>
   );
 };
