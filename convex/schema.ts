@@ -26,6 +26,45 @@ export default defineSchema({
         phone: v.optional(v.string()),
       })
     ),
+    questionnaire: v.optional(v.object({
+      gender: v.string(),
+      age: v.string(),
+      height: v.string(),
+      weight: v.string(),
+      occupation: v.string(),
+      goals: v.array(v.string()),
+      healthConditions: v.array(v.string()),
+      symptoms: v.array(v.string()),
+      allergies: v.array(v.string()),
+      habits: v.array(v.string()),
+      dietStyle: v.string(),
+      spiceLevel: v.string(),
+      texturePreferences: v.array(v.string()),
+      foodsToAvoid: v.array(v.string()),
+      cookingLevel: v.string(),
+      wakeUpTime: v.union(v.string(), v.null()),
+      sleepTime: v.union(v.string(), v.null()),
+      mealTimes: v.object({
+        breakfast: v.union(v.string(), v.null()),
+        lunch: v.union(v.string(), v.null()),
+        snack: v.union(v.string(), v.null()),
+        dinner: v.union(v.string(), v.null())
+      }),
+      heaviestMeal: v.string(),
+      activityLevel: v.string(),
+      workouts: v.object({
+        doWorkouts: v.boolean(),
+        days: v.array(v.string()),
+        time: v.union(v.string(), v.null()),
+        type: v.string(),
+        duration: v.string()
+      }),
+      location: v.string(),
+      homeCuisine: v.string(),
+      otherCuisines: v.array(v.string()),
+      primaryGoal: v.string(),
+      completedAt: v.string()
+    })),
   })
     // .index("by_userId", [_id])
     .index("by_role_and_busy", ["role", "busy"])
@@ -226,7 +265,11 @@ export default defineSchema({
     unit: v.optional(v.string()),
     frequency: v.array(v.string()),
     color: v.string(),
-    icon: v.string()
+    icon: v.string(),
+    streak:v.number(),
+    progress:v.object({
+      current:v.number(),
+    }),
   }).index("by_user", ["userId"]),
 
   habitEntries: defineTable({

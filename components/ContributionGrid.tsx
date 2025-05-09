@@ -5,6 +5,7 @@ import { FlashList } from "@shopify/flash-list";
 import type { Habit } from "~/utils/Interfaces";
 import type { Entry } from "~/utils/Interfaces";
 import type { HabitType } from "~/utils/Interfaces";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const ContributionGrid = forwardRef<View, { habit: Habit }>(({ habit }, ref) => {
   // Use mockHabits as an example habit
@@ -66,7 +67,7 @@ const ContributionGrid = forwardRef<View, { habit: Habit }>(({ habit }, ref) => 
   return (
     <View ref={ref} style={contributionStyles.habitContainer}>
       <View style={contributionStyles.habitHeader}>
-        <IconCircle name={habit.icon} size={20} />
+        <MaterialCommunityIcons name={habit.icon as any} size={20} color="#fff" />
         <Text style={contributionStyles.habitName}>{habit.name}</Text>
       </View>
       

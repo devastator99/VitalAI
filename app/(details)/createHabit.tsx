@@ -24,7 +24,12 @@ export default function CreateHabit() {
   const handleCreateHabit = async (
     newHabit: Omit<Habit, "_id" | "entries" | "streak" | "progress">
   ) => {
-    await createHabit(newHabit);
+    const habitToCreate = {
+      ...newHabit,
+      streak: 0,
+      progress: { current: 0 }
+    };
+    await createHabit(habitToCreate);
     router.back();
   };
 

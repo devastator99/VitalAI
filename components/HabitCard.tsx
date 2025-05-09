@@ -19,6 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import IconCircle from "~/components/IconCircle";
 import { ProgressBar } from "react-native-paper";
 import { DAYS } from "~/utils/habitData";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const HabitCard = forwardRef<View, {
   habit: Habit;
@@ -85,11 +86,12 @@ const HabitCard = forwardRef<View, {
           style={[styles.card, { marginTop: -10, borderRadius: 25 }]}
         >
           <View style={styles.cardHeader}>
-            <IconCircle name={habit.icon} size={24} iconColor="#fff" />
+            <MaterialCommunityIcons name={habit.icon as any} size={24} color="#fff" />
             <Text style={styles.cardTitle}>{habit.name}</Text>
             <Text style={[styles.streakText, { marginLeft: "auto" }]}>
-              {habit.streak}🔥
+              {habit.streak}
             </Text>
+            <MaterialCommunityIcons name="fire-circle" size={24} color="#fff" />
           </View>
 
           {selectedView !== "Daily" && (
@@ -153,6 +155,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
+    gap: 2,
   },
   cardTitle: {
     fontSize: 17,
@@ -168,8 +171,10 @@ const styles = StyleSheet.create({
   },
   streakText: {
     color: "#fff",
-    marginBottom: 10,
+    marginBottom: 0,
     fontWeight: "600",
+    flexDirection: "row",
+    alignItems: "center",
   },
   frequencyContainer: {
     flexDirection: "row",

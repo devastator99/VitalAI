@@ -24,6 +24,10 @@ export const createHabit = mutation({
     frequency: v.array(v.string()),
     color: v.string(),
     icon: v.string(),
+    streak: v.number(),
+    progress: v.object({
+      current: v.number(),
+    }),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -49,7 +53,9 @@ export const createHabit = mutation({
       unit: args.unit,
       frequency: args.frequency,
       color: args.color,
-      icon: args.icon
+      icon: args.icon,
+      streak: args.streak,
+      progress: args.progress,
     });
   },
 });
@@ -62,6 +68,12 @@ export const logEntry = mutation({
     date: v.string()
   },
   handler: async (ctx, args) => {
+    const habit = await ctx.db.get(args.habitId);
+    if (!habit) throw new Error("Habit not found");
+
+    const currentDate = new Date().toISOString().split('T')[0];
+    const currentStreak = habit.streak;
+    
     return await ctx.db.insert("habitEntries", {
       habitId: args.habitId,
       value: args.value,

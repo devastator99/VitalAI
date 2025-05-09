@@ -129,17 +129,13 @@ export default function InfoForm() {
     }
   };
 
-
-
-  
-
   const handleSubmit = async () => {
     try {
       await saveUserInfo(formData);
       if (userStatusResult === undefined) return;
       userStatusResult
         ? router.replace("/(auth)/(drawer)/(ai-chat)/new")
-        : router.push("/(onboarding)/waiting");
+        : router.push("/(onboarding)/Questionnaire");
     } catch (error) {
       console.error("Error saving user info:", error);
       alert("Error saving profile. Please try again.");

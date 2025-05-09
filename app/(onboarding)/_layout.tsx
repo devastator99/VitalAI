@@ -12,6 +12,14 @@ export default function OnboardingLayout() {
         }}
       />
       <Stack.Screen
+        name="Questionnaire" // New screen for the questionnaire
+        options={{
+          headerShown: false,
+          animation: "fade",
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
         name="waiting" // This will be InfoForm.tsx
         options={{
           headerShown: false,

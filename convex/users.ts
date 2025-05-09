@@ -983,5 +983,71 @@ export const getUsersByIds = query({
   }
 });
 
+export const updateUserProfile = mutation({
+  args: {
+    questionnaire: v.object({
+      gender: v.string(),
+      age: v.string(),
+      height: v.string(),
+      weight: v.string(),
+      occupation: v.string(),
+      goals: v.array(v.string()),
+      healthConditions: v.array(v.string()),
+      symptoms: v.array(v.string()),
+      allergies: v.array(v.string()),
+      habits: v.array(v.string()),
+      dietStyle: v.string(),
+      spiceLevel: v.string(),
+      texturePreferences: v.array(v.string()),
+      foodsToAvoid: v.array(v.string()),
+      cookingLevel: v.string(),
+      wakeUpTime: v.union(v.string(), v.null()),
+      sleepTime: v.union(v.string(), v.null()),
+      mealTimes: v.object({
+        breakfast: v.union(v.string(), v.null()),
+        lunch: v.union(v.string(), v.null()),
+        snack: v.union(v.string(), v.null()),
+        dinner: v.union(v.string(), v.null())
+      }),
+      heaviestMeal: v.string(),
+      activityLevel: v.string(),
+      workouts: v.object({
+        doWorkouts: v.boolean(),
+        days: v.array(v.string()),
+        time: v.union(v.string(), v.null()),
+        type: v.string(),
+        duration: v.string()
+      }),
+      location: v.string(),
+      homeCuisine: v.string(),
+      otherCuisines: v.array(v.string()),
+      primaryGoal: v.string(),
+      completedAt: v.string()
+    })
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .filter(q => q.eq(q.field("userId"), identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Update the user document with questionnaire data
+    await ctx.db.patch(user._id, {
+      questionnaire: args.questionnaire
+    });
+
+    return user._id;
+  }
+});
+
 
 

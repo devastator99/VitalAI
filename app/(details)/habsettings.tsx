@@ -34,7 +34,7 @@ export default function Settings() {
           <IconCircle name="chevron-back-sharp" size={17} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={styles.titleWhite}>App </Text>
+          <Text style={styles.titleWhite}>Habits </Text>
           <Text style={styles.titleBlue}>Settings</Text>
         </View>
         <View style={{ width: 50 }} />

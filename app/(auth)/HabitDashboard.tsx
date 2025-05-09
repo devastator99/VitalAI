@@ -59,6 +59,7 @@ import { Id } from "~/convex/_generated/dataModel";
 import { api } from "~/convex/_generated/api";
 import HabitCard from "../../components/HabitCard";
 import { useMutation } from "convex/react";
+import { EmptyHabitState } from "~/components/EmptyHabitState";
 // TO ADD: // Precompute lightened colors in habit creation
 //habit name and frequency in header in weekdays with right icons for edit delete and share
 //display  total , score percent ,in a card
@@ -98,6 +99,10 @@ const HabitDashboard = () => {
         <ActivityIndicator size="large" color="#fff" />
       </View>
     );
+  }
+
+  if (!habits || habits.length === 0) {
+    return <EmptyHabitState />;
   }
 
   return (
