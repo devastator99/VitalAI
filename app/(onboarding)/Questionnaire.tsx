@@ -29,9 +29,12 @@ export default function QuestionnaireScreen() {
       
       await saveUserInfo(profileData);
       
+      // Remove profile-specific fields from questionnaire data
+      const { name, profilePicture, ...questionnaireData } = data;
+      
       // Then save the questionnaire data
       await saveQuestionnaire({ 
-        questionnaire: data 
+        questionnaire: questionnaireData 
       });
       
       // Navigate to waiting screen

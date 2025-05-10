@@ -80,22 +80,6 @@ const Layout = () => {
       },
     },
     {
-      name: "contacts",
-      label: "Contacts",
-      icon: {
-        active: "people",
-        inactive: "people-outline",
-      },
-    },
-    {
-      name: "Profile",
-      label: "Profile",
-      icon: {
-        active: "person",
-        inactive: "person-outline",
-      },
-    },
-    {
       name: "HabitDashboard",
       label: "Habits",
       icon: {
@@ -112,14 +96,32 @@ const Layout = () => {
       },
     },
     {
-      name: "settings",
-      label: "Settings",
+      name: "Profile",
+      label: "Profile",
       icon: {
-        active: "settings",
-        inactive: "settings-outline",
+        active: "person",
+        inactive: "person-outline",
       },
-    }
+    },
   ];
+
+
+  // {
+  //   name: "contacts",
+  //   label: "Contacts",
+  //   icon: {
+  //     active: "people",
+  //     inactive: "people-outline",
+  //   },
+  // },
+  // {
+  //   name: "settings",
+  //   label: "Settings",
+  //   icon: {
+  //     active: "settings",
+  //     inactive: "settings-outline",
+  //   },
+  // }
 
   return (
     <Authenticated>

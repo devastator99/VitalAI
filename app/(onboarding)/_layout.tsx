@@ -3,20 +3,15 @@ import { Stack } from "expo-router/stack";
 export default function OnboardingLayout() {
   return (
     <Stack>
-      {/* <Stack.Screen
-        name="InfoForm" // This will be InfoForm.tsx
-        options={{
-          headerShown: false,
-          animation: "fade",
-          gestureEnabled: false,
-        }}
-      /> */}
       <Stack.Screen
-        name="Questionnaire" // New screen for the questionnaire
+        name="Questionnaire" 
         options={{
           headerShown: false,
           animation: "fade",
           gestureEnabled: false,
+          gestureDirection: "horizontal",
+          headerBackVisible: false,
+          headerLeft: () => null
         }}
       />
       <Stack.Screen

@@ -198,11 +198,7 @@ const InitialLayout = () => {
         options={{
           presentation: "modal",
           title: "",
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="close-outline" size={28} />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
         }}
       />
       <Stack.Screen

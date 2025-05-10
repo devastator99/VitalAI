@@ -1854,8 +1854,8 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({
           <Image source={{ uri: imageUrl }} style={styles.profileImage} />
         ) : (
           <View style={styles.emptyProfileContainer}>
-            <UserVector size={200} color={Colors.white} />
-          </View>
+            <UserVector width={50} height={50} />
+            </View>
         )}
         <TouchableOpacity
           style={styles.uploadButton}

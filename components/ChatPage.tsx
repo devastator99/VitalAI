@@ -108,6 +108,12 @@ const DateSeparator = React.memo(({ timestamp }: { timestamp: number }) => {
   );
 });
 
+const FlashListEmptyState = () => (
+  <View style={{ transform: [{ scaleY: -1 }, { scaleX: -1 }] }}>
+    <EmptyState />
+  </View>
+);
+
 const ChatPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const listRef = useRef<FlashList<any>>(null);
@@ -330,7 +336,7 @@ const ChatPage = () => {
             drawDistance={500}
             inverted={true}
             contentContainerStyle={styles.listContent}
-            ListEmptyComponent={<EmptyState />}
+            ListEmptyComponent={<FlashListEmptyState />}
             onEndReached={() => loadMore(50)}
             onEndReachedThreshold={0.5}
           />
@@ -440,7 +446,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: "70%",
+    marginBottom: "70%",
   },
   birdContainer: {
     marginBottom: 20,
