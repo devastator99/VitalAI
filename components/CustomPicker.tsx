@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Animated,
   TouchableWithoutFeedback,
-  TextInput,
   ListRenderItemInfo,
   Platform,
   Dimensions,
@@ -37,8 +36,6 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
 }) => {
   const [visible, setVisible] = useState<boolean>(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const [filter, setFilter] = useState<string>('');
-  const searchInputRef = useRef<TextInput>(null);
 
   const open = useCallback(() => {
     setVisible(true);
@@ -47,9 +44,7 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
       useNativeDriver: true,
       damping: 20,
       stiffness: 90,
-    }).start(() => {
-      searchInputRef.current?.focus();
-    });
+    }).start();
   }, []);
 
   const close = useCallback(() => {
@@ -59,7 +54,6 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
       useNativeDriver: true,
     }).start(() => {
       setVisible(false);
-      setFilter('');
     });
   }, []);
 
@@ -72,13 +66,6 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
     inputRange: [0, 0.5, 1],
     outputRange: [0, 0.5, 1],
   });
-
-  const displayedOptions = useMemo(() => 
-    options.filter(opt =>
-      opt.toLowerCase().includes(filter.toLowerCase())
-    ),
-    [options, filter]
-  );
 
   const renderOption = useCallback(({ item }: ListRenderItemInfo<string>) => (
     <TouchableOpacity
@@ -158,32 +145,11 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
           <View style={styles.handle} />
           
           <View style={styles.sheetHeader}>
-            <View style={styles.searchContainer}>
-              <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-              <TextInput
-                ref={searchInputRef}
-                style={styles.searchInput}
-                placeholder="Search..."
-                placeholderTextColor="#666"
-                value={filter}
-                onChangeText={setFilter}
-                returnKeyType="done"
-                autoCorrect={false}
-                autoCapitalize="none"
-              />
-              {filter !== '' && (
-                <TouchableOpacity 
-                  onPress={() => setFilter('')}
-                  style={styles.clearButton}
-                >
-                  <Ionicons name="close-circle" size={20} color="#666" />
-                </TouchableOpacity>
-              )}
-            </View>
+            <Text style={styles.sheetTitle}>Select an option</Text>
           </View>
 
           <FlatList
-            data={displayedOptions}
+            data={options}
             keyExtractor={keyExtractor}
             renderItem={renderOption}
             showsVerticalScrollIndicator={false}
@@ -195,12 +161,6 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
             initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={10}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Ionicons name="search" size={48} color="#444" />
-                <Text style={styles.emptyText}>No matches found</Text>
-              </View>
-            }
             contentContainerStyle={styles.listContent}
           />
         </Animated.View>
@@ -285,27 +245,14 @@ const styles = StyleSheet.create({
   sheetHeader: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ffffff15',
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff10',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: Colors.white,
+  sheetTitle: {
     fontSize: 16,
-    height: '100%',
-    padding: 0,
-  },
-  clearButton: {
-    padding: 4,
+    fontWeight: '600',
+    color: Colors.white,
+    textAlign: 'center',
   },
   listContent: {
     paddingHorizontal: 16,
@@ -335,16 +282,6 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: Colors.mainBlue,
     fontWeight: '600',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    color: '#666',
-    fontSize: 16,
-    marginTop: 12,
   },
 });
 

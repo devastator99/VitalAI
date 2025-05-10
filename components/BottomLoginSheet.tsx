@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import {
   View,
   Text,
@@ -19,11 +19,13 @@ import { useWarmUpBrowser } from "~/utils/useWarmUpBrowser";
 import * as Linking from "expo-linking";
 import { useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { useLocalSearchParams } from "expo-router";
 
 const BottomLoginSheet = () => {
   WebBrowser.maybeCompleteAuthSession();
   const { signIn } = useSignIn();
   useWarmUpBrowser();
+  const { signUp: signUpParam } = useLocalSearchParams();
 
   // const [request, response, promptAsync] = Google.useAuthRequest({
   //   clientId: '599657657682-dk6q7juah7efs1bpl1hiccgde251lfip.apps.googleusercontent.com',
@@ -59,6 +61,10 @@ const BottomLoginSheet = () => {
 
   const { bottom } = useSafeAreaInsets();
 
+  const handleSignUp = () => {
+    router.push("/login?signUp=true");
+  };
+
   return (
     <View style={[styles.container, { paddingBottom: bottom }]}>
       <TouchableOpacity style={[styles.btn, styles.btnLight]}>
@@ -77,36 +83,24 @@ const BottomLoginSheet = () => {
         />
         <Text style={styles.btnDarkText}>Continue with Google</Text>
       </TouchableOpacity>
-      <Link
-        href={{
-          pathname: "/login",
-          params: { type: "register" },
-        }}
+      <TouchableOpacity
         style={[styles.btn, styles.btnDark]}
-        asChild
+        onPress={() => router.push("/login?signUp=true")}
       >
-        <TouchableOpacity>
-          <Ionicons
-            name="mail"
-            size={20}
-            style={styles.btnIcon}
-            color={"#fff"}
-          />
-          <Text style={styles.btnDarkText}>Sign up with email</Text>
-        </TouchableOpacity>
-      </Link>
-      <Link
-        href={{
-          pathname: "/login",
-          params: { type: "login" },
-        }}
+        <Ionicons
+          name="mail"
+          size={20}
+          style={styles.btnIcon}
+          color={"#fff"}
+        />
+        <Text style={styles.btnDarkText}>Sign up with email</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
         style={[styles.btn, styles.btnOutline]}
-        asChild
+        onPress={() => router.push("/login")}
       >
-        <TouchableOpacity>
-          <Text style={styles.btnDarkText}>Log in</Text>
-        </TouchableOpacity>
-      </Link>
+        <Text style={styles.btnDarkText}>Log in</Text>
+      </TouchableOpacity>
     </View>
   );
 };

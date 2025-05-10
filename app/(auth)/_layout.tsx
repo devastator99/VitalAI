@@ -104,25 +104,6 @@ const Layout = () => {
       },
     },
   ];
-
-
-  // {
-  //   name: "contacts",
-  //   label: "Contacts",
-  //   icon: {
-  //     active: "people",
-  //     inactive: "people-outline",
-  //   },
-  // },
-  // {
-  //   name: "settings",
-  //   label: "Settings",
-  //   icon: {
-  //     active: "settings",
-  //     inactive: "settings-outline",
-  //   },
-  // }
-
   return (
     <Authenticated>
       <Tabs
