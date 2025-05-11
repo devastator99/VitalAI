@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import { View, Text, Image, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { MotiView } from "moti";
+import { Image } from "expo-image";
 import Colors from "~/utils/Colors";
 import { useCallback } from "react";
 import { useQuery } from "convex/react";

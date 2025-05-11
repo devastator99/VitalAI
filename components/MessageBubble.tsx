@@ -2,7 +2,6 @@ import React,{Fragment} from "react";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   Modal,
   TouchableOpacity,
@@ -28,6 +27,7 @@ import { MotiPressable } from "moti/interactions";
 import Gallery from "react-native-awesome-gallery";
 import { useMemo } from "react";
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { Image } from "expo-image";
 
 type MessageBubbleProps = {
   content: string;

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
 import { MotiView, AnimatePresence } from 'moti';
+import { Image } from "expo-image";
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Colors from '~/utils/Colors';

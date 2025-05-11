@@ -11,7 +11,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  Image,
   Text,
   View,
   StyleSheet,
@@ -23,6 +22,7 @@ import {
   Button,
   ImageBackground,
 } from "react-native";
+import { Image } from "expo-image";
 import Colors from "~/utils/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";

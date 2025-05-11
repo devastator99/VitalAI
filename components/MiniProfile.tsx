@@ -1,6 +1,6 @@
-import { View, Image, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import * as ContextMenu from "zeego/context-menu";
-
+import { Image } from "expo-image";
 // Dummy user data (replace with your actual data source)
 const user = {
   avatar: "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?q=80&w=3072&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",

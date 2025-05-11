@@ -13,7 +13,6 @@ import {
   Animated,
   ActivityIndicator,
   SafeAreaView,
-  Image,
 } from "react-native";
 import {
   useSharedValue,
@@ -33,6 +32,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { useUser } from "@clerk/clerk-expo";
 import UserVector from "./UserVector";
+import { Image } from "expo-image";
 // import * as Location from 'expo-location';
 // import * as Device from 'expo-device';
 
@@ -1855,7 +1855,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({
         ) : (
           <View style={styles.emptyProfileContainer}>
             <UserVector width={50} height={50} />
-            </View>
+          </View>
         )}
         <TouchableOpacity
           style={styles.uploadButton}

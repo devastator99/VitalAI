@@ -19,6 +19,7 @@ export const createHabit = mutation({
       v.literal("numeric"),
       v.literal("categorical")
     ),
+    
     target: v.optional(v.number()),
     unit: v.optional(v.string()),
     frequency: v.array(v.string()),

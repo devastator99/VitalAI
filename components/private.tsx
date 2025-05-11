@@ -10,7 +10,6 @@ import {
   Keyboard,
   Platform,
   ActivityIndicator,
-  Image,
   TextStyle,
   TouchableOpacity,
   TextInput,
@@ -31,6 +30,7 @@ import { api } from "~/convex/_generated/api";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { Id } from "~/convex/_generated/dataModel";
+import {Image} from "expo-image";
 // import { useConvexUser } from "~/utils/UserContext";
 /**
  * ---------------------------------------------

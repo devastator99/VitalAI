@@ -1,7 +1,8 @@
 import { useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api"; // Adjust the path to your Convex API
-import { StyleSheet, View, Text, ScrollView, Image } from "react-native";
+import { StyleSheet, View, Text, ScrollView } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { useState } from "react";

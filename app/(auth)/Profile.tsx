@@ -6,11 +6,11 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Image,
   Platform,
   ActivityIndicator,
   Dimensions,
 } from "react-native";
+import {Image} from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";

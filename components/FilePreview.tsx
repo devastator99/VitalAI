@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Animated, {
   useSharedValue,
   withTiming,
@@ -7,6 +7,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";
+import { Image } from "expo-image"
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import Colors from "~/utils/Colors";
 import { useAppStore } from "~/store";

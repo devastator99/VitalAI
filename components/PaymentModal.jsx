@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, Pressable, StyleSheet, Image, NativeModules, NativeEventEmitter, Alert } from 'react-native';
+import { View, Text, Modal, Pressable, StyleSheet, NativeModules, NativeEventEmitter, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAction } from "convex/react";
 import { api } from "../convex/_generated/api"
 import RazorpayWebView from './RazorpayWebView';
+import { Image } from "expo-image";
 
 const PaymentModal = ({ visible, onClose }) => {
   const [paymentMethod, setPaymentMethod] = useState('card');
