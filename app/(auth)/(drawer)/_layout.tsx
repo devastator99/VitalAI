@@ -22,7 +22,7 @@ import {
   Button,
   ImageBackground,
 } from "react-native";
-import { Image } from "expo-image";
+import Image from "@d11/react-native-fast-image";
 import Colors from "~/utils/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";

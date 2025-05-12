@@ -30,7 +30,7 @@ import { api } from "~/convex/_generated/api";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { Id } from "~/convex/_generated/dataModel";
-import {Image} from "expo-image";
+import CachedImage from './CachedImage';
 // import { useConvexUser } from "~/utils/UserContext";
 /**
  * ---------------------------------------------
@@ -230,7 +230,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({ message }) => {
       {message.isTyping ? (
         <LoadingDots />
       ) : message.imageUri ? (
-        <Image source={{ uri: message.imageUri }} style={styles.image} />
+        <CachedImage source={message.imageUri} style={styles.image} />
       ) : (
         <Text
           style={[
@@ -251,12 +251,11 @@ const MessageBubble: FC<MessageBubbleProps> = ({ message }) => {
         </Text>
 
         {isMyMessage && (
-          <Image
-            source={require("~/assets/images/asuka-2239.gif")} // or your read-receipt icon
-            style={[
-              styles.readIndicator,
-              { tintColor: isMessageRead ? "#53a6fd" : "#8aa69b" },
-            ]}
+          <CachedImage
+            source={require('~/assets/images/asuka-2239.gif')}
+            style={styles.readIndicator}
+            tintColor={isMessageRead ? "#53a6fd" : "#8aa69b"}
+            showLoader={false}
           />
         )}
       </View>

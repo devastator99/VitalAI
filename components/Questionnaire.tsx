@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import {
   View,
   Text,
@@ -32,7 +32,8 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { useUser } from "@clerk/clerk-expo";
 import UserVector from "./UserVector";
-import { Image } from "expo-image";
+import FastImage from "@d11/react-native-fast-image";
+import { MotiView } from "moti";
 // import * as Location from 'expo-location';
 // import * as Device from 'expo-device';
 
@@ -527,6 +528,37 @@ const styles = StyleSheet.create({
     color: Colors.mainBlue,
     fontSize: 20,
     fontWeight: "700",
+  },
+  profileSkeleton: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(50, 50, 50, 0.4)',
+    borderRadius: 60,
+  },
+  profileLoader: {
+    position: 'absolute',
+    zIndex: 2,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  skipButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#ffffff15',
+    marginLeft: 10,
+  },
+  skipButtonText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
@@ -1314,6 +1346,7 @@ const Questionnaire: React.FC<{
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const steps: JSX.Element[] = [
     <ProfileInfo
@@ -1397,6 +1430,36 @@ const Questionnaire: React.FC<{
 
     setCurrentStep(step);
     setErrors({});
+    
+    // Scroll to top when changing steps
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    }, 100);
+  };
+
+  const skipQuestionnaire = () => {
+    // Create minimal required data
+    const minimalData = {
+      ...formData,
+      name: formData.name || "User",
+      gender: formData.gender || "Other",
+      age: formData.age || "30",
+      height: formData.height || "170",
+      weight: formData.weight || "70",
+      occupation: formData.occupation || "Not specified",
+      goals: formData.goals.length ? formData.goals : ["Improve Health"],
+      dietStyle: formData.dietStyle || "Everything Goes",
+      spiceLevel: formData.spiceLevel || "Medium",
+      cookingLevel: formData.cookingLevel || "Amateur Cook",
+      heaviestMeal: formData.heaviestMeal || "Dinner",
+      activityLevel: formData.activityLevel || "Light Exercise",
+      location: formData.location || "Not specified",
+      homeCuisine: formData.homeCuisine || "Indian",
+      primaryGoal: "Improve Health",
+      completedAt: new Date().toISOString(),
+    };
+    
+    onComplete(minimalData);
   };
 
   const validateStep = (step: number): Record<string, string> => {
@@ -1407,6 +1470,9 @@ const Questionnaire: React.FC<{
         if (!formData.name.trim()) {
           stepErrors.name = "Please enter your name";
         }
+        break;
+        
+      case 1: // Personal Details
         const age = parseInt(formData.age as string, 10);
         if (!formData.age || isNaN(age) || age < 13) {
           stepErrors.age = "Please enter a valid age (13 or older)";
@@ -1422,9 +1488,6 @@ const Questionnaire: React.FC<{
         if (!formData.gender) {
           stepErrors.gender = "Please select your gender";
         }
-        break;
-
-      case 1: // Personal Details
         if (!formData.occupation || formData.occupation.trim().length < 2) {
           stepErrors.occupation = "Please enter your occupation";
         }
@@ -1508,18 +1571,27 @@ const Questionnaire: React.FC<{
           style={styles.gradientContainer}
         >
           <View style={styles.container}>
-            <View style={styles.progressBarContainer}>
-              <Animated.View
-                style={[
-                  styles.progressBar,
-                  {
-                    width: progressAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ["0%", "100%"],
-                    }),
-                  },
-                ]}
-              />
+            <View style={styles.headerContainer}>
+              <View style={styles.progressBarContainer}>
+                <Animated.View
+                  style={[
+                    styles.progressBar,
+                    {
+                      width: progressAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ["0%", "100%"],
+                      }),
+                    },
+                  ]}
+                />
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.skipButton}
+                onPress={skipQuestionnaire}
+              >
+                <Text style={styles.skipButtonText}>Skip</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.stepIndicator}>
@@ -1532,6 +1604,7 @@ const Questionnaire: React.FC<{
             </View>
 
             <ScrollView
+              ref={scrollViewRef}
               style={styles.scrollView}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -1784,6 +1857,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({
     api.files.getImageUrl,
     profilePicture ? { storageId: profilePicture } : "skip"
   );
+  const [imageLoading, setImageLoading] = useState(true);
 
   useEffect(() => {
     // Calculate BMI when height or weight changes
@@ -1851,7 +1925,20 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({
 
       <View style={styles.profileImageContainer}>
         {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.profileImage} />
+          <>
+            {imageLoading && <ProfileImageSkeleton />}
+            <FastImage 
+              source={{ 
+                uri: imageUrl,
+                priority: FastImage.priority.normal,
+                cache: FastImage.cacheControl.immutable
+              }} 
+              style={styles.profileImage} 
+              resizeMode={FastImage.resizeMode.cover}
+              onLoadStart={() => setImageLoading(true)}
+              onLoadEnd={() => setImageLoading(false)}
+            />
+          </>
         ) : (
           <View style={styles.emptyProfileContainer}>
             <UserVector width={50} height={50} />
@@ -1930,5 +2017,27 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({
     </View>
   );
 };
+
+// Profile image loading fallback
+const ProfileImageSkeleton = () => (
+  <View style={styles.emptyProfileContainer}>
+    <MotiView
+      from={{ opacity: 0.6 }}
+      animate={{ opacity: 1 }}
+      transition={{
+        type: 'timing',
+        duration: 1000,
+        loop: true,
+        repeatReverse: true,
+      }}
+      style={styles.profileSkeleton}
+    />
+    <ActivityIndicator 
+      size="small" 
+      color={Colors.mainBlue} 
+      style={styles.profileLoader} 
+    />
+  </View>
+);
 
 export default Questionnaire;

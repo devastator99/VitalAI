@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
 import { MotiView, AnimatePresence } from 'moti';
-import { Image } from "expo-image";
+import CachedImage from './CachedImage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Colors from '~/utils/Colors';
 import { useQuery } from 'convex/react';
 import { api } from '~/convex/_generated/api';
 import { Id } from '~/convex/_generated/dataModel';
+import FastImage from '@d11/react-native-fast-image';
 
 const { width } = Dimensions.get('window');
 
@@ -78,10 +79,14 @@ export default function ExerciseDetails({ id }: ExerciseDetailsProps) {
     >
       {/* Hero Image with Gradient Overlay */}
       <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: imgUrl || defaultImage }}
-          style={styles.headerImage}
-        />
+        <View style={{ width: '100%', height: '100%', position: 'absolute' }}>
+          <CachedImage 
+            source={imgUrl || defaultImage}
+            style={styles.headerImage}
+            resizeMode={FastImage.resizeMode.cover}
+            loaderColor={Colors.mainBlue}
+          />
+        </View>
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.8)']}
           style={styles.gradient}

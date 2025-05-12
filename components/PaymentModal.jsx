@@ -9,7 +9,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAction } from "convex/react";
 import { api } from "../convex/_generated/api"
 import RazorpayWebView from './RazorpayWebView';
-import { Image } from "expo-image";
+import CachedImage from './CachedImage';
+import FastImage from "@d11/react-native-fast-image";
 
 const PaymentModal = ({ visible, onClose }) => {
   const [paymentMethod, setPaymentMethod] = useState('card');
@@ -114,21 +115,21 @@ const PaymentModal = ({ visible, onClose }) => {
 
             <View style={styles.features}>
               <View style={styles.featureItem}>
-                <Image
+                <CachedImage
                   source={require('../assets/images/pngegg.png')}
                   style={styles.icon}
                 />
                 <Text style={styles.featureText}>24/7 Glucose Monitoring</Text>
               </View>
               <View style={styles.featureItem}>
-                <Image
+                <CachedImage
                   source={require('../assets/images/pngegg.png')}
                   style={styles.icon}
                 />
                 <Text style={styles.featureText}>Personalized Diet Plans</Text>
               </View>
               <View style={styles.featureItem}>
-                <Image
+                <CachedImage
                   source={require('../assets/images/pngegg.png')}
                   style={styles.icon}
                 />
@@ -144,7 +145,7 @@ const PaymentModal = ({ visible, onClose }) => {
                 ]}
                 onPress={() => setPaymentMethod('card')}
               >
-                <Image
+                <CachedImage
                   source={require('../assets/images/pngegg.png')}
                   style={styles.methodIcon}
                 />
@@ -157,7 +158,7 @@ const PaymentModal = ({ visible, onClose }) => {
                 ]}
                 onPress={() => setPaymentMethod('paypal')}
               >
-                <Image
+                <CachedImage
                   source={require('../assets/images/pngegg.png')}
                   style={styles.methodIcon}
                 />

@@ -1,12 +1,12 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { MotiView } from "moti";
-import { Image } from "expo-image";
+import FastImage from "@d11/react-native-fast-image";
 import Colors from "~/utils/Colors";
-import { useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { Id } from "~/convex/_generated/dataModel";
+import CachedImage from "./CachedImage";
 
 interface DietCardProps {
   title: string;
@@ -54,7 +54,19 @@ export function DietCard({
       }}
     >
       <Pressable onPress={onPress} style={styles.card}>
-        <Image source={{ uri: imgurl as string }} style={styles.image} />
+        <View style={styles.imageContainer}>
+          {imgurl ? (
+            <CachedImage
+              source={imgurl}
+              style={styles.image}
+              resizeMode={FastImage.resizeMode.cover}
+              fallbackColor="rgba(20, 20, 20, 0.9)"
+              loaderColor={Colors.mainBlue}
+            />
+          ) : (
+            <View style={styles.imagePlaceholder} />
+          )}
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>
             {title.split(" ").slice(0, -1).join(" ")}{" "}
@@ -85,10 +97,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
+  imageContainer: {
+    width: "100%",
+    height: 160,
+    backgroundColor: 'rgba(20, 20, 20, 0.9)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
   image: {
     width: "100%",
     height: 160,
-    resizeMode: "cover",
+    backgroundColor: 'transparent',
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: 160,
+    backgroundColor: 'rgba(30, 30, 30, 0.8)',
   },
   content: {
     padding: 16,
@@ -121,5 +145,5 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 14,
     color: "#D1D5DB",
-  },
+  }
 });

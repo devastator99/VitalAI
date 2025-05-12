@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
 import Questionnaire from '~/components/Questionnaire';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '~/convex/_generated/api';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
+import { Id } from '~/convex/_generated/dataModel';
 
 export default function QuestionnaireScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const saveUserInfo = useMutation(api.users.updateProfileDetails);
   const saveQuestionnaire = useMutation(api.users.updateUserProfile);
   const router = useRouter();
-  const { user } = useUser();
+  const userCurrent = useQuery(api.users.getCurrentUser);
 
   const handleComplete = async (data: any) => {
     try {
@@ -34,6 +35,7 @@ export default function QuestionnaireScreen() {
       
       // Then save the questionnaire data
       await saveQuestionnaire({ 
+        userId: userCurrent?._id as Id<"users">,
         questionnaire: questionnaireData 
       });
       

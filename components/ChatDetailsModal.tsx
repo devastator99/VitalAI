@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -8,7 +8,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
-import { Image } from "expo-image";
+import CachedImage from './CachedImage';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from 'convex/react';
 import { api } from '~/convex/_generated/api';
@@ -16,6 +16,7 @@ import { Id } from '~/convex/_generated/dataModel';
 import Colors from '~/utils/Colors';
 import BirdVector from './BirdVector';
 import UserVector from './UserVector';
+import { useUser } from '~/store';
 
 interface ChatDetailsModalProps {
   isVisible: boolean;
@@ -23,41 +24,66 @@ interface ChatDetailsModalProps {
   chatId: Id<'chats'>;
 }
 
-interface ParticipantCardProps {
-  user: any;  // Replace with proper user type if available
+interface ParticipantItemProps {
+  userId: Id<'users'>;
   role: string;
-  profilePictures: string | null | undefined;
-  isUserRole: boolean;
+  isCurrentUser: boolean;
 }
 
-const ParticipantCard: React.FC<ParticipantCardProps> = React.memo(({ 
-  user, 
-  role, 
-  profilePictures, 
-  isUserRole 
-}) => {
-  const [isLoading, setIsLoading] = React.useState(true);
+// Separate component for participant to handle individual image loading
+const ParticipantItem = ({ userId, role, isCurrentUser }: ParticipantItemProps) => {
+  const { user: currentUser } = useUser();
+  const [user, setUser] = useState<any>(null);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  
+  // If this is the current user, use the data from state
+  useEffect(() => {
+    if (isCurrentUser && currentUser) {
+      setUser(currentUser);
+    }
+  }, [isCurrentUser, currentUser]);
+  
+  // Otherwise, fetch user data from API
+  const userData = useQuery(
+    api.users.getUserById,
+    isCurrentUser ? "skip" : { id: userId }
+  );
+  
+  useEffect(() => {
+    if (!isCurrentUser && userData) {
+      setUser(userData);
+    }
+  }, [isCurrentUser, userData]);
+  
+  // Fetch profile picture if available
+  const pictureId = user?.profileDetails?.picture;
+  const pictureUrl = useQuery(
+    api.files.getImageUrl,
+    pictureId ? { storageId: pictureId } : "skip"
+  );
+  
+  useEffect(() => {
+    if (pictureUrl) {
+      setProfilePicture(pictureUrl);
+    }
+  }, [pictureUrl]);
+  
   const label = role.charAt(0).toUpperCase() + role.slice(1);
-  const bgColor = isUserRole ? Colors.mainBlue : '#2a2a2a';
-
+  const bgColor = role.toLowerCase() === 'user' ? Colors.mainBlue : '#2a2a2a';
+  
   return (
     <View style={[styles.card, { backgroundColor: bgColor }]}>
       <View style={styles.left}>
         <View style={styles.avatar}>
           {role === 'ai' ? (
             <BirdVector width={24} height={24} />
-          ) : user?.profileDetails?.picture ? (
+          ) : profilePicture ? (
             <View style={styles.avatarImageContainer}>
-              <ActivityIndicator 
-                size="small" 
-                color={Colors.mainBlue}
-                style={[StyleSheet.absoluteFill, { opacity: isLoading ? 1 : 0 }]} 
-              />
-              <Image 
-                source={profilePictures ? { uri: profilePictures } : undefined}
-                style={[styles.avatarImage, { opacity: isLoading ? 0 : 1 }]}
-                onLoadStart={() => setIsLoading(true)}
-                onLoadEnd={() => setIsLoading(false)}
+              <CachedImage 
+                source={profilePicture}
+                style={styles.avatarImage}
+                loaderColor={Colors.mainBlue}
+                loaderSize="small"
               />
             </View>
           ) : (
@@ -66,6 +92,7 @@ const ParticipantCard: React.FC<ParticipantCardProps> = React.memo(({
         </View>
         <Text style={styles.nameText}>
           {user?.name ?? '...'}
+          {isCurrentUser ? ' (You)' : ''}
         </Text>
       </View>
       <View style={styles.badge}>
@@ -73,24 +100,18 @@ const ParticipantCard: React.FC<ParticipantCardProps> = React.memo(({
       </View>
     </View>
   );
-});
+};
 
 const ChatDetailsModal: React.FC<ChatDetailsModalProps> = ({ 
   isVisible, 
   onClose, 
   chatId 
 }) => {
-  const chat = useQuery(api.chats.getChatWithParticipants, { chatId });
-  const users = useQuery(
-    api.users.getUsersByIds,
-    chat ? { userIds: chat.participants.map((p) => p.id) } : "skip"
-  );
+  // Get current user from store
+  const { user: currentUser } = useUser();
   
-  const profilePictures = useQuery(api.files.getImageUrl, 
-    users?.find(u => u?.profileDetails?.picture) 
-      ? { storageId: users.find(u => u?.profileDetails?.picture)?.profileDetails?.picture! }
-      : "skip"
-  );
+  // Get chat and participants
+  const chat = useQuery(api.chats.getChatWithParticipants, { chatId });
 
   const fmtDate = React.useCallback((ts?: number) =>
     ts
@@ -105,19 +126,15 @@ const ChatDetailsModal: React.FC<ChatDetailsModalProps> = ({
   );
 
   const renderItem = React.useCallback(({ item }: { item: any }) => {
-    const user = users?.find((u) => u._id === item.id);
-    const role = (item.role || 'user').toLowerCase();
-    const isUserRole = role === 'user';
-
+    const isCurrentUser = item.id === currentUser?._id;
     return (
-      <ParticipantCard 
-        user={user}
-        role={role}
-        profilePictures={profilePictures}
-        isUserRole={isUserRole}
+      <ParticipantItem 
+        userId={item.id}
+        role={item.role || 'user'} 
+        isCurrentUser={isCurrentUser}
       />
     );
-  }, [users, profilePictures]);
+  }, [currentUser]);
 
   if (!chat) {
     return (

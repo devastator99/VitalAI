@@ -333,7 +333,7 @@ export const getCurrentUser = query({
 
 export const getuserbyId = query({
   args: { userId: v.string() },
-  handler: async (ctx,args) => {
+  handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
@@ -413,7 +413,7 @@ export const createUser = mutation({
         validateEmail(args.profileDetails.email);
       }
 
-      console.log('email address validated')
+      console.log("email address validated");
 
       // Check for existing user using guaranteed non-null identity
       const existingUser = await ctx.db
@@ -434,8 +434,8 @@ export const createUser = mutation({
         profileDetails: args.profileDetails,
       });
 
-      console.log('new user --> from createuser:')
-      console.log(newUser)
+      console.log("new user --> from createuser:");
+      console.log(newUser);
       return newUser;
     } catch (error) {
       throw new Error(`User creation failed: ${(error as Error).message}`);
@@ -445,7 +445,7 @@ export const createUser = mutation({
 
 export const createUserbyclerkID = mutation({
   args: {
-    userId : v.string(),
+    userId: v.string(),
     role: v.union(
       v.literal("user"),
       v.literal("doctor"),
@@ -471,7 +471,7 @@ export const createUserbyclerkID = mutation({
         validateEmail(args.profileDetails.email);
       }
 
-      console.log('email address validated')
+      console.log("email address validated");
 
       // Check for existing user using guaranteed non-null identity
       const existingUser = await ctx.db
@@ -492,8 +492,8 @@ export const createUserbyclerkID = mutation({
         profileDetails: args.profileDetails,
       });
 
-      console.log('new user --> from createuser:')
-      console.log(newUser)
+      console.log("new user --> from createuser:");
+      console.log(newUser);
       return newUser;
     } catch (error) {
       throw new Error(`User creation failed: ${(error as Error).message}`);
@@ -594,7 +594,7 @@ export const updateProfileDetails = mutation({
       v.object({
         picture: v.optional(v.id("_storage")),
         height: v.optional(v.number()),
-        weight: v.optional(v.number())
+        weight: v.optional(v.number()),
       })
     ),
   },
@@ -617,12 +617,12 @@ export const updateProfileDetails = mutation({
     // Merge existing profile details with new updates
     const currentProfileDetails = user.profileDetails || {};
     const updateData: Partial<{ name: string; profileDetails: any }> = {};
-    
+
     if (args.name) updateData.name = args.name;
     if (args.profileDetails) {
       updateData.profileDetails = {
-        ...currentProfileDetails,  // Keep existing fields
-        ...prepareProfileDetails(args.profileDetails)  // Apply updates
+        ...currentProfileDetails, // Keep existing fields
+        ...prepareProfileDetails(args.profileDetails), // Apply updates
       };
     }
 
@@ -731,8 +731,6 @@ export const setRole = mutation({
 //   },
 // });
 
-
-
 export const getUserById = query({
   args: { id: v.id("users") },
   handler: async (ctx, args) => {
@@ -829,13 +827,13 @@ export const getCurrentUserAdminStatus = query({
     if (!identity) {
       return null; // Not logged in
     }
-    
+
     const userId = identity.subject;
     const user = await ctx.db
       .query("users")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
-      
+
     return user?.isAdmin || false;
   },
 });
@@ -947,7 +945,9 @@ export const isNewUser = query({
 });
 
 export const infoStatus = query({
-  args: { userId: v.string() },
+  args: {
+    userId: v.string(),
+  },
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
@@ -958,12 +958,14 @@ export const infoStatus = query({
       return false; // User not found
     }
 
-    const nameIsNotEmpty = Boolean(user.name?.trim()); // True if name is NOT empty
-    const emailIsFilled = Boolean(user.profileDetails?.email?.trim()); // True if email is filled
-    const phoneIsFilled = Boolean(user.profileDetails?.phone?.trim()); // True if phone is filled
+    // Check if name exists and isn't empty
+    const nameIsNotEmpty = Boolean(user.name?.trim());
 
-    // Return true only if name is NOT empty AND (email or phone is filled)
-    if (nameIsNotEmpty && (emailIsFilled || phoneIsFilled)) {
+    // Check if questionnaire exists and has been completed
+    const hasCompletedQuestionnaire = Boolean(user.questionnaire?.completedAt);
+
+    // Return true if both name is not empty AND questionnaire is completed
+    if (nameIsNotEmpty && hasCompletedQuestionnaire) {
       return true;
     }
 
@@ -973,18 +975,17 @@ export const infoStatus = query({
 
 export const getUsersByIds = query({
   args: {
-    userIds: v.array(v.id("users"))
+    userIds: v.array(v.id("users")),
   },
   handler: async (ctx, args) => {
-    const users = await Promise.all(
-      args.userIds.map(id => ctx.db.get(id))
-    );
-    return users.filter(user => user !== null);
-  }
+    const users = await Promise.all(args.userIds.map((id) => ctx.db.get(id)));
+    return users.filter((user) => user !== null);
+  },
 });
 
 export const updateUserProfile = mutation({
   args: {
+    userId: v.string(),
     questionnaire: v.object({
       gender: v.string(),
       age: v.string(),
@@ -1007,7 +1008,7 @@ export const updateUserProfile = mutation({
         breakfast: v.union(v.string(), v.null()),
         lunch: v.union(v.string(), v.null()),
         snack: v.union(v.string(), v.null()),
-        dinner: v.union(v.string(), v.null())
+        dinner: v.union(v.string(), v.null()),
       }),
       heaviestMeal: v.string(),
       activityLevel: v.string(),
@@ -1016,24 +1017,20 @@ export const updateUserProfile = mutation({
         days: v.array(v.string()),
         time: v.union(v.string(), v.null()),
         type: v.string(),
-        duration: v.string()
+        duration: v.string(),
       }),
       location: v.string(),
       homeCuisine: v.string(),
       otherCuisines: v.array(v.string()),
       primaryGoal: v.string(),
-      completedAt: v.string()
-    })
+      completedAt: v.string(),
+    }),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
 
     const user = await ctx.db
       .query("users")
-      .filter(q => q.eq(q.field("userId"), identity.subject))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
       .first();
 
     if (!user) {
@@ -1042,12 +1039,9 @@ export const updateUserProfile = mutation({
 
     // Update the user document with questionnaire data
     await ctx.db.patch(user._id, {
-      questionnaire: args.questionnaire
+      questionnaire: args.questionnaire,
     });
 
     return user._id;
-  }
+  },
 });
-
-
-

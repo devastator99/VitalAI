@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { MotiView } from "moti";
-import { Image } from "expo-image";
+import FastImage from "@d11/react-native-fast-image";
+import CachedImage from "./CachedImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Colors from "~/utils/Colors";
@@ -86,7 +87,13 @@ export function ExerciseCard({
     >
       <Pressable onPress={onPress} style={styles.card}>
         <View style={styles.imageWrapper}>
-          <Image source={{ uri: imgurl || defaultImageId  }} style={styles.image} />
+          <CachedImage 
+            source={imgurl || defaultImageId}
+            style={styles.image}
+            resizeMode={FastImage.resizeMode.cover}
+            fallbackColor="#1A1A1A"
+            loaderColor={Colors.mainBlue}
+          />
           <LinearGradient
             colors={["transparent", "rgba(0,0,0,0.7)"]}
             style={styles.gradient}

@@ -4,7 +4,29 @@ import { Id } from './convex/_generated/dataModel';
 import { Role } from './utils/Interfaces';
 
 type Chat = any; // Replace with your actual Chat type if defined
-// / Adjust based on your actual Role definition
+
+// Define the User type with all relevant profile fields
+interface UserProfile {
+  email?: string;
+  picture?: Id<"_storage">;
+  height?: number;
+  weight?: number;
+  phone?: string;
+}
+
+interface User {
+  _id?: Id<"users">;
+  userId: string;
+  name?: string;
+  role?: 'user' | 'doctor' | 'dietician' | 'ai';
+  busy?: boolean;
+  isApproved?: boolean;
+  isAdmin?: boolean;
+  createdAt?: number;
+  profileDetails?: UserProfile;
+  questionnaire?: any; // Replace with proper questionnaire type if available
+  defaultChatId?: Id<"chats">;
+}
 
 interface Message {
   id: string;
@@ -23,6 +45,9 @@ interface AppState {
   isAdmin: boolean | undefined;
   isApproved: boolean | undefined;
   detailsFilled: boolean | undefined;
+  
+  // New user object
+  user: User | null;
 
   // Chat & Navigation States
   chatId: string | null;
@@ -50,6 +75,8 @@ interface AppState {
   setIsAdmin: (isAdmin: boolean | undefined) => void;
   setIsApproved: (isApproved: boolean | undefined) => void;
   setDetailsFilled: (detailsFilled: boolean | undefined) => void;
+  setUser: (user: User | null) => void;
+  updateUserProfile: (profileDetails: Partial<UserProfile>) => void;
   setChatId: (chatId: string | null) => void;
   setIsInitializing: (isInitializing: boolean) => void;
   setHistory: (history: Chat[]) => void;
@@ -76,6 +103,7 @@ export const useAppStore = create<AppState>((set) => ({
   isAdmin: undefined,
   isApproved: undefined,
   detailsFilled: undefined,
+  user: null,
 
   // --- Chat & Navigation States ---
   chatId: null,
@@ -98,6 +126,16 @@ export const useAppStore = create<AppState>((set) => ({
   setIsAdmin: (isAdmin) => set({ isAdmin }),
   setIsApproved: (isApproved) => set({ isApproved }),
   setDetailsFilled: (detailsFilled) => set({ detailsFilled }),
+  setUser: (user) => set({ user }),
+  updateUserProfile: (profileDetails) => set((state) => ({
+    user: state.user ? {
+      ...state.user,
+      profileDetails: {
+        ...state.user.profileDetails,
+        ...profileDetails
+      }
+    } : null
+  })),
   setChatId: (chatId) => set({ chatId }),
   setIsInitializing: (isInitializing) => set({ isInitializing }),
   setHistory: (history) => set({ history }),
@@ -118,6 +156,7 @@ export const useAppStore = create<AppState>((set) => ({
       isAdmin: undefined,
       isApproved: undefined,
       detailsFilled: undefined,
+      user: null,
       chatId: null,
       isInitializing: false,
       history: [],
@@ -132,3 +171,27 @@ export const useAppStore = create<AppState>((set) => ({
       previewFile: null,
     }),
 }));
+
+// Convenience hook for accessing user data throughout the app
+export const useUser = () => {
+  const user = useAppStore((state) => state.user);
+  const setUser = useAppStore((state) => state.setUser);
+  const updateUserProfile = useAppStore((state) => state.updateUserProfile);
+  
+  return {
+    user,
+    setUser,
+    updateUserProfile,
+    
+    // Computed properties
+    isAdmin: user?.isAdmin || false,
+    isApproved: user?.isApproved || false,
+    profileDetails: user?.profileDetails || null,
+    userId: user?.userId || null,
+    role: user?.role || 'user',
+    
+    // Helper functions
+    hasCompletedQuestionnaire: Boolean(user?.questionnaire?.completedAt),
+    hasProfileDetails: Boolean(user?.profileDetails),
+  };
+};

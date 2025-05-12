@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import Animated, {
   FadeIn,
@@ -24,12 +25,14 @@ import Colors from "~/utils/Colors";
 import { api } from "~/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Id } from "~/convex/_generated/dataModel";
-import { ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import NutrientCard from "./NutrientCard";
 import IconCircle from "~/components/IconCircle";
+import FastImage from "@d11/react-native-fast-image";
+import CachedImage from "./CachedImage";
+import { MotiView } from "moti";
 
-const AnimatedImage = Animated.Image;
+// Don't use AnimatedCachedImage - instead use Animated.View with CachedImage inside
 const AnimatedView = Animated.View;
 
 interface MealDetailsProps {
@@ -71,6 +74,28 @@ const AnimatedNutritionItem = ({
     </AnimatedView>
   );
 };
+
+// Add ImageSkeleton component 
+const DetailImageSkeleton = () => (
+  <View style={styles.imageSkeleton}>
+    <MotiView
+      from={{ opacity: 0.5 }}
+      animate={{ opacity: 1 }}
+      transition={{
+        type: 'timing',
+        duration: 1000,
+        loop: true,
+        repeatReverse: true,
+      }}
+      style={styles.skeletonAnimation}
+    />
+    <ActivityIndicator 
+      size="large" 
+      color={Colors.mainBlue} 
+      style={styles.loader} 
+    />
+  </View>
+);
 
 export default function MealDetails({ id, style }: MealDetailsProps) {
   const router = useRouter();
@@ -144,10 +169,18 @@ export default function MealDetails({ id, style }: MealDetailsProps) {
 
   return (
     <ScrollView style={[styles.container, style]}>
-      <AnimatedImage
-        source={{ uri: imgurl as string }}
-        style={[styles.image, imageAnimatedStyle]}
-      />
+      <View style={styles.imageContainer}>
+        <AnimatedView style={[{ width: '100%', height: '100%' }, imageAnimatedStyle]}>
+          <CachedImage
+            source={imgurl as string}
+            style={styles.image}
+            resizeMode={FastImage.resizeMode.cover}
+            fallbackColor="rgba(30, 30, 30, 0.8)"
+            loaderColor={Colors.mainBlue}
+            loaderSize="large"
+          />
+        </AnimatedView>
+      </View>
 
       <AnimatedView style={[styles.content, contentAnimatedStyle]}>
         <Text style={[styles.title, { marginBottom: 20,fontWeight:700 }]}>
@@ -239,10 +272,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000000",
   },
+  imageContainer: {
+    width: "100%",
+    height: 300,
+    backgroundColor: 'rgba(20, 20, 20, 0.9)',
+    position: 'relative',
+  },
   image: {
     width: "100%",
     height: 300,
-    resizeMode: "cover",
+    backgroundColor: 'transparent',
+  },
+  imageSkeleton: {
+    position: 'absolute',
+    width: "100%",
+    height: "100%",
+    backgroundColor: 'rgba(30, 30, 30, 0.8)',
+    zIndex: 1,
+  },
+  skeletonAnimation: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(50, 50, 50, 0.3)',
   },
   content: {
     flex: 1,
@@ -345,5 +399,9 @@ const styles = StyleSheet.create({
     color: Colors.mainBlue,
     fontSize: 12,
     fontWeight: '500',
+  },
+  loader: {
+    position: 'relative',
+    zIndex: 2,
   },
 });

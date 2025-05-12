@@ -7,11 +7,11 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";
-import { Image } from "expo-image"
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import Colors from "~/utils/Colors";
 import { useAppStore } from "~/store";
 import { LinearGradient } from "expo-linear-gradient";
+import FastImage from "@d11/react-native-fast-image";
 
 export type FilePreviewProps = {
   fileUri: string;
@@ -94,10 +94,10 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       {/* Preview area */}
       <View style={styles.previewContainer}>
         {fileType === "image" ? (
-          <Image
+          <FastImage
             source={{ uri: fileUri }}
             style={styles.previewImage}
-            resizeMode="contain"
+            resizeMode={FastImage.resizeMode.contain}
           />
         ) : (
           <View style={styles.documentContainer}>

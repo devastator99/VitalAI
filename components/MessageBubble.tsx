@@ -1,4 +1,4 @@
-import React,{Fragment} from "react";
+import React,{Fragment, useEffect} from "react";
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   Linking,
   ActivityIndicator,
   Pressable,
+  Image as RNImage,
 } from "react-native";
+import Image from "@d11/react-native-fast-image";
 import * as ContextMenu from "zeego/context-menu";
 import { Role } from "~/utils/Interfaces";
 import Colors from "~/utils/Colors";
@@ -27,7 +29,7 @@ import { MotiPressable } from "moti/interactions";
 import Gallery from "react-native-awesome-gallery";
 import { useMemo } from "react";
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { Image } from "expo-image";
+import FastImage from "@d11/react-native-fast-image";
 
 type MessageBubbleProps = {
   content: string;
@@ -44,12 +46,43 @@ type MessageBubbleProps = {
   participants: { id: Id<"users">; role: string }[];
 };
 
-const MemoizedAvatarImage = React.memo(({ uri, style }: { uri: string; style: any }) => (
-  <Image 
-    source={{ uri }} 
-    style={style}
-  />
-), (prevProps, nextProps) => prevProps.uri === nextProps.uri);
+const MemoizedAvatarImage = React.memo(({ uri, style }: { uri: string; style: any }) => {
+  const [isLoading, setIsLoading] = React.useState(true);
+  
+  // Event handlers for FastImage
+  const handleLoadStart = React.useCallback(() => {
+    setIsLoading(true);
+  }, []);
+  
+  const handleLoadEnd = React.useCallback(() => {
+    setIsLoading(false);
+  }, []);
+  
+  const handleError = React.useCallback(() => {
+    setIsLoading(false);
+  }, []);
+  
+  return (
+    <View style={style}>
+      {isLoading && (
+        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }]}>
+          <ActivityIndicator size="small" color={Colors.mainBlue} />
+        </View>
+      )}
+      <FastImage 
+        source={{ 
+          uri: uri,
+          priority: FastImage.priority.normal
+        }}
+        style={[StyleSheet.absoluteFill]}
+        resizeMode={FastImage.resizeMode.cover}
+        onLoadStart={handleLoadStart}
+        onLoadEnd={handleLoadEnd}
+        onError={handleError}
+      />
+    </View>
+  );
+}, (prevProps, nextProps) => prevProps.uri === nextProps.uri);
 
 const SingleImage = ({ style, url }: { style: any; url: string }) => (
   <Gallery
@@ -378,7 +411,16 @@ const MessageBubble = React.memo(
 
         {/* Content */}
         {content === "" && imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.previewImage} />
+          <View style={styles.previewImage}>
+            <FastImage 
+              source={{ 
+                uri: imageUrl,
+                priority: FastImage.priority.normal
+              }}
+              style={StyleSheet.absoluteFill}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          </View>
         ) : (
           <ContextMenu.Root>
             <ContextMenu.Trigger>
@@ -486,30 +528,106 @@ const MediaComponent = React.memo(
   }: {
     mediaUrl: string | null;
     isMediaLoading?: boolean;
-  }) => (
-    <View style={styles.media}>
-      {isMediaLoading ? (
-        <ActivityIndicator
-          size="large"
-          color="rgb(0, 255, 255)"
-          style={styles.loadingIndicator}
-        />
-      ) : (
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          onPress={() =>
-            SingleImage({ style: StyleSheet.absoluteFill, url: mediaUrl! })
+  }) => {
+    const [dimensions, setDimensions] = React.useState({ width: 240, height: 240 });
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState(false);
+    
+    // Get image dimensions when URL is available
+    useEffect(() => {
+      if (mediaUrl) {
+        // Using the native Image module to get dimensions
+        try {
+          if (typeof RNImage.getSize === 'function') {
+            RNImage.getSize(
+              mediaUrl,
+              (width: number, height: number) => {
+                // Calculate aspect ratio and set dimensions
+                const maxWidth = 240;
+                const aspectRatio = width / height;
+                const calculatedHeight = maxWidth / aspectRatio;
+                
+                // Set dimensions with some constraints to avoid extreme aspect ratios
+                setDimensions({
+                  width: maxWidth,
+                  height: Math.min(350, Math.max(120, calculatedHeight))
+                });
+                setLoading(false);
+              },
+              (_error: any) => {
+                console.error("Failed to get image dimensions:", _error);
+                setError(true);
+                setLoading(false);
+              }
+            );
+          } else {
+            // Fallback if getSize isn't available
+            setLoading(false);
           }
-        >
-          <Image
-            source={{ uri: mediaUrl || "skip" }}
+        } catch (err) {
+          console.error("Error accessing image dimensions:", err);
+          setLoading(false);
+          setError(true);
+        }
+      }
+    }, [mediaUrl]);
+
+    // Handle opening the gallery
+    const handleImagePress = React.useCallback(() => {
+      if (mediaUrl) {
+        SingleImage({ style: StyleSheet.absoluteFill, url: mediaUrl });
+      }
+    }, [mediaUrl]);
+
+    // FastImage event handlers
+    const handleLoadStart = React.useCallback(() => {
+      setLoading(true);
+    }, []);
+
+    const handleLoadEnd = React.useCallback(() => {
+      setLoading(false);
+    }, []);
+
+    const handleError = React.useCallback(() => {
+      setError(true);
+    }, []);
+
+    return (
+      <View style={[styles.media, { width: dimensions.width, height: dimensions.height }]}>
+        {isMediaLoading || loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator
+              size="large"
+              color={Colors.mainBlue}
+            />
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={24} color="#ff6b6b" />
+            <Text style={styles.errorText}>Failed to load image</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
             style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-      )}
-    </View>
-  )
+            onPress={handleImagePress}
+            activeOpacity={0.9}
+          >
+            <FastImage
+              source={{
+                uri: mediaUrl || "",
+                priority: FastImage.priority.high
+              }}
+              style={StyleSheet.absoluteFill}
+              resizeMode={FastImage.resizeMode.cover}
+              onLoadStart={handleLoadStart}
+              onLoadEnd={handleLoadEnd}
+              onError={handleError}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }
 );
 
 const FileComponent = React.memo(({ mediaUrl }: { mediaUrl: string }) => (
@@ -733,15 +851,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   media: {
-    width: 240,
-    height: 240,
     borderRadius: 10,
     backgroundColor: "rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
   },
   mediaBubble: {
-    padding: 0,
+    padding: 10,
     overflow: "hidden",
+    backgroundColor: "rgba(40, 40, 40, 0.8)",
   },
   fileContainer: {
     borderRadius: 20,
@@ -767,24 +884,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
-  loadingIndicator: {
+  loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
-  receiptContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 4,
-    marginLeft: 0,
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
-  receiptContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 12,
+  errorText: {
+    color: '#ff6b6b',
+    marginTop: 8,
+    fontSize: 14,
   },
-  receiptIcon: { marginRight: 4 },
-  readText: { color: Colors.deepSkyBlue, fontSize: 10, marginRight: 4 },
-  timestampText: { color: "rgb(230, 230, 229)", fontSize: 12 },
   imageContainer: {
     width: 100,
     height: 100,
@@ -802,6 +918,21 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 2,
   },
+  receiptContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 4,
+    marginLeft: 0,
+  },
+  receiptContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  receiptIcon: { marginRight: 4 },
+  readText: { color: Colors.deepSkyBlue, fontSize: 10, marginRight: 4 },
+  timestampText: { color: "rgb(230, 230, 229)", fontSize: 12 },
 });
 
 export default React.memo(MessageBubble);

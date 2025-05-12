@@ -12,6 +12,7 @@ import {
     Text,
     TouchableOpacity,
     View,
+    Image as RNImage,
   } from 'react-native';
   import AwesomeGallery, {
     GalleryRef,
@@ -19,7 +20,7 @@ import {
   } from 'react-native-awesome-gallery';
   import * as React from 'react';
   import type { NavParams } from '~/utils/Interfaces';
-  import { Image } from 'expo-image';
+  import CachedImage from './CachedImage';
   import Animated, {
     FadeInDown,
     FadeInUp,
@@ -27,21 +28,45 @@ import {
     FadeOutUp,
   } from 'react-native-reanimated';
   import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import FastImage from '@d11/react-native-fast-image';
   
   const renderItem = ({
     item,
     setImageDimensions,
   }: RenderItemInfo<{ uri: string }>) => {
+    // Use ref to track if component is mounted
+    const isMounted = React.useRef(true);
+    
+    // First get dimensions with regular Image
+    React.useEffect(() => {
+      RNImage.getSize(
+        item.uri,
+        (width, height) => {
+          if (isMounted.current) {
+            setImageDimensions({ width, height });
+          }
+        },
+        () => {
+          // On error, use fallback dimensions
+          if (isMounted.current) {
+            setImageDimensions({ width: 300, height: 300 });
+          }
+        }
+      );
+      
+      return () => {
+        isMounted.current = false;
+      };
+    }, [item.uri, setImageDimensions]);
+    
     return (
-      <Image
-        source={item.uri}
-        style={StyleSheet.absoluteFillObject}
-        contentFit="contain"
-        onLoad={(e:any) => {
-          const { width, height } = e.source;
-          setImageDimensions({ width, height });
-        }}
-      />
+      <View style={StyleSheet.absoluteFillObject}>
+        <CachedImage
+          source={item.uri}
+          style={StyleSheet.absoluteFillObject}
+          resizeMode={FastImage.resizeMode.contain}
+        />
+      </View>
     );
   };
   

@@ -73,21 +73,22 @@ const InitialLayout = () => {
   const segments = useSegments();
   const router = useRouter();
 
-  const {userId,setUserId, isAdmin,setIsAdmin,isApproved, setIsApproved,detailsFilled, setDetailsFilled} = useAppStore();
-
-  // 4. User state management
-  // const [userId, setUserId] = useState<string | null>(null);
-  // const [isAdmin, setIsAdmin] = useState<boolean | undefined>();
-  // const [isApproved, setIsApproved] = useState<boolean | undefined>();
-  // const [detailsfilled, setdetailsfilled] = useState<boolean | undefined>();
+  const {userId, setUserId, isAdmin, setIsAdmin, isApproved, setIsApproved, detailsFilled, setDetailsFilled, setUser} = useAppStore();
 
   const userIdInitialized = useRef(false);
 
-  // 5. Navigation state
-  // const [isNavigating, setIsNavigating] = useState(false);
-
-  // 6. User status queries
+  // 5. User status queries
   const safeUserId = userId || undefined;
+  
+  // Fetch complete user data from backend
+  const userData = useQuery(api.users.getCurrentUser);
+  
+  // Fallback query if getCurrentUser returns null
+  const userByIdData = useQuery(
+    api.users.getuserbyId,
+    safeUserId ? { userId: safeUserId } : "skip"
+  );
+  
   const checkAdminResult = useQuery(api.users.isAdmin, {
     userId: safeUserId ? safeUserId : "skip",
   });
@@ -96,7 +97,7 @@ const InitialLayout = () => {
   });
   const infoSubmitted = useQuery(api.users.infoStatus, {
     userId: safeUserId ? safeUserId : "skip",
-  });
+  }); 
 
   // 7. Handle font errors
   useEffect(() => {
@@ -115,6 +116,20 @@ const InitialLayout = () => {
       userIdInitialized.current = true;
     }
   }, [user]);
+  
+  // Set user data in store when available
+  useEffect(() => {
+    // If we have user data from getCurrentUser, use that
+    if (userData) {
+      console.log("Setting user from getCurrentUser");
+      setUser(userData);
+    } 
+    // Otherwise, if we have user data from getuserbyId, use that as fallback
+    else if (!userData && userByIdData) {
+      console.log("Setting user from userByIdData");
+      setUser(userByIdData);
+    }
+  }, [userData, userByIdData, setUser]);
 
   // 10. User status updates - fixed for type safety
   useEffect(() => {

@@ -10,7 +10,7 @@ import {
   Text,
   Animated,
 } from "react-native";
-import { Image } from "expo-image";
+import Image from "@d11/react-native-fast-image";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery } from "convex/react";
 import { useAppStore } from "~/store";

@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Dimensions,
 } from "react-native";
-import {Image} from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
@@ -21,22 +20,16 @@ import { router, Stack } from "expo-router";
 import Colors from "~/utils/Colors";
 import { BlurView } from "expo-blur";
 import IconCircle from "~/components/IconCircle";
-
+import CachedImage from "~/components/CachedImage";
+import { useUser } from "~/store";
 const { width, height } = Dimensions.get('window');
-
 export default function Profile() {
-  const user = useQuery(api.users.getCurrentUser);
+  const { user } = useUser();
+  console.log("currus ", user);
   const profilePicture = user?.profileDetails?.picture;
   const imageUrl = useQuery(api.files.getImageUrl,
     profilePicture ? { storageId: profilePicture } : "skip"
   );
-
-  const MemoizedAvatarImage = React.memo(
-    ({ uri, style }: { uri: string; style: any }) => (
-      <Image source={{ uri }} style={style} />
-    )
-  );
-  const insets = useSafeAreaInsets();
   
   if (user === undefined) {
     return (
@@ -150,10 +143,7 @@ export default function Profile() {
                 <TouchableOpacity style={styles.avatarContainer}>
                   {profilePicture ? (
                     imageUrl ? (
-                      <MemoizedAvatarImage
-                        uri={imageUrl as string}
-                        style={styles.avatar}
-                      />
+                      <CachedImage source={imageUrl as string} style={styles.avatar} />
                     ) : (
                       <View style={styles.loadingIndicator}>
                         <ActivityIndicator size="small" color={Colors.mainBlue} />
@@ -166,7 +156,7 @@ export default function Profile() {
                   )}
                 </TouchableOpacity>
               </LinearGradient>
-              <TouchableOpacity style={styles.cameraIcon}>
+              {/* <TouchableOpacity style={styles.cameraIcon}>
                 <LinearGradient
                   colors={[Colors.mainBlue, '#5f9eaf']}
                   style={styles.cameraGradient}
@@ -175,7 +165,7 @@ export default function Profile() {
                 >
                   <Ionicons name="camera" size={18} color="white" />
                 </LinearGradient>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
             
             <Text style={styles.headerTitle}>{user.name || "User"}</Text>
