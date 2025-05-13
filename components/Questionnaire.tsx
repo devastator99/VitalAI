@@ -13,6 +13,11 @@ import {
   Animated,
   ActivityIndicator,
   SafeAreaView,
+  Keyboard,
+  Pressable,
+  Modal,
+  Image,
+  Alert,
 } from "react-native";
 import {
   useSharedValue,
@@ -22,7 +27,7 @@ import {
 // import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "../utils/Colors";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons, AntDesign, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { TimePickerModal } from "react-native-paper-dates";
 import CustomPicker from "./CustomPicker";
 import useLocation from "~/utils/useLocation";
@@ -30,10 +35,11 @@ import * as ImagePicker from "expo-image-picker";
 import { Id } from "~/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
-import { useUser } from "@clerk/clerk-expo";
+import { useUser as useClerkUser } from "@clerk/clerk-expo";
 import UserVector from "./UserVector";
 import FastImage from "@d11/react-native-fast-image";
 import { MotiView } from "moti";
+import { BlurView } from "expo-blur";
 // import * as Location from 'expo-location';
 // import * as Device from 'expo-device';
 
@@ -122,6 +128,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   scrollView: {
+    marginVertical: 10,
     flex: 1,
   },
   title: {
@@ -170,6 +177,13 @@ const styles = StyleSheet.create({
     color: Colors.white,
     textAlign: "center",
   },
+  backButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    padding: 10,
+    zIndex: 10,
+  },
   progressContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -201,14 +215,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 15,
-    borderRadius: 12,
+    borderRadius: 25,
     flex: 1,
     gap: 8,
   },
-  backButton: {
-    backgroundColor: "#ffffff15",
-  },
   nextButton: {
+    borderRadius: 25,
     backgroundColor: Colors.mainBlue,
   },
   disabledButton: {
@@ -342,18 +354,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#ff000008",
   },
   progressBarContainer: {
-    height: 4,
+    height: 6,
     backgroundColor: "#ffffff15",
-    borderRadius: 2,
+    borderRadius: 3,
     overflow: "hidden",
     marginBottom: 20,
+    width: '100%',
   },
   progressBar: {
     height: "100%",
     backgroundColor: Colors.mainBlue,
-    borderRadius: 2,
+    borderRadius: 3,
   },
   stepIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
   stepText: {
@@ -530,35 +546,37 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   profileSkeleton: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: 'rgba(50, 50, 50, 0.4)',
+    backgroundColor: "rgba(50, 50, 50, 0.4)",
     borderRadius: 60,
   },
   profileLoader: {
-    position: 'absolute',
+    position: "absolute",
     zIndex: 2,
   },
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 10,
+    width: '100%',
+    paddingHorizontal: 5,
   },
   skipButton: {
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#ffffff15',
+    backgroundColor: "#ffffff15",
     marginLeft: 10,
   },
   skipButtonText: {
     color: Colors.white,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });
 
@@ -974,7 +992,10 @@ const Lifestyle: React.FC<StepComponentProps> = ({ formData, setFormData }) => {
   ];
   const meals: string[] = ["Breakfast", "Lunch", "Dinner"];
 
-  const updateMealTime = (meal: "breakfast" | "lunch" | "snack" | "dinner", time: string) => {
+  const updateMealTime = (
+    meal: "breakfast" | "lunch" | "snack" | "dinner",
+    time: string
+  ) => {
     setFormData({
       ...formData,
       mealTimes: { ...formData.mealTimes, [meal]: time },
@@ -1256,22 +1277,25 @@ interface ConfirmationProps extends StepComponentProps {
 }
 
 // Add helper functions
-const getStepDescription = (step: number): string => {
+const getStepDescription = (step: number, isEdit = false): string => {
+  const prefix = isEdit ? "Edit your " : "";
   switch (step) {
     case 0:
-      return "Setup your profile";
+      return `${prefix}Profile Information`;
     case 1:
-      return "Tell us about yourself";
+      return `${prefix}Personal Details`;
     case 2:
-      return "Your health goals";
+      return `${prefix}Health & Goals`;
     case 3:
-      return "Dietary preferences";
+      return `${prefix}Diet Preferences`;
     case 4:
-      return "Daily routine";
+      return `${prefix}Daily Routine`;
     case 5:
-      return "Activity level";
+      return `${prefix}Activity Level`;
     case 6:
-      return "Location and cuisine";
+      return `${prefix}Location & Cuisine`;
+    case 7:
+      return isEdit ? "Save Profile Changes" : "Review & Confirm";
     default:
       return "";
   }
@@ -1348,28 +1372,67 @@ const Questionnaire: React.FC<{
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const steps: JSX.Element[] = [
-    <ProfileInfo
-      formData={formData}
-      setFormData={setFormData}
-      errors={errors}
-    />,
-    <PersonalDetails
-      formData={formData}
-      setFormData={setFormData}
-      errors={errors}
-    />,
-    <HealthAndGoals formData={formData} setFormData={setFormData} />,
-    <DietPreferences formData={formData} setFormData={setFormData} />,
-    <Lifestyle formData={formData} setFormData={setFormData} />,
-    <Activity formData={formData} setFormData={setFormData} />,
-    <Cuisines formData={formData} setFormData={setFormData} />,
-    <Confirmation
-      formData={formData}
-      setFormData={setFormData}
-      onSubmit={onComplete}
-    />,
-  ];
+  // Get current user data for editing
+  const currUser = useQuery(api.users.getCurrentUser);
+  
+  // Load existing user data when editing
+  useEffect(() => {
+    if (currUser) {
+      // Prefill name and profile details
+      if (currUser.name) {
+        setFormData(prev => ({
+          ...prev,
+          name: currUser.name || "",
+        }));
+      }
+      
+      if (currUser.profileDetails) {
+        setFormData(prev => ({
+          ...prev,
+          profilePicture: currUser.profileDetails?.picture,
+          height: currUser.profileDetails?.height ? String(currUser.profileDetails.height) : "",
+          weight: currUser.profileDetails?.weight ? String(currUser.profileDetails.weight) : "",
+        }));
+      }
+      
+      // Prefill questionnaire data if it exists
+      if (currUser.questionnaire) {
+        const q = currUser.questionnaire;
+        setFormData(prev => ({
+          ...prev,
+          gender: q.gender || "",
+          age: q.age || "",
+          occupation: q.occupation || "",
+          goals: q.goals || [],
+          healthConditions: q.healthConditions || [],
+          symptoms: q.symptoms || [],
+          allergies: q.allergies || [],
+          habits: q.habits || [],
+          dietStyle: q.dietStyle || "",
+          spiceLevel: q.spiceLevel || "",
+          texturePreferences: q.texturePreferences || [],
+          foodsToAvoid: q.foodsToAvoid || [],
+          cookingLevel: q.cookingLevel || "",
+          wakeUpTime: q.wakeUpTime,
+          sleepTime: q.sleepTime,
+          mealTimes: q.mealTimes || { breakfast: null, lunch: null, snack: null, dinner: null },
+          heaviestMeal: q.heaviestMeal || "",
+          activityLevel: q.activityLevel || "",
+          workouts: q.workouts || {
+            doWorkouts: false,
+            days: [],
+            time: null,
+            type: "",
+            duration: "",
+          },
+          location: q.location || "",
+          homeCuisine: q.homeCuisine || "",
+          otherCuisines: q.otherCuisines || [],
+          primaryGoal: q.primaryGoal || "",
+        }));
+      }
+    }
+  }, [currUser]);
 
   useEffect(() => {
     Animated.timing(progressAnim, {
@@ -1430,7 +1493,7 @@ const Questionnaire: React.FC<{
 
     setCurrentStep(step);
     setErrors({});
-    
+
     // Scroll to top when changing steps
     setTimeout(() => {
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
@@ -1458,7 +1521,7 @@ const Questionnaire: React.FC<{
       primaryGoal: "Improve Health",
       completedAt: new Date().toISOString(),
     };
-    
+
     onComplete(minimalData);
   };
 
@@ -1471,7 +1534,7 @@ const Questionnaire: React.FC<{
           stepErrors.name = "Please enter your name";
         }
         break;
-        
+
       case 1: // Personal Details
         const age = parseInt(formData.age as string, 10);
         if (!formData.age || isNaN(age) || age < 13) {
@@ -1540,6 +1603,16 @@ const Questionnaire: React.FC<{
     return stepErrors;
   };
 
+  const isFormValid = (): boolean => {
+    // For the final confirmation step, we only need a primary goal
+    if (currentStep === steps.length - 1) {
+      return formData.primaryGoal !== "" || (formData.goals.length > 0 && formData.goals[0] !== "");
+    }
+    
+    const errors = validateStep(currentStep);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = () => {
     const finalErrors = validateStep(currentStep);
     if (Object.keys(finalErrors).length > 0) {
@@ -1553,6 +1626,32 @@ const Questionnaire: React.FC<{
     };
     onComplete(convertedData);
   };
+
+  const steps: JSX.Element[] = [
+    <ProfileInfo
+      formData={formData}
+      setFormData={setFormData}
+      errors={errors}
+    />,
+    <PersonalDetails
+      formData={formData}
+      setFormData={setFormData}
+      errors={errors}
+    />,
+    <HealthAndGoals formData={formData} setFormData={setFormData} />,
+    <DietPreferences formData={formData} setFormData={setFormData} />,
+    <Lifestyle formData={formData} setFormData={setFormData} />,
+    <Activity formData={formData} setFormData={setFormData} />,
+    <Cuisines formData={formData} setFormData={setFormData} />,
+    <Confirmation
+      formData={formData}
+      setFormData={setFormData}
+      onSubmit={onComplete}
+    />,
+  ];
+
+  // Check if we're in edit mode
+  const isEditMode = currUser?.questionnaire?.completedAt;
 
   if (isLoading) {
     return (
@@ -1571,12 +1670,43 @@ const Questionnaire: React.FC<{
           style={styles.gradientContainer}
         >
           <View style={styles.container}>
+            {/* Header with Back Button (Edit Mode) and Progress Bar */}
             <View style={styles.headerContainer}>
-              <View style={styles.progressBarContainer}>
+              {isEditMode && (
+                <TouchableOpacity 
+                  style={styles.backButton}
+                  onPress={() => {
+                    // Use router to navigate back to profile
+                    if (typeof window !== 'undefined') {
+                      // For Expo Router
+                      const router = require('expo-router');
+                      router.router.back();
+                    }
+                  }}
+                >
+                  <Ionicons name="arrow-back" size={24} color={Colors.white} />
+                </TouchableOpacity>
+              )}
+              
+              <View style={{
+                width: '100%',
+                height: 8,
+                backgroundColor: "#222222",
+                borderRadius: 4,
+                overflow: "hidden",
+                marginBottom: 10,
+              }}>
                 <Animated.View
                   style={[
-                    styles.progressBar,
                     {
+                      height: "100%",
+                      backgroundColor: Colors.mainBlue,
+                      borderRadius: 4,
+                      shadowColor: Colors.mainBlue,
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: 0.5,
+                      shadowRadius: 3,
+                      elevation: 5,
                       width: progressAnim.interpolate({
                         inputRange: [0, 1],
                         outputRange: ["0%", "100%"],
@@ -1585,24 +1715,29 @@ const Questionnaire: React.FC<{
                   ]}
                 />
               </View>
-              
-              <TouchableOpacity 
-                style={styles.skipButton}
-                onPress={skipQuestionnaire}
-              >
-                <Text style={styles.skipButtonText}>Skip</Text>
-              </TouchableOpacity>
             </View>
 
+            {/* Step Indicator and Skip Button */}
             <View style={styles.stepIndicator}>
+              <View>
               <Text style={styles.stepText}>
                 Step {currentStep + 1} of {steps.length}
               </Text>
               <Text style={styles.stepDescription}>
-                {getStepDescription(currentStep)}
+                  {getStepDescription(currentStep, Boolean(isEditMode))}
               </Text>
+              </View>
+              {!isEditMode && (
+                <TouchableOpacity
+                  style={styles.skipButton}
+                  onPress={skipQuestionnaire}
+                >
+                  <Text style={styles.skipButtonText}>Skip</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
+            {/* Form Content */}
             <ScrollView
               ref={scrollViewRef}
               style={styles.scrollView}
@@ -1654,35 +1789,38 @@ const Questionnaire: React.FC<{
                     <Text style={styles.buttonText}>Back</Text>
                   </TouchableOpacity>
                 )}
-
-                <TouchableOpacity
-                  style={[
-                    styles.navButton,
-                    styles.nextButton,
-                    isLoading && styles.disabledButton,
-                  ]}
-                  onPress={() =>
-                    currentStep === steps.length - 1
-                      ? handleSubmit()
-                      : handleStepChange(currentStep + 1)
-                  }
-                  disabled={isLoading}
-                >
-                  <Text style={styles.buttonText}>
-                    {currentStep === steps.length - 1 ? "Complete" : "Next"}
-                  </Text>
-                  <Ionicons
-                    name={
-                      currentStep === steps.length - 1
-                        ? "checkmark"
-                        : "arrow-forward"
-                    }
-                    size={20}
-                    color={Colors.white}
-                  />
-                </TouchableOpacity>
               </View>
             </ScrollView>
+            
+            {/* Next/Complete Button */}
+            <View style={{ height: 50 }}>
+              <TouchableOpacity
+                style={[
+                  styles.navButton,
+                  styles.nextButton,
+                  (!isFormValid() || isLoading) && styles.disabledButton,
+                ]}
+                onPress={() =>
+                  currentStep === steps.length - 1
+                    ? handleSubmit()
+                    : handleStepChange(currentStep + 1)
+                }
+                disabled={!isFormValid() || isLoading}
+              >
+                <Text style={styles.buttonText}>
+                  {currentStep === steps.length - 1 ? "Complete" : "Next"}
+                </Text>
+                <Ionicons
+                  name={
+                    currentStep === steps.length - 1
+                      ? "checkmark"
+                      : "arrow-forward"
+                  }
+                  size={20}
+                  color={Colors.white}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         </LinearGradient>
       </SafeAreaView>
@@ -1696,6 +1834,8 @@ const Confirmation: React.FC<ConfirmationProps> = ({
   setFormData,
   onSubmit,
 }) => {
+  const currUser = useQuery(api.users.getCurrentUser);
+  const isEditMode = Boolean(currUser?.questionnaire?.completedAt);
   const [primaryGoal, setPrimaryGoal] = useState<string>(
     formData.primaryGoal || formData.goals[0] || ""
   );
@@ -1726,7 +1866,9 @@ const Confirmation: React.FC<ConfirmationProps> = ({
   return (
     <View style={styles.confirmationContainer}>
       <View>
-        <Text style={styles.sectionTitle}>Select Your Primary Goal</Text>
+        <Text style={styles.sectionTitle}>
+          {isEditMode ? "Update Your Primary Goal" : "Select Your Primary Goal"}
+        </Text>
         <View style={styles.goalsList}>
           {formData.goals.length > 0 ? (
             formData.goals.map((goal) => (
@@ -1830,7 +1972,9 @@ const Confirmation: React.FC<ConfirmationProps> = ({
       </View>
 
       <TouchableOpacity style={styles.approveButton} onPress={handleSubmit}>
-        <Text style={styles.approveButtonText}>Confirm & Continue</Text>
+        <Text style={styles.approveButtonText}>
+          {isEditMode ? "Save Changes" : "Confirm & Continue"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -1849,7 +1993,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({
   const [bmi, setBmi] = useState<number | null>(null);
   const saveImage = useMutation(api.files.saveProfilePicture);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const { user } = useUser();
+  const { user } = useClerkUser();
   const curruser = useQuery(api.users.getCurrentUser);
   const profilePicture =
     curruser?.profileDetails?.picture || formData.profilePicture;
@@ -1927,13 +2071,13 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({
         {imageUrl ? (
           <>
             {imageLoading && <ProfileImageSkeleton />}
-            <FastImage 
-              source={{ 
+            <FastImage
+              source={{
                 uri: imageUrl,
                 priority: FastImage.priority.normal,
-                cache: FastImage.cacheControl.immutable
-              }} 
-              style={styles.profileImage} 
+                cache: FastImage.cacheControl.immutable,
+              }}
+              style={styles.profileImage}
               resizeMode={FastImage.resizeMode.cover}
               onLoadStart={() => setImageLoading(true)}
               onLoadEnd={() => setImageLoading(false)}
@@ -2025,17 +2169,17 @@ const ProfileImageSkeleton = () => (
       from={{ opacity: 0.6 }}
       animate={{ opacity: 1 }}
       transition={{
-        type: 'timing',
+        type: "timing",
         duration: 1000,
         loop: true,
         repeatReverse: true,
       }}
       style={styles.profileSkeleton}
     />
-    <ActivityIndicator 
-      size="small" 
-      color={Colors.mainBlue} 
-      style={styles.profileLoader} 
+    <ActivityIndicator
+      size="small"
+      color={Colors.mainBlue}
+      style={styles.profileLoader}
     />
   </View>
 );

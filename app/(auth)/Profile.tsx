@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
   Dimensions,
+  Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -16,21 +17,52 @@ import { useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenTransitionView from "~/components/ScreenTransitionView";
-import { router, Stack } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import Colors from "~/utils/Colors";
 import { BlurView } from "expo-blur";
 import IconCircle from "~/components/IconCircle";
 import CachedImage from "~/components/CachedImage";
 import { useUser } from "~/store";
 const { width, height } = Dimensions.get('window');
+
 export default function Profile() {
   const { user } = useUser();
-  console.log("currus ", user);
+  const { edited } = useLocalSearchParams();
+  const [showNotification, setShowNotification] = useState(false);
+  const notificationOpacity = React.useRef(new Animated.Value(0)).current;
+  
   const profilePicture = user?.profileDetails?.picture;
   const imageUrl = useQuery(api.files.getImageUrl,
     profilePicture ? { storageId: profilePicture } : "skip"
   );
   
+  // Show notification when returning from editing profile
+  useEffect(() => {
+    if (edited === "true") {
+      setShowNotification(true);
+      
+      // Fade in
+      Animated.timing(notificationOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+      
+      // Auto hide after 3 seconds
+      const timer = setTimeout(() => {
+        Animated.timing(notificationOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowNotification(false);
+        });
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [edited]);
+
   if (user === undefined) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -396,7 +428,10 @@ export default function Profile() {
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => router.push("/(onboarding)/Questionnaire")}
+            >
               <LinearGradient
                 colors={[Colors.mainBlue, Colors.mainBlue + 'CC']}
                 style={styles.buttonGradient}
@@ -408,12 +443,12 @@ export default function Profile() {
               </LinearGradient>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.shareButton}>
+            {/* <TouchableOpacity style={styles.shareButton}>
               <BlurView intensity={30} tint="dark" style={styles.shareButtonContent}>
                 <Ionicons name="share-social-outline" size={18} color="white" style={{marginRight: 8}} />
                 <Text style={styles.shareButtonText}>Share Progress</Text>
               </BlurView>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </ScrollView>
       </View>

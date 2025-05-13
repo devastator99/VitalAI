@@ -84,14 +84,46 @@ const MemoizedAvatarImage = React.memo(({ uri, style }: { uri: string; style: an
   );
 }, (prevProps, nextProps) => prevProps.uri === nextProps.uri);
 
-const SingleImage = ({ style, url }: { style: any; url: string }) => (
-  <Gallery
-    data={[url]}
-    onIndexChange={(newIndex) => {
-      console.log(newIndex);
-    }}
-  />
-);
+const SingleImage = ({ url }: { url: string }) => {
+  const [isVisible, setIsVisible] = React.useState(false);
+  
+  const openGallery = () => setIsVisible(true);
+  const closeGallery = () => setIsVisible(false);
+  
+  return (
+    <>
+      <TouchableOpacity onPress={openGallery}>
+        <FastImage 
+          source={{ uri: url }}
+          style={{ width: 240, height: 180, minHeight: 180 }}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+      </TouchableOpacity>
+      
+      {isVisible && (
+        <Modal
+          visible={isVisible}
+          transparent={true}
+          onRequestClose={closeGallery}
+        >
+          <View style={styles.galleryModal}>
+            <TouchableOpacity 
+              style={styles.closeGalleryButton}
+              onPress={closeGallery}
+            >
+              <Ionicons name="close" size={28} color="white" />
+            </TouchableOpacity>
+            <Gallery
+              data={[url]}
+              initialIndex={0}
+              style={styles.gallery}
+            />
+          </View>
+        </Modal>
+      )}
+    </>
+  );
+};
 
 const ProfileDetails = ({
   imageurl,
@@ -529,7 +561,7 @@ const MediaComponent = React.memo(
     mediaUrl: string | null;
     isMediaLoading?: boolean;
   }) => {
-    const [dimensions, setDimensions] = React.useState({ width: 240, height: 240 });
+    const [dimensions, setDimensions] = React.useState({ width: 240, height: 180 });
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState(false);
     
@@ -550,7 +582,7 @@ const MediaComponent = React.memo(
                 // Set dimensions with some constraints to avoid extreme aspect ratios
                 setDimensions({
                   width: maxWidth,
-                  height: Math.min(350, Math.max(120, calculatedHeight))
+                  height: Math.min(350, Math.max(180, calculatedHeight))
                 });
                 setLoading(false);
               },
@@ -572,13 +604,6 @@ const MediaComponent = React.memo(
       }
     }, [mediaUrl]);
 
-    // Handle opening the gallery
-    const handleImagePress = React.useCallback(() => {
-      if (mediaUrl) {
-        SingleImage({ style: StyleSheet.absoluteFill, url: mediaUrl });
-      }
-    }, [mediaUrl]);
-
     // FastImage event handlers
     const handleLoadStart = React.useCallback(() => {
       setLoading(true);
@@ -590,10 +615,11 @@ const MediaComponent = React.memo(
 
     const handleError = React.useCallback(() => {
       setError(true);
+      setLoading(false);
     }, []);
 
     return (
-      <View style={[styles.media, { width: dimensions.width, height: dimensions.height }]}>
+      <View style={[styles.media, { width: dimensions.width, height: dimensions.height, minHeight: 180 }]}>
         {isMediaLoading || loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator
@@ -607,23 +633,7 @@ const MediaComponent = React.memo(
             <Text style={styles.errorText}>Failed to load image</Text>
           </View>
         ) : (
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            onPress={handleImagePress}
-            activeOpacity={0.9}
-          >
-            <FastImage
-              source={{
-                uri: mediaUrl || "",
-                priority: FastImage.priority.high
-              }}
-              style={StyleSheet.absoluteFill}
-              resizeMode={FastImage.resizeMode.cover}
-              onLoadStart={handleLoadStart}
-              onLoadEnd={handleLoadEnd}
-              onError={handleError}
-            />
-          </TouchableOpacity>
+          mediaUrl && <SingleImage url={mediaUrl} />
         )}
       </View>
     );
@@ -854,11 +864,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
+    minHeight: 180,
+    minWidth: 200,
   },
   mediaBubble: {
     padding: 10,
     overflow: "hidden",
     backgroundColor: "rgba(40, 40, 40, 0.8)",
+    minWidth: 200,
   },
   fileContainer: {
     borderRadius: 20,
@@ -889,12 +902,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    minHeight: 180,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    minHeight: 180,
   },
   errorText: {
     color: '#ff6b6b',
@@ -933,6 +948,26 @@ const styles = StyleSheet.create({
   receiptIcon: { marginRight: 4 },
   readText: { color: Colors.deepSkyBlue, fontSize: 10, marginRight: 4 },
   timestampText: { color: "rgb(230, 230, 229)", fontSize: 12 },
+  galleryModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeGalleryButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 100,
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+  },
+  gallery: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: 'transparent',
+  },
 });
 
 export default React.memo(MessageBubble);

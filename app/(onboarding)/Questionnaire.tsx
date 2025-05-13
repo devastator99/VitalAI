@@ -35,12 +35,22 @@ export default function QuestionnaireScreen() {
       
       // Then save the questionnaire data
       await saveQuestionnaire({ 
-        userId: userCurrent?._id as Id<"users">,
         questionnaire: questionnaireData 
       });
       
-      // Navigate to waiting screen
-      router.replace("/(onboarding)/waiting");
+      // Check if this is an edit (user already exists) or new profile creation
+      const isEditMode = userCurrent?.questionnaire?.completedAt;
+      
+      if (isEditMode) {
+        // If editing, go back to profile with edited parameter
+        router.replace({
+          pathname: "/(auth)/Profile",
+          params: { edited: "true" }
+        });
+      } else {
+        // If new user, go to waiting screen
+        router.replace("/(onboarding)/waiting");
+      }
     } catch (error) {
       console.error('Error saving data:', error);
       alert('There was an error saving your information. Please try again.');

@@ -985,7 +985,6 @@ export const getUsersByIds = query({
 
 export const updateUserProfile = mutation({
   args: {
-    userId: v.string(),
     questionnaire: v.object({
       gender: v.string(),
       age: v.string(),
@@ -1027,10 +1026,16 @@ export const updateUserProfile = mutation({
     }),
   },
   handler: async (ctx, args) => {
+    // Get the authenticated user identity
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
 
+    // Find the user by the authenticated identity
     const user = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
       .first();
 
     if (!user) {

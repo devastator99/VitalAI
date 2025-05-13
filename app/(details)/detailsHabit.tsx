@@ -8,19 +8,69 @@ import { api } from "~/convex/_generated/api";
 import { Id } from "~/convex/_generated/dataModel";
 import { SafeAreaView } from "react-native-safe-area-context";
 import IconCircle from "~/components/IconCircle";
+import { Suspense } from "react";
 
-export default function DetailsHabit() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+// Loading component for Suspense fallback
+const LoadingIndicator = () => (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator size="large" color={Colors.mainBlue} />
+    <Text style={styles.loadingText}>Loading habit details...</Text>
+  </View>
+);
+
+// Header component extracted for better reusability
+const DetailsHeader = ({ title, onBack }: { title: string, onBack: () => void }) => {
+  // Split the title into words
+  const titleWords = title.split(" ");
+  const lastWord = titleWords.pop(); // Get the last word
+  const otherWords = titleWords; // Remaining words
+
+  return (
+    <View style={styles.header}>
+      <TouchableOpacity
+        onPress={onBack}
+        style={{ marginLeft: 16, paddingEnd: 10 }}
+      >
+        <IconCircle name="chevron-back-sharp" size={17} />
+      </TouchableOpacity>
+      <View style={styles.titleContainer}>
+        {titleWords.length === 0 ? (
+          <Text style={styles.titleWhite}>{title}</Text>
+        ) : (
+          <>
+            {otherWords.map((word, index) => (
+              <Text key={index} style={styles.titleWhite}>
+                {word}{index < otherWords.length - 1 ? " " : ""}
+              </Text>
+            ))}
+            {lastWord && (
+              <Text style={styles.titleBlue}>{lastWord}</Text>
+            )}
+          </>
+        )}
+      </View>
+      <View style={{ width: 50 }} />
+    </View>
+  );
+};
+
+// Dynamic header that fetches and displays the habit name
+const DynamicDetailsHeader = ({ id, onBack }: { id: Id<"habits">, onBack: () => void }) => {
+  const habit = useQuery(api.habits.getHabit, { id });
   
-  const habit = useQuery(api.habits.getHabit, { 
-    id: id as Id<"habits">
-  });
+  return (
+    <DetailsHeader 
+      title={habit?.name || "..."}
+      onBack={onBack}
+    />
+  );
+};
 
-  const entries = useQuery(api.habits.getHabitEntries, {
-    habitId: id as Id<"habits">
-  });
-
+// Main component with Suspense
+const HabitDetailContent = ({ id, onClose }: { id: Id<"habits">, onClose: () => void }) => {
+  const habit = useQuery(api.habits.getHabit, { id });
+  const entries = useQuery(api.habits.getHabitEntries, { habitId: id });
+  
   if (!habit) {
     return (
       <View style={styles.loadingContainer}>
@@ -37,43 +87,35 @@ export default function DetailsHabit() {
     progress: calculateProgress(habit, entries || [])
   };
 
-  // Split the habit name into words
-  const habitNameWords = habit.name.split(" ");
-  const lastWord = habitNameWords.pop(); // Get the last word
-  const otherWords = habitNameWords; // Remaining words
+  return (
+    <HabitDetail
+      habit={habitWithEntries}
+      onClose={onClose}
+    />
+  );
+};
+
+export default function DetailsHabit() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  
+  if (!id) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ marginLeft: 16, paddingEnd: 10 }}
-        >
-          <IconCircle name="chevron-back-sharp" size={17} />
-        </TouchableOpacity>
-        <View style={styles.titleContainer}>
-          {habitNameWords.length === 0 ? (
-            <Text style={styles.titleWhite}>{habit.name}</Text>
-          ) : (
-            <>
-              {otherWords.map((word, index) => (
-                <Text key={index} style={styles.titleWhite}>
-                  {word}{index < otherWords.length - 1 ? " " : ""}
-                </Text>
-              ))}
-              {lastWord && (
-                <Text style={styles.titleBlue}>{lastWord}</Text>
-              )}
-            </>
-          )}
-        </View>
-        <View style={{ width: 50 }} />
-      </View>
-
-      <HabitDetail
-        habit={habitWithEntries}
-        onClose={() => router.back()}
+      <DynamicDetailsHeader 
+        id={id as Id<"habits">}
+        onBack={() => router.back()}
       />
+      
+      <Suspense fallback={<LoadingIndicator />}>
+        <HabitDetailContent 
+          id={id as Id<"habits">} 
+          onClose={() => router.back()} 
+        />
+      </Suspense>
     </SafeAreaView>
   );
 }
@@ -139,5 +181,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: Colors.PitchBlack,
+  },
+  loadingText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "400",
+    marginTop: 10,
   }
 });

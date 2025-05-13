@@ -130,6 +130,9 @@ const ChatPage = () => {
     setIsNearBottom,
   } = useAppStore();
 
+  // Add state for layout measurement
+  const [containerHeight, setContainerHeight] = React.useState(0);
+  
   const currentUser = useQuery(api.users.getCurrentUser);
   // Chat ID Management
   const chatId = useMemo(
@@ -292,6 +295,12 @@ const ChatPage = () => {
     [currentUser, participants, queryMsgs]
   );
 
+  // Add layout handler
+  const handleLayout = useCallback((event: any) => {
+    const { height } = event.nativeEvent.layout;
+    setContainerHeight(height);
+  }, []);
+
   return (
     <View
       style={[
@@ -320,27 +329,30 @@ const ChatPage = () => {
           styles.gradient,
           { flex: 1, backgroundColor: "rgba(0,0,0,0.95)" },
         ]}
+        onLayout={handleLayout}
       >
-        <View style={{ flex: 1 }}>
-          <FlashList
-            ref={listRef}
-            data={[...queryMsgs]}
-            keyExtractor={(item) => item._id}
-            renderItem={renderItem}
-            estimatedItemSize={estimatedItemSize}
-            getItemType={getItemType}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            keyboardDismissMode="on-drag"
-            removeClippedSubviews
-            drawDistance={500}
-            inverted={true}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={<FlashListEmptyState />}
-            onEndReached={() => loadMore(50)}
-            onEndReachedThreshold={0.5}
-          />
-        </View>
+        {containerHeight > 0 && (
+          <View style={[styles.listContainer, { height: containerHeight }]}>
+            <FlashList
+              ref={listRef}
+              data={[...queryMsgs]}
+              keyExtractor={(item) => item._id}
+              renderItem={renderItem}
+              estimatedItemSize={estimatedItemSize}
+              getItemType={getItemType}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              keyboardDismissMode="on-drag"
+              removeClippedSubviews={Platform.OS !== 'web'}
+              drawDistance={500}
+              inverted={true}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={<FlashListEmptyState />}
+              onEndReached={() => loadMore(50)}
+              onEndReachedThreshold={0.5}
+            />
+          </View>
+        )}
 
         {showScrollToBottom && (
           <ScrollToBottomButton
@@ -429,7 +441,11 @@ const EmptyState = () => {
 
 const styles = StyleSheet.create({
   gradient: {
-    // flex: 1,   // now applied inline
+    position: 'relative',
+    width: '100%',
+  },
+  listContainer: {
+    width: '100%',
   },
   listContent: {
     paddingTop: 100,

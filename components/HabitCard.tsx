@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginVertical: -5,
     alignSelf: "center",
-    elevation: 1,
+    elevation: 20,
   },
   cardHeader: {
     flexDirection: "row",

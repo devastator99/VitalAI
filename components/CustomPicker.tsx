@@ -255,6 +255,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContent: {
+    paddingTop: 8,
     paddingHorizontal: 16,
     paddingBottom: Platform.select({ ios: 34, android: 16 }),
   },

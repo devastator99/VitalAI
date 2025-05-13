@@ -126,4 +126,28 @@ export const updateHabit = mutation({
   },
 });
 
+export const deleteHabit = mutation({
+  args: {
+    id: v.id("habits")
+  },
+  handler: async (ctx, args) => {
+    const habit = await ctx.db.get(args.id);
+    if (!habit) throw new Error("Habit not found");
+    
+    // Delete all entries for this habit
+    const entries = await ctx.db
+      .query("habitEntries")
+      .withIndex("by_habit_date", (q) => q.eq("habitId", args.id))
+      .collect();
+    
+    // Delete each entry
+    for (const entry of entries) {
+      await ctx.db.delete(entry._id);
+    }
+    
+    // Delete the habit itself
+    return await ctx.db.delete(args.id);
+  }
+});
+
 

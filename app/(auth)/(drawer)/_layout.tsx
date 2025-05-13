@@ -58,6 +58,7 @@ import MagButton from "~/components/MagButton";
 import ChatDetailsModal from "~/components/ChatDetailsModal";
 import { Id } from "~/convex/_generated/dataModel";
 import { Drawer } from "expo-router/drawer";
+import WaterGlass from "~/components/WaterGlass";
 
 // Add type for navigation prop
 type NavigationProp = DrawerNavigationProp<Record<string, object>>;
@@ -91,20 +92,21 @@ const AnimatedHeader = ({ chatId }: { chatId: string }) => {
     <SafeAreaView style={{ backgroundColor: "rgb(0, 0, 0)" }}>
       <StatusBar backgroundColor="rgb(0, 0, 0)" style="dark" />
       <View
-        style={[
-          styles3.headerContainer,
-          { backgroundColor: "rgb(0, 0, 0)" },
-        ]}
+        style={[styles3.headerContainer, { backgroundColor: "rgb(0, 0, 0)" }]}
       >
-        <DrawerToggleButton tintColor={"rgb(71, 123, 211)"}  />
+        <DrawerToggleButton tintColor={"rgb(71, 123, 211)"} />
         <View style={styles3.container}>
           <BirdVector width={100} height={35} />
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => setIsDetailsModalVisible(true)}
           style={styles3.optionsButton}
         >
-          <Ionicons name="ellipsis-horizontal-circle-sharp" size={28} color={"rgb(130, 164, 223)"} />
+          <Ionicons
+            name="ellipsis-horizontal-circle-sharp"
+            size={28}
+            color={"rgb(130, 164, 223)"}
+          />
         </TouchableOpacity>
       </View>
 
@@ -118,8 +120,6 @@ const AnimatedHeader = ({ chatId }: { chatId: string }) => {
     </SafeAreaView>
   );
 };
-
-
 
 const styles3 = StyleSheet.create({
   headerContainer: {
@@ -135,7 +135,7 @@ const styles3 = StyleSheet.create({
   optionsButton: {
     padding: 8,
     marginLeft: "auto",
-  }
+  },
 });
 
 // ------------------------------------------
@@ -255,7 +255,7 @@ export const CustomDrawerContent = ({
   };
 
   return (
-    <LinearGradient 
+    <LinearGradient
       colors={[Colors.PitchBlack, "#001a33", Colors.PitchBlack]}
       style={{ flex: 1 }}
     >
@@ -270,7 +270,7 @@ export const CustomDrawerContent = ({
           />
           <TextInput
             placeholder="Search chats"
-            placeholderTextColor={Colors.greyLight + 'aa'}
+            placeholderTextColor={Colors.greyLight + "aa"}
             style={styles.searchInput}
           />
         </View>
@@ -281,7 +281,7 @@ export const CustomDrawerContent = ({
         {...props}
         contentContainerStyle={styles.listContent}
       >
-        {history.map((chat) => (
+        {/* {history.map((chat) => (
           <ContextMenu.Root key={chat.id}>
             <ContextMenu.Trigger>
               <LinearGradient
@@ -342,7 +342,17 @@ export const CustomDrawerContent = ({
               </ContextMenu.Item>
             </ContextMenu.Content>
           </ContextMenu.Root>
-        ))}
+
+          
+        ))} */}
+
+        <View style={styles.waterSection}>
+          <Text style={styles.sectionTitle}>Hydration Tracker</Text>
+          <WaterGlass />
+          <Text style={styles.waterDescription}>
+            Track your daily water intake
+          </Text>
+        </View>
       </DrawerContentScrollView>
 
       {/* Footer Section */}
@@ -358,7 +368,7 @@ export const CustomDrawerContent = ({
           <Ionicons name="log-out-outline" size={22} color={Colors.red} />
           <Text style={styles.signOutText}>Sign Out</Text>
         </MagButton>
-        
+
         <Link href="/(auth)/(modal)/settings" asChild>
           <TouchableOpacity style={styles.profileButton}>
             {/* <Image
@@ -382,7 +392,7 @@ export const CustomDrawerContent = ({
 };
 
 const Layout = () => {
-  const {chatId,setChatId} = useAppStore();
+  const { chatId, setChatId } = useAppStore();
   const currentUser = useQuery(api.users.getCurrentUser) as User | undefined;
   const dimensions = useWindowDimensions();
   const router = useRouter();
@@ -481,12 +491,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#ffffff33',
+    borderBottomColor: "#ffffff33",
   },
   searchSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 12,
     paddingHorizontal: 12,
     borderWidth: 1,
@@ -502,8 +512,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   chatItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     marginVertical: 4,
     marginHorizontal: 8,
@@ -513,23 +523,26 @@ const styles = StyleSheet.create({
   chatTitle: {
     color: Colors.greyLight,
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   footer: {
-    padding: 4,
-    gap: 12,
-    height: 100,
-    alignItems: 'center',
+    padding: 12,
+    gap: 16,
+    height: 280,
+    paddingBottom: 20,
+    alignItems: "center",
+    borderTopWidth: 0.5,
+    borderTopColor: "#ffffff15",
   },
   signOutButton: {
     borderWidth: 2,
     borderColor: Colors.lightRed,
     borderRadius: 25,
-    flex:0,
-    alignItems: 'center',
+    flex: 0,
+    alignItems: "center",
     gap: 0,
     padding: 5,
-    backgroundColor: 'rgba(128, 55, 55, 0.7)',
+    backgroundColor: "rgba(128, 55, 55, 0.7)",
     width: 100,
     height: 60,
   },
@@ -538,8 +551,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   profileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   avatar: {
@@ -549,10 +562,10 @@ const styles = StyleSheet.create({
   },
   userName: {
     color: Colors.greyLight,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   userEmail: {
-    color: Colors.greyLight + 'aa',
+    color: Colors.greyLight + "aa",
     fontSize: 12,
   },
   loadingContainer: {
@@ -561,7 +574,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   searchIcon: {
-    marginRight: 8
+    marginRight: 8,
+  },
+  waterSection: {
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+    paddingVertical: 10,
+    width: "100%",
+    backgroundColor: "rgba(0, 30, 60, 0.3)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(71, 123, 211, 0.2)",
+    padding: 15,
+  },
+  sectionTitle: {
+    color: Colors.mainBlue,
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 5,
+  },
+  waterDescription: {
+    color: Colors.greyLight + "99",
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: "center",
   },
 });
 
