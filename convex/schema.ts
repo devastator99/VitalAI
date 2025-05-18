@@ -260,6 +260,7 @@ export default defineSchema({
   habits: defineTable({
     userId: v.id("users"),
     name: v.string(),
+    description: v.optional(v.string()),
     type: v.union(v.literal("boolean"), v.literal("numeric"), v.literal("categorical")),
     target: v.optional(v.number()),
     unit: v.optional(v.string()),

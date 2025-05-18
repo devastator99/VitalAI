@@ -14,6 +14,7 @@ export const getHabits = query({
 export const createHabit = mutation({
   args: {
     name: v.string(),
+    description: v.optional(v.string()),
     type: v.union(
       v.literal("boolean"),
       v.literal("numeric"),
@@ -49,6 +50,7 @@ export const createHabit = mutation({
     return await ctx.db.insert("habits", {
       userId: user._id,
       name: args.name,
+      description: args.description,
       type: args.type,
       target: args.target,
       unit: args.unit,
