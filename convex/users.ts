@@ -331,6 +331,7 @@ export const getCurrentUser = query({
   },
 });
 
+// returns the user object
 export const getuserbyId = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
