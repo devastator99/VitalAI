@@ -1,0 +1,124 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Together AI API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/chat/completions": {
+      "post": {
+        "description": "Create a completion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/NonStreamingResponse" },
+                    { "$ref": "#/components/schemas/StreamingResponse" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompletionRequest": {
+        "type": "object",
+        "properties": {
+          "model": { "type": "string" },
+          "messages": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Message" }
+          },
+          "stream": { "type": "boolean" }
+        },
+        "required": ["model", "messages"]
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string", "enum": ["user", "assistant", "system"] },
+          "content": { "type": "string" }
+        },
+        "required": ["role", "content"]
+      },
+      "NonStreamingResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "object": { "type": "string", "enum": ["chat.completion"] },
+          "created": { "type": "integer" },
+          "model": { "type": "string" },
+          "choices": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Choice" }
+          },
+          "usage": { "$ref": "#/components/schemas/Usage" }
+        },
+        "required": ["id", "object", "created", "model", "choices"]
+      },
+      "StreamingResponse": {
+        "type": "object",
+        "properties": {
+          "object": { "type": "string", "enum": ["chat.completion.chunk"] },
+          "id": { "type": "string" },
+          "created": { "type": "integer" },
+          "model": { "type": "string" },
+          "choices": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StreamChoice" }
+          }
+        },
+        "required": ["object", "id", "created", "model", "choices"]
+      },
+      "Choice": {
+        "type": "object",
+        "properties": {
+          "index": { "type": "integer" },
+          "message": { "$ref": "#/components/schemas/Message" },
+          "finish_reason": { "type": "string" }
+        },
+        "required": ["index", "message"]
+      },
+      "StreamChoice": {
+        "type": "object",
+        "properties": {
+          "index": { "type": "integer" },
+          "delta": { "$ref": "#/components/schemas/Delta" },
+          "finish_reason": { "type": "string" }
+        },
+        "required": ["index", "delta"]
+      },
+      "Delta": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string", "enum": ["assistant"] },
+          "content": { "type": "string" }
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "prompt_tokens": { "type": "integer" },
+          "completion_tokens": { "type": "integer" },
+          "total_tokens": { "type": "integer" }
+        }
+      }
+    }
+  }
+}

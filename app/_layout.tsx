@@ -1,4 +1,4 @@
-import { useFonts } from "expo-font";
+import { isLoaded, useFonts } from "expo-font";
 import {
   router,
   Slot,
@@ -9,12 +9,6 @@ import {
 } from "expo-router";
 import { Stack } from "expo-router/stack";
 import React, { useEffect, useState, useRef } from "react";
-import {
-  ClerkLoaded,
-  ClerkProvider,
-  useAuth,
-  useUser,
-} from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Platform, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -24,6 +18,8 @@ import { tokenCache } from "~/cache";
 import Constants from "expo-constants";
 import { ChatProvider } from "~/utils/ChatContext";
 import { api } from "~/convex/_generated/api";
+import { useAuth } from "@clerk/clerk-expo";
+import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { useQuery } from "convex/react";
 import {
   Theme,
@@ -34,9 +30,12 @@ import {
 import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { StatusBar } from "expo-status-bar";
-import { PortalHost } from '@rn-primitives/portal';
+import { PortalHost } from "@rn-primitives/portal";
 import { setBackgroundColorAsync } from "expo-system-ui";
 import { useAppStore } from "~/store";
+import { useUser } from "@clerk/clerk-expo";
+import { helloWorld } from "~/convex/users";
+// import { useSupabaseAuth } from '~/useSupabaseAuth';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -54,13 +53,19 @@ if (!publishableKey) {
   throw new Error("Missing Clerk Publishable Key");
 }
 
+const url = Constants.expoConfig?.extra?.EXPO_PUBLIC_CONVEX_URL;
+console.log("convex url ober here xxxxxxx:", url);
+
 const convex = new ConvexReactClient(
   Constants.expoConfig?.extra?.EXPO_PUBLIC_CONVEX_URL!
 );
+console.log(convex , "convex iover here")
 
 SplashScreen.preventAutoHideAsync();
 
 const InitialLayout = () => {
+
+  
   // 2. Font loading
   const [fontsLoaded, fontError] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -69,26 +74,43 @@ const InitialLayout = () => {
   // 3. Auth and routing hooks
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
+  console.log(isLoaded , "is loaded x");
+  console.log(authLoaded , "authloaded x ");
+  console.log(isSignedIn , "issignedin x");
   const pathname = usePathname();
   const segments = useSegments();
   const router = useRouter();
 
-  const {userId, setUserId, isAdmin, setIsAdmin, isApproved, setIsApproved, detailsFilled, setDetailsFilled, setUser} = useAppStore();
+  console.log( pathname,"current path x ");
+
+  const {
+    userId,
+    setUserId,
+    isAdmin,
+    setIsAdmin,
+    isApproved,
+    setIsApproved,
+    detailsFilled,
+    setDetailsFilled,
+    setUser,
+  } = useAppStore();
 
   const userIdInitialized = useRef(false);
 
   // 5. User status queries
   const safeUserId = userId || undefined;
-  
+
+  console.log(safeUserId, "safe user id x");
+
   // Fetch complete user data from backend
   const userData = useQuery(api.users.getCurrentUser);
-  
+
   // Fallback query if getCurrentUser returns null
   const userByIdData = useQuery(
     api.users.getuserbyId,
     safeUserId ? { userId: safeUserId } : "skip"
   );
-  
+
   const checkAdminResult = useQuery(api.users.isAdmin, {
     userId: safeUserId ? safeUserId : "skip",
   });
@@ -97,7 +119,7 @@ const InitialLayout = () => {
   });
   const infoSubmitted = useQuery(api.users.infoStatus, {
     userId: safeUserId ? safeUserId : "skip",
-  }); 
+  });
 
   // 7. Handle font errors
   useEffect(() => {
@@ -116,14 +138,14 @@ const InitialLayout = () => {
       userIdInitialized.current = true;
     }
   }, [user]);
-  
+
   // Set user data in store when available
   useEffect(() => {
     // If we have user data from getCurrentUser, use that
     if (userData) {
       console.log("Setting user from getCurrentUser");
       setUser(userData);
-    } 
+    }
     // Otherwise, if we have user data from getuserbyId, use that as fallback
     else if (!userData && userByIdData) {
       console.log("Setting user from userByIdData");
@@ -159,6 +181,12 @@ const InitialLayout = () => {
   setBackgroundColorAsync("black");
 
   useEffect(() => {
+
+    console.log("routing logic called ");
+    console.log(isAdmin, "ISADMIN X");
+    console.log(isApproved , "isApproved x");
+    console.log(infoSubmitted , " infoSubmitted x");
+    console.log(isSignedIn , "issignedin x");
     if (!authLoaded || isAdmin === undefined || isApproved === undefined)
       return;
 
