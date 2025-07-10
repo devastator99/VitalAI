@@ -261,7 +261,7 @@ const RootLayoutNav = () => {
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache} audience="convex">
       <ClerkLoaded>
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
