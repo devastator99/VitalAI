@@ -83,8 +83,9 @@ export const sendMessage = mutation({
     attachId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const sender = await getUserbyconvID(ctx, args.senderId);
+    // const sender = await getUserbyconvID(ctx, args.senderId);
     const chat = await getChatById(ctx, args.chatId);
+    console.log(chat , "chat found");
     if (!chat) throw new Error("Chat not found");
 
     // Validate media URL if provided
@@ -95,7 +96,7 @@ export const sendMessage = mutation({
     // Insert the new message
     const messageId = await ctx.db.insert("messages", {
       chatId: chat._id,
-      senderId: sender._id,
+      senderId: args.senderId,
       content: args.content,
       isAi: args.isAi,
       type: args.type,

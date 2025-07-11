@@ -13,8 +13,10 @@ import AnimHeader from "./AnimHeader";
 import MagButton from "./MagButton";
 import { Stack, useRouter } from "expo-router";
 import IconCircle from "./IconCircle";
+import { useAuth } from "@clerk/clerk-expo";
 
 const Settings = () => {
+  const { signOut } = useAuth();
   const settingsSections = [
     {
       title: "Account",
@@ -104,7 +106,7 @@ const Settings = () => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <MagButton buttonStyle={styles.logoutTouchable}>
+          <MagButton buttonStyle={styles.logoutTouchable} onPress={() => {signOut()}}>
             <Text style={styles.logoutText}>Log Out</Text>
             <Ionicons name="log-out" size={20} color="white" />
           </MagButton>

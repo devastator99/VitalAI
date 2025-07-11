@@ -310,8 +310,9 @@ export const assignDietician = mutation({
 // returns the userID
 export const getCurrentUser = query({
   handler: async (ctx) => {
+    console.log("entered getcurrent user query conveX")
     const identity = await ctx.auth.getUserIdentity();
-    console.log("getcurrentuser called");
+    console.log(identity , "getcurrentuser called");
     if (!identity) {
       console.error("User is not authenticated.");
       return null; // ✅ Return `null` instead of throwing an error
@@ -326,7 +327,7 @@ export const getCurrentUser = query({
       console.warn("User not found in database.");
       return null; // ✅ Return `null` to avoid breaking UI
     }
-
+    console.log(user._id , "user found");
     return user;
   },
 });
@@ -600,7 +601,9 @@ export const updateProfileDetails = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    console.log("inside handler for ipdate profile details")
     const identity = await ctx.auth.getUserIdentity();
+    console.log("identityxx", identity);
     if (!identity) {
       throw new Error("Not authenticated");
     }
@@ -1049,5 +1052,37 @@ export const updateUserProfile = mutation({
     });
 
     return user._id;
+  },
+});
+
+export const helloWorld = query({
+  handler: async () => {
+    console.log("helloWorld handler called!");
+    return "Hello from Convex!";
+  },
+});
+
+// Create the AI user if it doesn't exist
+export const createAIUser = mutation({
+  handler: async (ctx) => {
+    const AI_USER_ID = "AI_USER";
+    const existingUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("userId"), AI_USER_ID))
+      .first();
+    if (existingUser) {
+      return;
+    }
+    await ctx.db.insert("users", {
+      userId: AI_USER_ID,
+      name: "AI Assistant",
+      profileDetails: {
+        email: "ai@example.com",
+      },
+      role: "ai",
+      busy: false,
+      createdAt: Date.now(),
+    });
+    return "AI user created successfully";
   },
 });

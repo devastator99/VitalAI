@@ -36,7 +36,7 @@ import { fetchGeminiResponse } from "~/utils/openRouterApi";
 import { usePaginatedQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
-import { fetchOpenAIResponse } from "~/utils/OpenaiApi";
+import { fetchTogetherResponse } from "~/utils/OpenaiApi";
 
 const AI_USER_ID = "j576bezhm29ycwx1bh4mf7db3s7bpy6q" as Id<"users">;
 
@@ -195,13 +195,13 @@ const ChatPage = () => {
 
       // Format messages for OpenAI
       const formattedMessages = queryMsgs.map(msg => ({
-        isAi: msg.isAi,
+        role: msg.isAi ? "system" : "user",
         content: msg.content
       }));
-      formattedMessages.push({ isAi: false, content });
+      // formattedMessages.push({ role, content });
 
       // Get AI response
-      const response = await fetchOpenAIResponse(formattedMessages);
+      const response = await fetchTogetherResponse(formattedMessages);
       
       if (response.success && response.data) {
         await handleMessageSubmit({
@@ -300,6 +300,12 @@ const ChatPage = () => {
     const { height } = event.nativeEvent.layout;
     setContainerHeight(height);
   }, []);
+
+  const createAIUser = useMutation(api.users.createAIUser);
+
+  useEffect(() => {
+    createAIUser();
+  }, [createAIUser]);
 
   return (
     <View

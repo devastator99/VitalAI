@@ -1,4 +1,4 @@
-import { useSignIn, useSignUp } from "@clerk/clerk-expo";
+import { useAuth, useSignIn, useSignUp } from "@clerk/clerk-expo";
 import { SignUpResource, SignInResource } from "@clerk/types";
 import { useMutation } from "convex/react";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -102,6 +102,21 @@ const login = () => {
 
   // Add this state for the country selector
   const [showCountrySelect, setShowCountrySelect] = useState(false);
+
+  // Switch between sign in and sign up modes, resetting Clerk session and form
+  const handleModeSwitch = async () => {
+    await resetClerkSession(signUp, signIn);
+    setIsSignUp((prev) => !prev);
+    setAuthMethod("email");
+    setFormData({
+      email: "",
+      phone: "",
+      password: "",
+      code: "",
+      countryCode: "+91",
+    });
+    setVerifying(false);
+  };
 
   // Reset form when switching modes
   useEffect(() => {
@@ -321,7 +336,33 @@ const login = () => {
     }
   };
 
+  const { signOut } = useAuth();
+  const resetClerkSession = async (signUp: any, signIn: any) => {
+    try {
+      console.log("resetClerkSession");
+      let sessionId = null;
+      if (signUp && signUp.createdSessionId) {
+        sessionId = signUp.createdSessionId;
+        console.log("Using signUp sessionId:", sessionId);
+      } else if (signIn && signIn.createdSessionId) {
+        sessionId = signIn.createdSessionId;
+        console.log("Using signIn sessionId:", sessionId);
+      }
+      if (sessionId) {
+        await signOut({ sessionId });
+        console.log("Signed out session:", sessionId);
+      } else {
+        await signOut();
+        console.log("Signed out current session");
+      }
+    } catch (err) {
+      console.log("Error in resetClerkSession:", err);
+    }
+  };
+
   const handleEmailFlow = async () => {
+    await resetClerkSession(signUp, signIn);
+
     if (isSignUp) {
       await signUp?.create({
         emailAddress: formData.email,
@@ -329,6 +370,7 @@ const login = () => {
       });
       await signUp?.prepareEmailAddressVerification();
       setVerifying(true);
+      console.log("handleEmailFlow");
     } else {
       const result = await signIn?.create({
         identifier: formData.email,
@@ -337,11 +379,14 @@ const login = () => {
 
       if (result?.status === "complete") {
         await setSignInActive?.({ session: result.createdSessionId });
+        console.log("Sign in complete, routing to home");
+        router.replace("/(onboarding)/Questionnaire");
       }
     }
   };
 
   const handlePhoneFlow = async () => {
+    await resetClerkSession(signUp, signIn);
     const fullPhoneNumber =
       formData.countryCode + formData.phone.replace(/[\s-]/g, "");
 
@@ -371,13 +416,15 @@ const login = () => {
 
   const handleVerification = async () => {
     if (loading || formData.code.length < 6) return;
-
+    console.log("handleVerification");
     setLoading(true);
     try {
       if (authMethod === "email") {
         const result = await signUp?.attemptEmailAddressVerification({
           code: formData.code,
         });
+
+        console.log(result, "yoyoyoyoy");
 
         if (result?.status === "complete") {
           await createUserbyclerkId({
@@ -388,8 +435,9 @@ const login = () => {
               email: formData.email,
             },
           });
+          console.log("createdUser");
           await setSignUpActive?.({ session: result.createdSessionId });
-          router.replace("/");
+          router.replace("/(onboarding)/Questionnaire");
         }
       } else {
         const result = isSignUp
@@ -415,7 +463,6 @@ const login = () => {
                 phone: formData.phone,
               },
             });
-            router.replace("/(onboarding)/Questionnaire");
           } else {
             router.replace("/");
           }
@@ -1019,7 +1066,7 @@ const login = () => {
             {/* Switch Account Mode */}
             <TouchableOpacity
               style={styles.switchModeContainer}
-              onPress={() => setIsSignUp(!isSignUp)}
+              onPress={handleModeSwitch}
               activeOpacity={0.7}
             >
               <Text style={styles.secondaryText}>
