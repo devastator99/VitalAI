@@ -111,7 +111,7 @@ const Layout = () => {
           headerShown: false,
           tabBarShowLabel: false,
           tabBarStyle: {
-            backgroundColor: "rgba(19, 22, 28,0.4)",
+            backgroundColor: "rgb(12, 15, 18)",
             borderTopWidth: 0,
             elevation: 0,
             height: 70,

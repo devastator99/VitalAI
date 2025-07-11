@@ -116,6 +116,48 @@ export const sendMessage = mutation({
   },
 });
 
+// Send a media message with attachment
+export const sendMediaMessage = mutation({
+  args: {
+    chatId: v.id("chats"),
+    senderId: v.id("users"),
+    content: v.optional(v.string()),
+    isAi: v.boolean(),
+    type: v.union(
+      v.literal("image"),
+      v.literal("video"),
+      v.literal("audio"),
+      v.literal("file")
+    ),
+    attachId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const chat = await getChatById(ctx, args.chatId);
+    if (!chat) throw new Error("Chat not found");
+
+    // Insert the media message
+    const messageId = await ctx.db.insert("messages", {
+      chatId: chat._id,
+      senderId: args.senderId,
+      content: args.content || "",
+      isAi: args.isAi,
+      type: args.type,
+      attachId: args.attachId,
+      createdAt: Date.now(),
+      readBy: [],
+      updatedAt: Date.now(),
+    });
+
+    // Update chat's last message
+    await ctx.db.patch(chat._id, {
+      lastMessageId: messageId,
+      updatedAt: Date.now(),
+    });
+
+    return messageId;
+  },
+});
+
 // // Get messages for a chat
 // export const getMessages = query({
 //   args: {

@@ -708,13 +708,16 @@ const styles = StyleSheet.create({
     maxWidth: "100%",
   },
   botBubble: {
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
-    borderLeftWidth: 0.15,
-    borderLeftColor: "#0ff", // Cyan neon color
-    shadowColor: "#0ff", // Optional glow effect
+    backgroundColor: "transparent",
+    borderLeftWidth: 0.5,
+    borderLeftColor: Colors.mainBlue,
+    paddingLeft: 12,
+    paddingVertical: 5,
+    paddingRight: 0,
+    shadowColor: Colors.mainBlue,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4, // Increased opacity for better visibility
-    shadowRadius: 12, // Increased radius for a more pronounced shadow
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
   },
   humanBubble: {
     backgroundColor: "rgb(40, 40, 40)",

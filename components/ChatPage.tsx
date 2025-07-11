@@ -153,6 +153,7 @@ const ChatPage = () => {
 
   // Media Handling
   const handleMessageSubmit = useMutation(api.messages.sendMessage);
+  const handleMediaSubmit = useMutation(api.messages.sendMediaMessage);
   const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
 
   // Mark messages as read when the chat is opened
@@ -223,23 +224,23 @@ const ChatPage = () => {
 
   // Media Handling
   const handleMedia = useCallback(
-    async (attachId: string, content: string) => {
+    async (attachId: string, content?: string) => {
       if (!chatId || !currentUser || !previewFile) return;
 
       setLoading(true);
       try {
         if (!attachId) return;
 
-        await handleMessageSubmit({
+        await handleMediaSubmit({
           chatId: chatId as Id<"chats">,
           senderId: currentUser._id,
-          isAi: false,
-          content: content || "Media shared",
+          isAi: false,  
+          content: content,
           type: previewFile.type === "document" ? "file" : previewFile.type,
           attachId: attachId as Id<"_storage">,
         });
 
-        await handleSendMessage(content || "Media shared");
+        // await handleSendMessage(content);
       } catch (error) {
         Alert.alert("Error", "Failed to upload media");
       } finally {
@@ -379,7 +380,7 @@ const ChatPage = () => {
           fileName={previewFile.name}
           attachId={previewFile.attachId || ""}
           onSend={(attachId) => {
-            handleMedia(attachId, "File shared");
+            handleMedia(attachId);
             setPreviewFile(null);
           }}
           onCancel={() => setPreviewFile(null)}
