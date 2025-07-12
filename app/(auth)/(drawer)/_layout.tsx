@@ -1,10 +1,4 @@
-import {
-  DrawerContentScrollView,
-  DrawerItemList,
-  DrawerItem,
-  createDrawerNavigator,
-  DrawerToggleButton,
-} from "@react-navigation/drawer";
+import { Modal } from "react-native";
 import { Link, useNavigation, useRouter } from "expo-router";
 import {
   SafeAreaView,
@@ -26,9 +20,9 @@ import Image from "@d11/react-native-fast-image";
 import Colors from "~/utils/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { DrawerActions, NavigationContainer } from "@react-navigation/native";
+
 import { useEffect, useRef, useState } from "react";
-import { useDrawerStatus } from "@react-navigation/drawer";
+
 import { Chat } from "~/utils/Interfaces";
 import * as ContextMenu from "zeego/context-menu";
 import { Keyboard } from "react-native";
@@ -36,7 +30,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "~/convex/_generated/api";
 import { useChat } from "~/utils/ChatContext";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import type { DrawerNavigationProp } from "@react-navigation/drawer";
+
 import ChatPage from "~/components/ChatPage";
 import Animated, {
   useAnimatedProps,
@@ -55,17 +49,21 @@ import BirdVector from "~/components/BirdVector";
 import { useAppStore } from "~/store";
 import AnimatedButton from "~/components/AnimatedButton";
 import MagButton from "~/components/MagButton";
-import ChatDetailsModal from "~/components/ChatDetailsModal";
 import { Id } from "~/convex/_generated/dataModel";
-import { Drawer } from "expo-router/drawer";
-import WaterGlass from "~/components/WaterGlass";
 
-// Add type for navigation prop
-type NavigationProp = DrawerNavigationProp<Record<string, object>>;
+import WaterGlass from "~/components/WaterGlass";
+import NextMealPage from "../../../components/nextmealpage";
+import ChatDetailsModal from "~/components/ChatDetailsModal";
+import HomeDashboard from "~/components/HomeDashboard";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const AnimatedHeader = ({ chatId }: { chatId: string }) => {
+interface AnimatedHeaderProps {
+  chatId: string;
+  onMenuPress: () => void;
+}
+
+const AnimatedHeader = ({ chatId, onMenuPress }: AnimatedHeaderProps) => {
   const progress = useSharedValue(0);
   const pathLength = 2730; // Roughly calculated from the path coordinates
   const fullWidth = 200; // Matches SVG width for the underline
@@ -90,11 +88,13 @@ const AnimatedHeader = ({ chatId }: { chatId: string }) => {
 
   return (
     <SafeAreaView style={{ backgroundColor: "rgb(0, 0, 0)" }}>
-      <StatusBar backgroundColor="rgb(0, 0, 0)" style="dark" />
+      <StatusBar style="light" />
       <View
         style={[styles3.headerContainer, { backgroundColor: "rgb(0, 0, 0)" }]}
       >
-        <DrawerToggleButton tintColor={"rgb(71, 123, 211)"} />
+        <TouchableOpacity onPress={onMenuPress}>
+          <Ionicons name="grid-outline" size={20} color={"rgb(71, 123, 211)"} />
+        </TouchableOpacity>
         <View style={styles3.container}>
           <BirdVector width={100} height={35} />
         </View>
@@ -127,6 +127,7 @@ const styles3 = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     height: 60,
+    paddingTop:10
   },
   container: {
     flex: 1,
@@ -138,265 +139,16 @@ const styles3 = StyleSheet.create({
   },
 });
 
-// ------------------------------------------
-
-export const CustomDrawerContent = ({
-  chatId,
-  ...props
-}: { chatId?: string | null } & any) => {
-  const { signOut } = useAuth();
-  const { bottom, top } = useSafeAreaInsets();
-  // const db = useSQLiteContext();
-  const isDrawerOpen = useDrawerStatus() === "open";
-  const [history, setHistory] = useState<Chat[]>([]);
-  const [Message, setMessage] = useState("");
-  const router = useRouter();
-  const currentUser = useQuery(api.users.getCurrentUser);
-  const getChats = useQuery(api.chats.getChats);
-  // const createChat = useMutation(api.chats.getOrCreateChat);
-
-  // GET ALL PRIVATE CHATS AND MAP TO HISTORY
-  const loadChats = async () => {
-    try {
-      if (!currentUser) return;
-
-      // Create or get the AI chat, only 1 AI chat per user
-      // const chatId = await createChat({
-      //   senderId: currentUser.userId!,
-      //   participantIds: [],
-      //   isAi: true,
-      //   type: "group",
-      // });
-
-      // setchatId(chatId);
-      // Fetch all chats
-      const allChats = await getChats;
-
-      if (!allChats) {
-        return;
-      }
-
-      // Update history with all chats
-      setHistory(
-        allChats.map((chat: any) => ({
-          id: chat._id,
-          title: chat.isAi ? "AI" : "Private",
-          type: chat.type,
-        }))
-      );
-    } catch (error) {
-      console.error("Error loading chats:", error);
-    }
-  };
-
-  useEffect(() => {
-    loadChats();
-  }, [getChats]); // Runs on mount
-
-  // Add useEffect to load chats when drawer opens
-  // useEffect(() => {
-  //   if (isDrawerOpen) {
-  //     loadChats();
-  //     Keyboard.dismiss();
-  //   }
-  // }, [isDrawerOpen]);
-
-  const handleChatPress = (chat: Chat) => {
-    if (!chat.id) {
-      console.error("Chat ID is not defined");
-      return;
-    }
-
-    if (chat.type == "group") {
-      console.log("LISTING THE CHATS ARRAY");
-      console.log(chat);
-      console.log("LISTING THE CHATS ARRAY");
-      console.log(`/(auth)/(drawer)/(ai-chat)/${encodeURIComponent(chat.id)}`);
-
-      router.push(`/(auth)/(drawer)/(ai-chat)/${encodeURIComponent(chat.id)}`);
-    } else {
-      router.push(
-        `/(auth)/(drawer)/(private-chat)/${encodeURIComponent(chat.id)}`
-      );
-    }
-  };
-
-  // ... existing code ...
-
-  const onDeleteChat = (chatId: string) => {
-    Alert.alert("Delete Chat", "Are you sure you want to delete this chat?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Delete",
-        onPress: async () => {
-          // Delete the chat
-          // await db.runAsync('DELETE FROM chats WHERE id = ?', chatId);
-          loadChats();
-        },
-      },
-    ]);
-  };
-
-  const onRenameChat = (chatId: string) => {
-    Alert.prompt(
-      "Rename Chat",
-      "Enter a new name for the chat",
-      async (newName) => {
-        if (newName) {
-          // Rename the chat
-          // await renameChat(db, chatId, newName);
-          loadChats();
-        }
-      }
-    );
-  };
-
-  return (
-    <LinearGradient
-      colors={[Colors.PitchBlack, "#001a33", Colors.PitchBlack]}
-      style={{ flex: 1 }}
-    >
-      {/* Header Section */}
-      <BlurView intensity={70} tint="dark" style={styles.header}>
-        <View style={styles.searchSection}>
-          <Ionicons
-            name="search"
-            size={20}
-            color={Colors.greyLight}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            placeholder="Search chats"
-            placeholderTextColor={Colors.greyLight + "aa"}
-            style={styles.searchInput}
-          />
-        </View>
-      </BlurView>
-
-      {/* Chat List */}
-      <DrawerContentScrollView
-        {...props}
-        contentContainerStyle={styles.listContent}
-      >
-        {/* {history.map((chat) => (
-          <ContextMenu.Root key={chat.id}>
-            <ContextMenu.Trigger>
-              <LinearGradient
-                colors={['#ffffff08', '#ffffff02']}
-                style={styles.chatItem}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons 
-                  name={chat.type === 'group' ? 'people' : 'chatbubble'} 
-                  size={18} 
-                  color={Colors.greyLight} 
-                />
-                <Text style={styles.chatTitle}>
-                  {chat.title || "Untitled Chat"}
-                </Text>
-              </LinearGradient>
-            </ContextMenu.Trigger>
-            <ContextMenu.Content>
-              <ContextMenu.Preview>
-                {() => (
-                  <View
-                    style={{
-                      padding: 16,
-                      height: 200,
-                      backgroundColor: "#fff",
-                    }}
-                  >
-                    <Text>{chat.title || "Untitled Chat"}</Text>
-                  </View>
-                )}
-              </ContextMenu.Preview>
-
-              <ContextMenu.Item
-                key={"rename"}
-                onSelect={() => onRenameChat(chat.id)}
-              >
-                <ContextMenu.ItemTitle>Rename</ContextMenu.ItemTitle>
-                <ContextMenu.ItemIcon
-                  ios={{
-                    name: "pencil",
-                    pointSize: 18,
-                  }}
-                />
-              </ContextMenu.Item>
-              <ContextMenu.Item
-                key={"delete"}
-                onSelect={() => onDeleteChat(chat.id)}
-                destructive
-              >
-                <ContextMenu.ItemTitle>Delete</ContextMenu.ItemTitle>
-                <ContextMenu.ItemIcon
-                  ios={{
-                    name: "trash",
-                    pointSize: 18,
-                  }}
-                />
-              </ContextMenu.Item>
-            </ContextMenu.Content>
-          </ContextMenu.Root>
-
-          
-        ))} */}
-
-        <View style={styles.waterSection}>
-          <Text style={styles.sectionTitle}>Hydration Tracker</Text>
-          <WaterGlass />
-          <Text style={styles.waterDescription}>
-            Track your daily water intake
-          </Text>
-        </View>
-      </DrawerContentScrollView>
-
-      {/* Footer Section */}
-      <LinearGradient
-        colors={[Colors.PitchBlack, Colors.PitchBlack]}
-        style={styles.footer}
-      >
-        <MagButton
-          onPress={() => signOut()}
-          buttonColor={Colors.lightRed}
-          buttonStyle={styles.signOutButton}
-        >
-          <Ionicons name="log-out-outline" size={22} color={Colors.red} />
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </MagButton>
-
-        <Link href="/(auth)/(modal)/settings" asChild>
-          <TouchableOpacity style={styles.profileButton}>
-            {/* <Image
-              source={require("~/assets/images/sample.png")}
-              style={styles.avatar}
-            />
-            <View>
-              <Text style={styles.userName}>Sample User</Text>
-              <Text style={styles.userEmail}>user@example.com</Text>
-            </View>
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={20}
-              color={Colors.greyLight}
-            /> */}
-          </TouchableOpacity>
-        </Link>
-      </LinearGradient>
-    </LinearGradient>
-  );
-};
-
 const Layout = () => {
-  const { chatId, setChatId } = useAppStore();
+  const router = useRouter();
+  const { chatId, setChatId, showDashboard, setShowDashboard } = useAppStore((state) => ({
+    chatId: state.chatId,
+    setChatId: state.setChatId,
+    showDashboard: state.showDashboard,
+    setShowDashboard: state.setShowDashboard,
+  }));
   const currentUser = useQuery(api.users.getCurrentUser) as User | undefined;
   const dimensions = useWindowDimensions();
-  const router = useRouter();
-  const Drawer = createDrawerNavigator();
   const INitAiChat = useMutation(api.chats.initAiChat);
   const updateuserchatid = useMutation(api.users.updateChatID);
   const { isInitializing, setIsInitializing } = useAppStore((state) => ({
@@ -450,38 +202,22 @@ const Layout = () => {
     );
   }
 
-  // console.log("this is CHATID global from DRAWER LAYOUT-->>>>");
-  // console.log(chatId);
-
   return (
-    <Drawer.Navigator
-      drawerContent={(props) => (
-        <CustomDrawerContent {...props} chatId={chatId} />
-      )}
-      screenOptions={{
-        headerLeft: () => <DrawerToggleButton />,
-        headerStyle: {
-          backgroundColor: "#f2f2f2",
-        },
-        headerShadowVisible: false,
-        drawerActiveBackgroundColor: Colors.selected,
-        drawerActiveTintColor: "#fff",
-        drawerInactiveTintColor: "#fff",
-        overlayColor: "rgba(0, 0, 0,0.8)",
-        drawerItemStyle: { borderRadius: 12 },
-        drawerLabelStyle: { marginLeft: -20 },
-        drawerStyle: { width: dimensions.width * 0.86 },
-      }}
-    >
-      <Drawer.Screen
-        name="(ai-chat)/[id]"
-        initialParams={{ id: chatId }}
-        options={{
-          header: () => <AnimatedHeader chatId={chatId} />,
-        }}
-        component={ChatPage}
+    <View style={{ flex: 1 }}>
+      <AnimatedHeader 
+        chatId={chatId} 
+        onMenuPress={() => {
+          console.log("Menu icon pressed, toggling NextMealPage visibility");
+          setShowDashboard(!showDashboard);
+        }} 
       />
-    </Drawer.Navigator>
+      <ChatPage chatId={chatId} />
+      {showDashboard && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <HomeDashboard />
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -602,5 +338,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+
 
 export default Layout;

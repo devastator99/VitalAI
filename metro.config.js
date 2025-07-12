@@ -28,6 +28,7 @@
 // metro.config.js
 const { getDefaultConfig } = require('expo/metro-config');
 const { withNativeWind } = require('nativewind/metro');
+const { withSentryConfig } = require('@sentry/react-native/metro');
 
 module.exports = (async () => {
   // 1) Get the default Expo config
@@ -48,8 +49,20 @@ module.exports = (async () => {
 
   // 3) Wrap it with NativeWind
   //    Pass in the config and any NativeWind options
-  const finalConfig = withNativeWind(config, { input: './global.css' });
+  const nativeWindConfig = withNativeWind(config, { input: './global.css' });
 
-  // 4) Return the single, merged config
+  // 4) Wrap it with Sentry
+  const finalConfig = withSentryConfig(
+    nativeWindConfig,
+    {
+      // Sentry options
+      projectRoot: __dirname,
+      org: 'your-org-slug',
+      project: 'your-project-slug',
+      // Additional Sentry config options if needed
+    }
+  );
+
+  // 5) Return the single, merged config
   return finalConfig;
 })();

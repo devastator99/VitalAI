@@ -15,7 +15,6 @@ import {
   Dialog,
   List,
 } from "react-native-paper";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 
 type HabitType = "boolean" | "numeric" | "categorical";

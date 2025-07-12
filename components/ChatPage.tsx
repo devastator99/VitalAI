@@ -27,6 +27,7 @@ import MessageInput from "~/components/MessageInput";
 import MessageBubble from "~/components/MessageBubble";
 import MessageIdeas from "~/components/MessageIdeas";
 import ScrollToBottomButton from "./ScrollToBottomButton";
+import TypingIndicator from "./TypingIndicator";
 import FilePreview from "~/components/FilePreview";
 import { LinearGradient } from "expo-linear-gradient";
 import BirdVector from "~/components/BirdVector";
@@ -114,7 +115,11 @@ const FlashListEmptyState = () => (
   </View>
 );
 
-const ChatPage = () => {
+interface ChatPageProps {
+  chatId?: string | null;
+}
+
+const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const listRef = useRef<FlashList<any>>(null);
   const {
@@ -136,7 +141,7 @@ const ChatPage = () => {
   const currentUser = useQuery(api.users.getCurrentUser);
   // Chat ID Management
   const chatId = useMemo(
-    () => id || currentUser?.defaultChatId,
+    () => propChatId || id || currentUser?.defaultChatId,
     [id, currentUser]
   );
   const chat = useQuery(api.chats.getChatWithParticipants, chatId ? { chatId: chatId as Id<"chats"> } : "skip");
@@ -400,12 +405,14 @@ const ChatPage = () => {
             style={styles.loadingIndicator}
           />
         )}
+        {loading && <TypingIndicator />}
         <MessageInput onShouldSend={handleSendMessage} />
       </KeyboardAvoidingView>
     </View>
   );
 };
 
+// ... (rest of the code remains the same)
 const EmptyState = () => {
   // const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
   // const opacityAnim = React.useRef(new Animated.Value(0)).current;

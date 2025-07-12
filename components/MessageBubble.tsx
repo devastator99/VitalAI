@@ -14,9 +14,9 @@ import Image from "@d11/react-native-fast-image";
 import * as ContextMenu from "zeego/context-menu";
 import { Role } from "~/utils/Interfaces";
 import Colors from "~/utils/Colors";
-import { MiniProfile } from "./MiniProfile";
 import BirdVector from "./BirdVector";
-import LinearGradient from "react-native-linear-gradient";
+import TypingIndicator from "./TypingIndicator";
+import {LinearGradient} from "expo-linear-gradient";
 import { api } from "~/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Id } from "~/convex/_generated/dataModel";
@@ -84,7 +84,7 @@ const MemoizedAvatarImage = React.memo(({ uri, style }: { uri: string; style: an
   );
 }, (prevProps, nextProps) => prevProps.uri === nextProps.uri);
 
-const SingleImage = ({ url }: { url: string }) => {
+const SingleImage = ({ url, dimensions }: { url: string, dimensions?: { width: number, height: number } }) => {
   const [isVisible, setIsVisible] = React.useState(false);
   
   const openGallery = () => setIsVisible(true);
@@ -95,7 +95,11 @@ const SingleImage = ({ url }: { url: string }) => {
       <TouchableOpacity onPress={openGallery}>
         <FastImage 
           source={{ uri: url }}
-          style={{ width: 240, height: 180, minHeight: 180 }}
+          style={{
+            width: dimensions?.width ?? 240,
+            height: dimensions?.height ?? 180,
+            minHeight: 180
+          }}
           resizeMode={FastImage.resizeMode.cover}
         />
       </TouchableOpacity>
@@ -471,7 +475,11 @@ const MessageBubble = React.memo(
                     ]}
                   >
                     {renderMedia()}
-                    {type === "text" && (
+                    {type === "typing" ? (
+                      <TypingIndicator />
+                    ) : type === "text" && !content.trim() && (role === Role.Bot || role === Role.User) ? (
+                      <TypingIndicator />
+                    ) : type === "text" ? (
                       <Text
                         style={
                           isCurrentUser
@@ -483,7 +491,7 @@ const MessageBubble = React.memo(
                       >
                         {content}
                       </Text>
-                    )}
+                    ) : null}
                     <View style={styles.messageFooter}>
                       {isCurrentUser && (
                         <ReadReceipt
@@ -633,43 +641,50 @@ const MediaComponent = React.memo(
             <Text style={styles.errorText}>Failed to load image</Text>
           </View>
         ) : (
-          mediaUrl && <SingleImage url={mediaUrl} />
+          mediaUrl && <SingleImage url={mediaUrl} dimensions={dimensions} />
         )}
       </View>
     );
   }
 );
 
-const FileComponent = React.memo(({ mediaUrl }: { mediaUrl: string }) => (
-  <TouchableOpacity
-    onPress={async () => {
-      try {
-        const fileUri = `${FileSystem.cacheDirectory}${mediaUrl.split("/").pop()}`;
-        await FileSystem.copyAsync({
-          from: mediaUrl,
-          to: fileUri,
-        });
-        await Sharing.shareAsync(fileUri, {
-          mimeType: "application/pdf", // or get the correct mime type
-          dialogTitle: "Open File",
-        });
-      } catch (error) {
-        console.error("Failed to open file:", error);
-      }
-    }}
-    style={styles.fileContainer}
-  >
-    <LinearGradient
-      colors={[Colors.mainBlue, "#00254d", Colors.PitchBlack]}
-      style={styles.gradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+const FileComponent = React.memo(({ mediaUrl }: { mediaUrl: string }) => {
+  // Extract filename from the mediaUrl
+  const fileName = mediaUrl ? decodeURIComponent(mediaUrl.split("/").pop() || "File") : "File";
+  // Optionally trim long filenames for UI
+  const displayName = fileName.length > 10 ? fileName.slice(0, 10) + "..." : fileName;
+
+  return (
+    <TouchableOpacity
+      onPress={async () => {
+        try {
+          const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+          await FileSystem.copyAsync({
+            from: mediaUrl,
+            to: fileUri,
+          });
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "application/pdf", // or get the correct mime type
+            dialogTitle: "Open File",
+          });
+        } catch (error) {
+          console.error("Failed to open file:", error);
+        }
+      }}
+      style={styles.fileContainer}
     >
-      <FontAwesome5 name="file-alt" size={16} color="white" />
-      <Text style={styles.fileText}>File Shared</Text>
-    </LinearGradient>
-  </TouchableOpacity>
-));
+      <LinearGradient
+        colors={[Colors.mainBlue, "#00254d", Colors.PitchBlack]}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <FontAwesome5 name="file-alt" size={16} color="white" />
+        <Text style={styles.fileText}>{displayName}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+});
 
 const styles = StyleSheet.create({
   row: {

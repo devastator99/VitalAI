@@ -63,6 +63,7 @@ interface AppState {
   refreshing: boolean;
   showScrollToBottom: boolean;
   isNearBottom: boolean;
+  showDashboard: boolean;
   previewFile: {
     uri: string;
     type: 'image' | 'document';
@@ -88,6 +89,7 @@ interface AppState {
   setRefreshing: (refreshing: boolean) => void;
   setShowScrollToBottom: (showScrollToBottom: boolean) => void;
   setIsNearBottom: (isNearBottom: boolean) => void;
+  setShowDashboard: (showDashboard: boolean) => void;
   setPreviewFile: (previewFile: {
     uri: string;
     type: 'image' | 'document';
@@ -119,6 +121,7 @@ export const useAppStore = create<AppState>((set) => ({
   refreshing: false,
   showScrollToBottom: false,
   isNearBottom: true,
+  showDashboard: false,
   previewFile: null,
 
   // --- Actions ---
@@ -147,6 +150,7 @@ export const useAppStore = create<AppState>((set) => ({
   setRefreshing: (refreshing) => set({ refreshing }),
   setShowScrollToBottom: (showScrollToBottom) => set({ showScrollToBottom }),
   setIsNearBottom: (isNearBottom) => set({ isNearBottom }),
+  setShowDashboard: (showDashboard) => set({ showDashboard }),
   setPreviewFile: (previewFile) => set({ previewFile }),
 
   // Reset all states to initial values
@@ -168,6 +172,7 @@ export const useAppStore = create<AppState>((set) => ({
       refreshing: false,
       showScrollToBottom: false,
       isNearBottom: true,
+      showDashboard: false,
       previewFile: null,
     }),
 }));

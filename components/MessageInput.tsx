@@ -1,6 +1,6 @@
 import Colors from "~/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ActivityIndicator, Modal } from "react-native";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
@@ -41,6 +41,7 @@ const MessageInput = forwardRef(
     const [message, setMessage] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [storageId, setStorageId] = useState<Id<"_storage"> | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const { bottom } = useSafeAreaInsets();
     const expanded = useSharedValue(0);
     const inputRef = useRef<TextInput>(null);
@@ -145,16 +146,21 @@ const MessageInput = forwardRef(
           const fileType = type === "document" ? "document" : "image";
           const fileName = result.assets[0].file?.name || "File";
 
-          // setPreviewFile({ uri: fileUri, type: fileType, name: fileName, attachId: null });
-
-          if (type === "document") {
-            const docStorageId = await handleFileUpload(fileUri);
-            setStorageId(docStorageId as Id<"_storage">);
-            setPreviewFile({ uri: fileUri, type: fileType, name: fileName, attachId: docStorageId as Id<"_storage"> });
-          } else {
-            const imageStorageId = await handleImageUpload(fileUri);
-            setStorageId(imageStorageId as Id<"_storage">);
-            setPreviewFile({ uri: fileUri, type: fileType, name: fileName, attachId: imageStorageId as Id<"_storage"> });
+          setIsUploading(true);
+          try {
+            if (type === "document") {
+              const docStorageId = await handleFileUpload(fileUri);
+              setStorageId(docStorageId as Id<"_storage">);
+              setPreviewFile({ uri: fileUri, type: fileType, name: fileName, attachId: docStorageId as Id<"_storage"> });
+            } else {
+              const imageStorageId = await handleImageUpload(fileUri);
+              setStorageId(imageStorageId as Id<"_storage">);
+              setPreviewFile({ uri: fileUri, type: fileType, name: fileName, attachId: imageStorageId as Id<"_storage"> });
+            }
+          } catch (error) {
+            console.error("File selection error:", error);
+          } finally {
+            setIsUploading(false);
           }
         }
       } catch (error) {
@@ -242,6 +248,13 @@ const MessageInput = forwardRef(
             </TouchableOpacity>
           )}
         </View>
+        {isUploading && (
+          <Modal visible={isUploading}>
+            <View style={styles.fullScreenLoading}>
+              <ActivityIndicator size="large" color={Colors.primary} />
+            </View>
+          </Modal>
+        )}
         {/* </BlurView> */}
       </Animated.View>
     );
@@ -284,6 +297,12 @@ const styles = StyleSheet.create({
   blurContainer: {
     flex: 1,
     overflow: "hidden",
+  },
+  fullScreenLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'black',
   },
 });
 
