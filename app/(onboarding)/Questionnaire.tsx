@@ -9,8 +9,7 @@ import { Id } from '~/convex/_generated/dataModel';
 
 export default function QuestionnaireScreen() {
   const [isLoading, setIsLoading] = useState(false);
-  const saveUserInfo = useMutation(api.users.updateProfileDetails);
-  const saveQuestionnaire = useMutation(api.users.updateUserProfile);
+  const submitQuestionnaire = useMutation(api.users.submitQuestionnaire);
   const router = useRouter();
   const userCurrent = useQuery(api.users.getCurrentUser);
 
@@ -22,39 +21,7 @@ export default function QuestionnaireScreen() {
       setIsLoading(true);
       console.log("inside try block");
 
-      if (!saveUserInfo) {
-        Alert.alert("Error", "No result returned from saveUserInfo");
-      }
-      
-      // First, save the profile details
-      const profileData = {
-        name: data.name,
-        profileDetails: {
-          picture: data.profilePicture,
-          height: parseFloat(data.height),
-          weight: parseFloat(data.weight),
-        }
-      };
-      console.log("profileData", profileData);
-      
-      try {
-        await saveUserInfo(profileData);
-        // Optionally: show a success message or navigate
-      } catch (err:any) {
-        console.error("Failed to save user info:", err);
-        alert("Error in saving user info ");
-      }
-
-      console.log("profileData saved");
-      
-      // Remove profile-specific fields from questionnaire data
-      const { name, profilePicture, ...questionnaireData } = data;
-      
-      console.log("questionnaireData", questionnaireData);
-      // Then save the questionnaire data
-      await saveQuestionnaire({ 
-        questionnaire: questionnaireData 
-      });
+      await submitQuestionnaire(data);
       
       console.log("questionnaireData saved");
       

@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import Image from "@d11/react-native-fast-image";
 import { FlashList } from "@shopify/flash-list";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, usePaginatedQuery } from "convex/react";
+import { api } from "~/convex/_generated/api";
 import { useAppStore } from "~/store";
 import { defaultStyles } from "~/constants/Styles";
 import { Id } from "~/convex/_generated/dataModel";
@@ -34,9 +35,6 @@ import BirdVector from "~/components/BirdVector";
 
 // Utilities
 import { fetchGeminiResponse } from "~/utils/openRouterApi";
-import { usePaginatedQuery } from "convex/react";
-import { api } from "~/convex/_generated/api";
-import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 import { fetchTogetherResponse } from "~/utils/OpenaiApi";
 
 const AI_USER_ID = "j576bezhm29ycwx1bh4mf7db3s7bpy6q" as Id<"users">;
@@ -44,7 +42,19 @@ const AI_USER_ID = "j576bezhm29ycwx1bh4mf7db3s7bpy6q" as Id<"users">;
 //may need to localise the loading state from zustand in this chatpage
 
 const RenderChatBubble = React.memo(
-  ({ item, currentUser, participants }: { item: any; currentUser: any; participants: any }) => {
+  ({
+    item,
+    currentUser,
+    participants,
+    onLongPress,
+    chatId,
+  }: {
+    item: any;
+    currentUser: any;
+    participants: any;
+    onLongPress: (messageId: Id<"messages">, content: string) => void;
+    chatId: Id<"chats">;
+  }) => {
     const isCurrentUser = item.senderId === currentUser?._id;
     const senderUser = useQuery(api.users.getUserById, { id: item.senderId });
 
@@ -61,6 +71,8 @@ const RenderChatBubble = React.memo(
         readBy={item.readBy || []}
         timestamp={item._creationTime}
         participants={participants}
+        onLongPress={onLongPress}
+        chatId={chatId}
       />
     );
   },
@@ -86,11 +98,11 @@ const DateSeparator = React.memo(({ timestamp }: { timestamp: number }) => {
     } else if (messageDate.toDateString() === yesterday.toDateString()) {
       return "Yesterday";
     } else {
-      return messageDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return messageDate.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     }
   }, [timestamp]);
@@ -99,7 +111,7 @@ const DateSeparator = React.memo(({ timestamp }: { timestamp: number }) => {
     <View style={styles.dateSeparatorContainer}>
       <View style={styles.dateSeparatorLine} />
       <LinearGradient
-        colors={[Colors.mainBlue, '#00254d']}
+        colors={[Colors.mainBlue, "#00254d"]}
         style={styles.dateSeparatorBadge}
       >
         <Text style={styles.dateSeparatorText}>{formattedDate}</Text>
@@ -137,15 +149,21 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
 
   // Add state for layout measurement
   const [containerHeight, setContainerHeight] = React.useState(0);
-  
+
   const currentUser = useQuery(api.users.getCurrentUser);
   // Chat ID Management
   const chatId = useMemo(
     () => propChatId || id || currentUser?.defaultChatId,
     [id, currentUser]
   );
-  const chat = useQuery(api.chats.getChatWithParticipants, chatId ? { chatId: chatId as Id<"chats"> } : "skip");
-  const participants = useMemo(() => chat?.participants || [], [chat?.participants]);
+  const chat = useQuery(
+    api.chats.getChatWithParticipants,
+    chatId ? { chatId: chatId as Id<"chats"> } : "skip"
+  );
+  const participants = useMemo(
+    () => chat?.participants || [],
+    [chat?.participants]
+  );
   const {
     results: queryMsgs,
     status,
@@ -160,6 +178,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
   const handleMessageSubmit = useMutation(api.messages.sendMessage);
   const handleMediaSubmit = useMutation(api.messages.sendMediaMessage);
   const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
+  const deleteMessage = useMutation(api.messages.deleteMessage);
 
   // Mark messages as read when the chat is opened
   useEffect(() => {
@@ -200,15 +219,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
       });
 
       // Format messages for OpenAI
-      const formattedMessages = queryMsgs.map(msg => ({
+      const formattedMessages = queryMsgs.map((msg) => ({
         role: msg.isAi ? "system" : "user",
-        content: msg.content
+        content: msg.content,
       }));
       // formattedMessages.push({ role, content });
 
       // Get AI response
       const response = await fetchTogetherResponse(formattedMessages);
-      
+
       if (response.success && response.data) {
         await handleMessageSubmit({
           content: response.data,
@@ -227,6 +246,40 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
     }
   };
 
+  const handleDeleteMessage = useCallback(
+    (messageId: Id<"messages">, content: string) => {
+      Alert.alert(
+        "Delete Message",
+        `Are you sure you want to delete this message?\n\n"${content}" `,
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                if (chatId) {
+                  await deleteMessage({
+                    messageId,
+                    chatId: chatId as Id<"chats">,
+                  });
+                }
+              } catch (error) {
+                console.error("Error deleting message:", error);
+                Alert.alert("Error", "Failed to delete message");
+              }
+            },
+          },
+        ],
+        { cancelable: true }
+      );
+    },
+    [deleteMessage, chatId]
+  );
+
   // Media Handling
   const handleMedia = useCallback(
     async (attachId: string, content?: string) => {
@@ -239,7 +292,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
         await handleMediaSubmit({
           chatId: chatId as Id<"chats">,
           senderId: currentUser._id,
-          isAi: false,  
+          isAi: false,
           content: content,
           type: previewFile.type === "document" ? "file" : previewFile.type,
           attachId: attachId as Id<"_storage">,
@@ -278,19 +331,23 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
       // Check if we should show a date separator
       const showDateSeparator = () => {
         if (index === queryMsgs.length - 1) return true; // Show for first message
-        
+
         const currentDate = new Date(item._creationTime).toDateString();
-        const nextDate = new Date(queryMsgs[index + 1]._creationTime).toDateString();
-        
+        const nextDate = new Date(
+          queryMsgs[index + 1]._creationTime
+        ).toDateString();
+
         return currentDate !== nextDate;
       };
 
       return (
         <>
-          <RenderChatBubble 
-            item={item} 
-            currentUser={currentUser} 
-            participants={participants} 
+          <RenderChatBubble
+            item={item}
+            currentUser={currentUser}
+            participants={participants}
+            onLongPress={handleDeleteMessage}
+            chatId={chatId}
           />
           {showDateSeparator() && (
             <DateSeparator timestamp={item._creationTime} />
@@ -298,7 +355,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
         </>
       );
     },
-    [currentUser, participants, queryMsgs]
+    [currentUser, participants, queryMsgs, handleDeleteMessage]
   );
 
   // Add layout handler
@@ -355,7 +412,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
               onScroll={handleScroll}
               scrollEventThrottle={16}
               keyboardDismissMode="on-drag"
-              removeClippedSubviews={Platform.OS !== 'web'}
+              removeClippedSubviews={Platform.OS !== "web"}
               drawDistance={500}
               inverted={true}
               contentContainerStyle={styles.listContent}
@@ -397,7 +454,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
         keyboardVerticalOffset={63}
         style={styles.inputContainer}
       >
-        {!queryMsgs?.length && <MessageIdeas onSelectCard={handleSendMessage} />}
+        {!queryMsgs?.length && (
+          <MessageIdeas onSelectCard={handleSendMessage} />
+        )}
         {loading && (
           <ActivityIndicator
             size="small"
@@ -447,7 +506,10 @@ const EmptyState = () => {
       <Animated.Text style={[styles.emptyText, { opacity: opacityAnim }]}>
         Start a new conversation
       </Animated.Text> */}
-      <Image source={require("~/assets/images/icon.png")} style={styles.emptyImage} />
+      <Image
+        source={require("~/assets/images/icon.png")}
+        style={styles.emptyImage}
+      />
       <Text style={styles.emptyText}>Start a new conversation</Text>
     </View>
   );
@@ -455,11 +517,11 @@ const EmptyState = () => {
 
 const styles = StyleSheet.create({
   gradient: {
-    position: 'relative',
-    width: '100%',
+    position: "relative",
+    width: "100%",
   },
   listContainer: {
-    width: '100%',
+    width: "100%",
   },
   listContent: {
     paddingTop: 100,
@@ -499,15 +561,15 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   dateSeparatorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
   dateSeparatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   dateSeparatorBadge: {
     paddingHorizontal: 12,
@@ -521,9 +583,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   dateSeparatorText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 

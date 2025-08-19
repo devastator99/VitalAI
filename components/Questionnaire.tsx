@@ -33,7 +33,7 @@ import CustomPicker from "./CustomPicker";
 import useLocation from "~/utils/useLocation";
 import * as ImagePicker from "expo-image-picker";
 import { Id } from "~/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery, useMutation } from 'convex/react';
 import { api } from "~/convex/_generated/api";
 import { useUser as useClerkUser } from "@clerk/clerk-expo";
 import UserVector from "./UserVector";
@@ -740,6 +740,109 @@ const FormField: React.FC<{
     {error && <Text style={styles.fieldError}>{error}</Text>}
   </View>
 );
+
+// ProfileInfo Component
+interface ProfileInfoProps {
+  formData: FormData;
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
+  errors: Record<string, string>;
+}
+
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ formData, setFormData, errors }) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const { user: clerkUser } = useClerkUser();
+
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setIsUploading(true);
+      try {
+        const uploadUrl = await generateUploadUrl();
+        const response = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/jpeg' },
+          body: await (await fetch(result.assets[0].uri)).blob(),
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(`Upload failed: ${response.status} ${errorBody}`);
+        }
+
+        const { storageId } = await response.json();
+        setFormData(prev => ({ ...prev, profilePicture: storageId }));
+
+      } catch (error) {
+        console.error("Image upload error:", error);
+        Alert.alert("Upload Failed", "Could not upload your profile picture. Please try again.");
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const ProfileImage = () => {
+    const imageUrl = useQuery(
+      api.files.getImageUrl,
+            formData.profilePicture ? { storageId: formData.profilePicture } : "skip"
+    );
+
+    if (!formData.profilePicture) {
+      return (
+        <View style={styles.emptyProfileContainer}>
+          <Ionicons name="person" size={50} color="#ffffff88" />
+        </View>
+      );
+    }
+
+    return (
+      <Suspense fallback={<View style={styles.profileSkeleton} />}>
+        {imageUrl ? (
+          <FastImage
+            style={styles.profileImage}
+            source={{ uri: imageUrl, priority: FastImage.priority.normal }}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+        ) : (
+          <View style={styles.profileSkeleton} />
+        )}
+      </Suspense>
+    );
+  };
+
+  return (
+    <View>
+      <Text style={styles.subtitle}>Profile Information</Text>
+      <View style={styles.profileImageContainer}>
+        <ProfileImage />
+        {isUploading && (
+          <ActivityIndicator
+            style={styles.profileLoader}
+            size="large"
+            color={Colors.mainBlue}
+          />
+        )}
+        <TouchableOpacity style={styles.uploadButton} onPress={handlePickImage} disabled={isUploading}>
+          <Ionicons name="camera" size={20} color={Colors.white} />
+        </TouchableOpacity>
+      </View>
+      <FormField
+        label="Full Name"
+        value={formData.name}
+        onChangeText={(text) => setFormData({ ...formData, name: text })}
+        error={errors.name}
+        placeholder="Enter your full name"
+      />
+    </View>
+  );
+};
 
 // Update the PersonalDetails component to pass errors from props
 interface PersonalDetailsProps {
@@ -1505,6 +1608,7 @@ const Questionnaire: React.FC<{
     const minimalData = {
       ...formData,
       name: formData.name || "User",
+      profilePicture: formData.profilePicture || undefined,
       gender: formData.gender || "Other",
       age: formData.age || "30",
       height: formData.height || "170",
@@ -1980,187 +2084,6 @@ const Confirmation: React.FC<ConfirmationProps> = ({
   );
 };
 
-// Add new image upload component
-interface ProfileInfoProps extends StepComponentProps {
-  errors: Record<string, string>;
-}
-
-const ProfileInfo: React.FC<ProfileInfoProps> = ({
-  formData,
-  setFormData,
-  errors,
-}) => {
-  const [bmi, setBmi] = useState<number | null>(null);
-  const saveImage = useMutation(api.files.saveProfilePicture);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const { user } = useClerkUser();
-  const curruser = useQuery(api.users.getCurrentUser);
-  const profilePicture =
-    curruser?.profileDetails?.picture || formData.profilePicture;
-  const imageUrl = useQuery(
-    api.files.getImageUrl,
-    profilePicture ? { storageId: profilePicture } : "skip"
-  );
-  const [imageLoading, setImageLoading] = useState(true);
-
-  useEffect(() => {
-    // Calculate BMI when height or weight changes
-    const height = parseFloat(formData.height);
-    const weight = parseFloat(formData.weight);
-    if (height > 0 && weight > 0) {
-      const heightInMeters = height / 100;
-      const calculatedBmi = weight / (heightInMeters * heightInMeters);
-      setBmi(parseFloat(calculatedBmi.toFixed(1))); // Round to 1 decimal place
-    } else {
-      setBmi(null);
-    }
-  }, [formData.height, formData.weight]);
-
-  const handleSelectImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      alert("Permission to access camera roll is required!");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      const uri = asset.uri;
-
-      try {
-        const postUrl = await generateUploadUrl();
-        const fileData = await fetch(uri);
-        if (!fileData.ok) {
-          console.error("Error loading file from URI:", fileData);
-          throw new Error("Failed to load image from URI");
-        }
-        const blob = await fileData.blob();
-        const uploadResult = await fetch(postUrl, {
-          method: "POST",
-          headers: { "Content-Type": "image/jpeg" },
-          body: blob,
-        });
-
-        if (!uploadResult.ok) {
-          throw new Error("Failed to upload image to Convex");
-        }
-
-        const { storageId } = await uploadResult.json();
-        await saveImage({ picastorageId: storageId });
-        setFormData({ ...formData, profilePicture: storageId });
-      } catch (error) {
-        console.error("Error uploading image:", error);
-        alert("Error uploading image. Please try again.");
-      }
-    }
-  };
-
-  return (
-    <View>
-      <Text style={styles.title}>Let's get to know you</Text>
-
-      <View style={styles.profileImageContainer}>
-        {imageUrl ? (
-          <>
-            {imageLoading && <ProfileImageSkeleton />}
-            <FastImage
-              source={{
-                uri: imageUrl,
-                priority: FastImage.priority.normal,
-                cache: FastImage.cacheControl.immutable,
-              }}
-              style={styles.profileImage}
-              resizeMode={FastImage.resizeMode.cover}
-              onLoadStart={() => setImageLoading(true)}
-              onLoadEnd={() => setImageLoading(false)}
-            />
-          </>
-        ) : (
-          <View style={styles.emptyProfileContainer}>
-            <UserVector width={50} height={50} />
-          </View>
-        )}
-        <TouchableOpacity
-          style={styles.uploadButton}
-          onPress={handleSelectImage}
-        >
-          <Ionicons name="camera" size={24} color={Colors.white} />
-        </TouchableOpacity>
-      </View>
-
-      <FormField
-        label="Your Name"
-        value={formData.name}
-        onChangeText={(text) => setFormData({ ...formData, name: text })}
-        error={errors.name}
-        placeholder="Enter your full name"
-      />
-
-      <View style={styles.pickerContainer}>
-        <Text style={styles.pickerLabel}>Gender</Text>
-        <CustomPicker
-          label="Select Gender"
-          options={["Male", "Female", "Other"]}
-          selectedValue={formData.gender}
-          onValueChange={(value) => setFormData({ ...formData, gender: value })}
-        />
-      </View>
-
-      <FormField
-        label="Age"
-        value={formData.age}
-        onChangeText={(text) => setFormData({ ...formData, age: text })}
-        error={errors.age}
-        keyboardType="numeric"
-        maxLength={3}
-        placeholder="Enter your age"
-      />
-
-      <FormField
-        label="Height (cm)"
-        value={formData.height}
-        onChangeText={(text) => setFormData({ ...formData, height: text })}
-        error={errors.height}
-        keyboardType="numeric"
-        maxLength={3}
-        placeholder="Enter your height in cm"
-      />
-
-      <FormField
-        label="Weight (kg)"
-        value={formData.weight}
-        onChangeText={(text) => setFormData({ ...formData, weight: text })}
-        error={errors.weight}
-        keyboardType="decimal-pad"
-        maxLength={5}
-        placeholder="Enter your weight in kg"
-      />
-
-      {bmi !== null && (
-        <View style={styles.bmiContainer}>
-          <Text style={styles.bmiLabel}>Your BMI</Text>
-          <Text style={styles.bmiValue}>{bmi}</Text>
-        </View>
-      )}
-
-      <FormField
-        label="Occupation"
-        value={formData.occupation}
-        onChangeText={(text) => setFormData({ ...formData, occupation: text })}
-        error={errors.occupation}
-        placeholder="Enter your occupation"
-      />
-    </View>
-  );
-};
 
 // Profile image loading fallback
 const ProfileImageSkeleton = () => (

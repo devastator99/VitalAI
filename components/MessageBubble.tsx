@@ -1,4 +1,4 @@
-import React,{Fragment, useEffect} from "react";
+import React, { Fragment, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,10 +16,13 @@ import { Role } from "~/utils/Interfaces";
 import Colors from "~/utils/Colors";
 import BirdVector from "./BirdVector";
 import TypingIndicator from "./TypingIndicator";
-import {LinearGradient} from "expo-linear-gradient";
+import { LinearGradient } from "expo-linear-gradient";
 import { api } from "~/convex/_generated/api";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Id } from "~/convex/_generated/dataModel";
+import { Alert } from "react-native";
+// import { Image as MemoizedAvatarImage } from "@d11/react-native-fast-image";
+import { useCallback } from "react";
 import UserVector from "./UserVector";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -28,7 +31,10 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { MotiPressable } from "moti/interactions";
 import Gallery from "react-native-awesome-gallery";
 import { useMemo } from "react";
-import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
 import FastImage from "@d11/react-native-fast-image";
 
 type MessageBubbleProps = {
@@ -44,66 +50,86 @@ type MessageBubbleProps = {
   readBy: Id<"users">[];
   timestamp?: number;
   participants: { id: Id<"users">; role: string }[];
+  onLongPress?: (messageId: Id<"messages">, content: string) => void;
+  chatId?: Id<"chats">;
 };
 
-const MemoizedAvatarImage = React.memo(({ uri, style }: { uri: string; style: any }) => {
-  const [isLoading, setIsLoading] = React.useState(true);
-  
-  // Event handlers for FastImage
-  const handleLoadStart = React.useCallback(() => {
-    setIsLoading(true);
-  }, []);
-  
-  const handleLoadEnd = React.useCallback(() => {
-    setIsLoading(false);
-  }, []);
-  
-  const handleError = React.useCallback(() => {
-    setIsLoading(false);
-  }, []);
-  
-  return (
-    <View style={style}>
-      {isLoading && (
-        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }]}>
-          <ActivityIndicator size="small" color={Colors.mainBlue} />
-        </View>
-      )}
-      <FastImage 
-        source={{ 
-          uri: uri,
-          priority: FastImage.priority.normal
-        }}
-        style={[StyleSheet.absoluteFill]}
-        resizeMode={FastImage.resizeMode.cover}
-        onLoadStart={handleLoadStart}
-        onLoadEnd={handleLoadEnd}
-        onError={handleError}
-      />
-    </View>
-  );
-}, (prevProps, nextProps) => prevProps.uri === nextProps.uri);
+const MemoizedAvatarImage = React.memo(
+  ({ uri, style }: { uri: string; style: any }) => {
+    const [isLoading, setIsLoading] = React.useState(true);
 
-const SingleImage = ({ url, dimensions }: { url: string, dimensions?: { width: number, height: number } }) => {
+    // Event handlers for FastImage
+    const handleLoadStart = React.useCallback(() => {
+      setIsLoading(true);
+    }, []);
+
+    const handleLoadEnd = React.useCallback(() => {
+      setIsLoading(false);
+    }, []);
+
+    const handleError = React.useCallback(() => {
+      setIsLoading(false);
+    }, []);
+
+    return (
+      <View style={style}>
+        {isLoading && (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0,0,0,0.1)",
+              },
+            ]}
+          >
+            <ActivityIndicator size="small" color={Colors.mainBlue} />
+          </View>
+        )}
+        <FastImage
+          source={{
+            uri: uri,
+            priority: FastImage.priority.normal,
+          }}
+          style={[StyleSheet.absoluteFill]}
+          resizeMode={FastImage.resizeMode.cover}
+          onLoadStart={handleLoadStart}
+          onLoadEnd={handleLoadEnd}
+          onError={handleError}
+        />
+      </View>
+    );
+  },
+  (prevProps, nextProps) => prevProps.uri === nextProps.uri
+);
+
+const SingleImage = ({
+  url,
+  dimensions,
+}: {
+  url: string;
+  dimensions?: { width: number; height: number };
+}) => {
   const [isVisible, setIsVisible] = React.useState(false);
-  
+
   const openGallery = () => setIsVisible(true);
   const closeGallery = () => setIsVisible(false);
-  
+
   return (
     <>
       <TouchableOpacity onPress={openGallery}>
-        <FastImage 
+        <FastImage
           source={{ uri: url }}
           style={{
             width: dimensions?.width ?? 240,
             height: dimensions?.height ?? 180,
-            minHeight: 180
+            minHeight: 180,
           }}
           resizeMode={FastImage.resizeMode.cover}
         />
       </TouchableOpacity>
-      
+
       {isVisible && (
         <Modal
           visible={isVisible}
@@ -111,17 +137,13 @@ const SingleImage = ({ url, dimensions }: { url: string, dimensions?: { width: n
           onRequestClose={closeGallery}
         >
           <View style={styles.galleryModal}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.closeGalleryButton}
               onPress={closeGallery}
             >
               <Ionicons name="close" size={28} color="white" />
             </TouchableOpacity>
-            <Gallery
-              data={[url]}
-              initialIndex={0}
-              style={styles.gallery}
-            />
+            <Gallery data={[url]} initialIndex={0} style={styles.gallery} />
           </View>
         </Modal>
       )}
@@ -185,8 +207,16 @@ const ProfileDetails = ({
                 <View style={styles.imageContainer}>
                   <React.Suspense
                     fallback={
-                      <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center' }]}>
-                        <ActivityIndicator size="large" color={Colors.mainBlue} />
+                      <View
+                        style={[
+                          StyleSheet.absoluteFill,
+                          { justifyContent: "center", alignItems: "center" },
+                        ]}
+                      >
+                        <ActivityIndicator
+                          size="large"
+                          color={Colors.mainBlue}
+                        />
                       </View>
                     }
                   >
@@ -227,25 +257,27 @@ const ProfileDetails = ({
           </View>
 
           {/* Physical Details - Only show if not a doctor or dietician */}
-          {userRole !== "doctor" && userRole !== "dietician" && (height || weight) && (
-            <View style={styles.physicalDetailsSection}>
-              <Text style={styles.sectionTitle}>Physical Details</Text>
-              <View style={styles.physicalDetailsGrid}>
-                {height && (
-                  <View style={styles.detailBox}>
-                    <Text style={styles.detailLabel}>Height</Text>
-                    <Text style={styles.detailValue}>{height} cm</Text>
-                  </View>
-                )}
-                {weight && (
-                  <View style={styles.detailBox}>
-                    <Text style={styles.detailLabel}>Weight</Text>
-                    <Text style={styles.detailValue}>{weight} kg</Text>
-                  </View>
-                )}
+          {userRole !== "doctor" &&
+            userRole !== "dietician" &&
+            (height || weight) && (
+              <View style={styles.physicalDetailsSection}>
+                <Text style={styles.sectionTitle}>Physical Details</Text>
+                <View style={styles.physicalDetailsGrid}>
+                  {height && (
+                    <View style={styles.detailBox}>
+                      <Text style={styles.detailLabel}>Height</Text>
+                      <Text style={styles.detailValue}>{height} cm</Text>
+                    </View>
+                  )}
+                  {weight && (
+                    <View style={styles.detailBox}>
+                      <Text style={styles.detailLabel}>Weight</Text>
+                      <Text style={styles.detailValue}>{weight} kg</Text>
+                    </View>
+                  )}
+                </View>
               </View>
-            </View>
-          )}
+            )}
         </View>
       </View>
     </Modal>
@@ -302,6 +334,8 @@ const MessageBubble = React.memo(
     timestamp,
     participants,
     messageId,
+    onLongPress,
+    chatId,
   }: MessageBubbleProps) => {
     const [isProfileVisible, setIsProfileVisible] = React.useState(false);
     const imageUrl = useQuery(
@@ -313,7 +347,11 @@ const MessageBubble = React.memo(
       attachId ? { storageId: attachId as Id<"_storage"> } : "skip"
     );
 
-    const senderUser = useQuery(api.users.getUserById, { id: userId as Id<"users"> });
+    const deleteMessage = useMutation(api.messages.deleteMessage);
+
+    const senderUser = useQuery(api.users.getUserById, {
+      id: userId as Id<"users">,
+    });
 
     const handleAvatarPress = () => {
       setIsProfileVisible(true);
@@ -385,16 +423,50 @@ const MessageBubble = React.memo(
       }
     }, [type, mediaUrl, isMediaLoading]);
 
+    const handleDeleteMessage = useCallback(
+      (messageId: Id<"messages">, content: string) => {
+        Alert.alert(
+          "Delete Message",
+          `Are you sure you want to delete this message?\n\n"${content}" `,
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Delete",
+              style: "destructive",
+              onPress: async () => {
+                try {
+                  if (chatId) {
+                    await deleteMessage({
+                      messageId,
+                      chatId: chatId as Id<"chats">,
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error deleting message:", error);
+                  Alert.alert("Error", "Failed to delete message");
+                }
+              },
+            },
+          ],
+          { cancelable: true }
+        );
+      },
+      [deleteMessage, chatId]
+    );
+
     const formattedDateTime = React.useMemo(() => {
-      if (!timestamp) return '';
+      if (!timestamp) return "";
       const date = new Date(timestamp);
-      return date.toLocaleString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      return date.toLocaleString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     }, [timestamp]);
 
@@ -412,10 +484,7 @@ const MessageBubble = React.memo(
             // Other users avatar
             <TouchableOpacity onPress={handleAvatarPress}>
               {imageUrl ? (
-                <MemoizedAvatarImage 
-                  uri={imageUrl} 
-                  style={styles.avatar}
-                />
+                <MemoizedAvatarImage uri={imageUrl} style={styles.avatar} />
               ) : (
                 <View
                   style={[
@@ -424,7 +493,7 @@ const MessageBubble = React.memo(
                       justifyContent: "center",
                       alignItems: "center",
                       backgroundColor: "rgba(0, 0, 0, 0.1)",
-                    }
+                    },
                   ]}
                 >
                   <UserVector height={18} width={18} />
@@ -448,10 +517,10 @@ const MessageBubble = React.memo(
         {/* Content */}
         {content === "" && imageUrl ? (
           <View style={styles.previewImage}>
-            <FastImage 
-              source={{ 
+            <FastImage
+              source={{
                 uri: imageUrl,
-                priority: FastImage.priority.normal
+                priority: FastImage.priority.normal,
               }}
               style={StyleSheet.absoluteFill}
               resizeMode={FastImage.resizeMode.cover}
@@ -460,7 +529,11 @@ const MessageBubble = React.memo(
         ) : (
           <ContextMenu.Root>
             <ContextMenu.Trigger>
-              <Pressable onPress={() => {}}>
+              <Pressable
+                onLongPress={() =>
+                  onLongPress && onLongPress(messageId, content)
+                }
+              >
                 {({ pressed }) => (
                   <Animated.View
                     style={[
@@ -471,13 +544,15 @@ const MessageBubble = React.memo(
                           ? styles.botBubble
                           : styles.humanBubble,
                       mediaUrl && styles.mediaBubble,
-                      { transform: [{ scale: pressed ? 0.98 : 1 }] }
+                      { transform: [{ scale: pressed ? 0.98 : 1 }] },
                     ]}
                   >
                     {renderMedia()}
                     {type === "typing" ? (
                       <TypingIndicator />
-                    ) : type === "text" && !content.trim() && (role === Role.Bot || role === Role.User) ? (
+                    ) : type === "text" &&
+                      !content.trim() &&
+                      (role === Role.Bot || role === Role.User) ? (
                       <TypingIndicator />
                     ) : type === "text" ? (
                       <Text
@@ -501,7 +576,9 @@ const MessageBubble = React.memo(
                         />
                       )}
                       {!isCurrentUser && (
-                        <Text style={styles.timeTooltip}>{formattedDateTime}</Text>
+                        <Text style={styles.timeTooltip}>
+                          {formattedDateTime}
+                        </Text>
                       )}
                     </View>
                   </Animated.View>
@@ -534,7 +611,8 @@ const MessageBubble = React.memo(
                   key="delete"
                   destructive
                   onSelect={() => {
-                    /* TODO: Implement delete */
+                    console.log("Delete message", messageId, content);
+                    onLongPress && onLongPress(messageId, content);
                   }}
                 >
                   <ContextMenu.ItemTitle>Delete</ContextMenu.ItemTitle>
@@ -569,16 +647,19 @@ const MediaComponent = React.memo(
     mediaUrl: string | null;
     isMediaLoading?: boolean;
   }) => {
-    const [dimensions, setDimensions] = React.useState({ width: 240, height: 180 });
+    const [dimensions, setDimensions] = React.useState({
+      width: 240,
+      height: 180,
+    });
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState(false);
-    
+
     // Get image dimensions when URL is available
     useEffect(() => {
       if (mediaUrl) {
         // Using the native Image module to get dimensions
         try {
-          if (typeof RNImage.getSize === 'function') {
+          if (typeof RNImage.getSize === "function") {
             RNImage.getSize(
               mediaUrl,
               (width: number, height: number) => {
@@ -586,11 +667,11 @@ const MediaComponent = React.memo(
                 const maxWidth = 240;
                 const aspectRatio = width / height;
                 const calculatedHeight = maxWidth / aspectRatio;
-                
+
                 // Set dimensions with some constraints to avoid extreme aspect ratios
                 setDimensions({
                   width: maxWidth,
-                  height: Math.min(350, Math.max(180, calculatedHeight))
+                  height: Math.min(350, Math.max(180, calculatedHeight)),
                 });
                 setLoading(false);
               },
@@ -627,13 +708,19 @@ const MediaComponent = React.memo(
     }, []);
 
     return (
-      <View style={[styles.media, { width: dimensions.width, height: dimensions.height, minHeight: 180 }]}>
+      <View
+        style={[
+          styles.media,
+          {
+            width: dimensions.width,
+            height: dimensions.height,
+            minHeight: 180,
+          },
+        ]}
+      >
         {isMediaLoading || loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator
-              size="large"
-              color={Colors.mainBlue}
-            />
+            <ActivityIndicator size="large" color={Colors.mainBlue} />
           </View>
         ) : error ? (
           <View style={styles.errorContainer}>
@@ -650,9 +737,12 @@ const MediaComponent = React.memo(
 
 const FileComponent = React.memo(({ mediaUrl }: { mediaUrl: string }) => {
   // Extract filename from the mediaUrl
-  const fileName = mediaUrl ? decodeURIComponent(mediaUrl.split("/").pop() || "File") : "File";
+  const fileName = mediaUrl
+    ? decodeURIComponent(mediaUrl.split("/").pop() || "File")
+    : "File";
   // Optionally trim long filenames for UI
-  const displayName = fileName.length > 10 ? fileName.slice(0, 10) + "..." : fileName;
+  const displayName =
+    fileName.length > 10 ? fileName.slice(0, 10) + "..." : fileName;
 
   return (
     <TouchableOpacity
@@ -711,7 +801,7 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     backgroundColor: "transparent",
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   bubble: {
     padding: 12,
@@ -917,20 +1007,20 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
     minHeight: 180,
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
     minHeight: 180,
   },
   errorText: {
-    color: '#ff6b6b',
+    color: "#ff6b6b",
     marginTop: 8,
     fontSize: 14,
   },
@@ -938,17 +1028,17 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    overflow: 'hidden',
-    position: 'relative',
+    overflow: "hidden",
+    position: "relative",
   },
   messageFooter: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
+    flexDirection: "column",
+    alignItems: "flex-end",
     marginTop: 4,
   },
   timeTooltip: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: "rgba(255, 255, 255, 0.5)",
     marginTop: 2,
   },
   receiptContainer: {
@@ -968,23 +1058,23 @@ const styles = StyleSheet.create({
   timestampText: { color: "rgb(230, 230, 229)", fontSize: 12 },
   galleryModal: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   closeGalleryButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 40,
     right: 20,
     zIndex: 100,
     padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 20,
   },
   gallery: {
     flex: 1,
-    width: '100%',
-    backgroundColor: 'transparent',
+    width: "100%",
+    backgroundColor: "transparent",
   },
 });
 

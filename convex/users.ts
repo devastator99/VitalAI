@@ -1051,7 +1051,7 @@ export const updateUserProfile = mutation({
       questionnaire: args.questionnaire,
     });
 
-    return user._id;
+    return await ctx.db.get(user._id);
   },
 });
 
@@ -1084,5 +1084,86 @@ export const createAIUser = mutation({
       createdAt: Date.now(),
     });
     return "AI user created successfully";
+  },
+});
+
+export const submitQuestionnaire = mutation({
+  args: {
+    // From profile details
+    name: v.string(),
+    profilePicture: v.optional(v.id("_storage")),
+
+    // From questionnaire, but also used in profileDetails
+    height: v.string(), 
+    weight: v.string(),
+
+    // The rest of the questionnaire data
+    gender: v.string(),
+    age: v.string(),
+    occupation: v.string(),
+    goals: v.array(v.string()),
+    healthConditions: v.array(v.string()),
+    symptoms: v.array(v.string()),
+    allergies: v.array(v.string()),
+    habits: v.array(v.string()),
+    dietStyle: v.string(),
+    spiceLevel: v.string(),
+    texturePreferences: v.array(v.string()),
+    foodsToAvoid: v.array(v.string()),
+    cookingLevel: v.string(),
+    wakeUpTime: v.union(v.string(), v.null()),
+    sleepTime: v.union(v.string(), v.null()),
+    mealTimes: v.object({
+      breakfast: v.union(v.string(), v.null()),
+      lunch: v.union(v.string(), v.null()),
+      snack: v.union(v.string(), v.null()),
+      dinner: v.union(v.string(), v.null()),
+    }),
+    heaviestMeal: v.string(),
+    activityLevel: v.string(),
+    workouts: v.object({
+      doWorkouts: v.boolean(),
+      days: v.array(v.string()),
+      time: v.union(v.string(), v.null()),
+      type: v.string(),
+      duration: v.string(),
+    }),
+    location: v.string(),
+    homeCuisine: v.string(),
+    otherCuisines: v.array(v.string()),
+    primaryGoal: v.string(),
+    completedAt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const { name, profilePicture, ...questionnaireData } = args;
+
+    const profileDetails = {
+      ...user.profileDetails,
+      picture: profilePicture,
+      height: parseFloat(args.height),
+      weight: parseFloat(args.weight),
+    };
+
+    await ctx.db.patch(user._id, {
+      name,
+      profileDetails,
+      questionnaire: questionnaireData,
+    });
+
+    return await ctx.db.get(user._id);
   },
 });

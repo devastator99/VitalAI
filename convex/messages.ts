@@ -255,7 +255,9 @@ export const deleteMessage = mutation({
         .query("messages")
         .filter((q) => q.eq(q.field("chatId"), chat._id))
         .collect()
-        .then((msgs) => msgs.sort((a, b) => b.createdAt - a.createdAt)[0]); // Get the most recent message
+        .then((msgs: any) => msgs.sort((a: any, b: any) => b.createdAt - a.createdAt)[0]); // Get the most recent message
+
+      console.log(recentMessage , "recent message by chat:DELETE");
 
       await ctx.db.patch(chat._id, {
         lastMessageId: recentMessage ? recentMessage._id : undefined,

@@ -121,6 +121,8 @@ const InitialLayout = () => {
     userId: safeUserId ? safeUserId : "skip",
   });
 
+  console.log(infoSubmitted,"infoSubmitted xx")
+
   // 7. Handle font errors
   useEffect(() => {
     if (fontError) throw fontError;
