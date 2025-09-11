@@ -347,7 +347,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ chatId: propChatId }) => {
             currentUser={currentUser}
             participants={participants}
             onLongPress={handleDeleteMessage}
-            chatId={chatId}
+            chatId={chatId as Id<"chats">}
           />
           {showDateSeparator() && (
             <DateSeparator timestamp={item._creationTime} />
