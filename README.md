@@ -1,4 +1,4 @@
-# Cura Health App
+# VitalAI
 
 A comprehensive healthcare and wellness mobile application built with React Native and Expo, featuring AI-powered chat, habit tracking, meal planning, and personalized health insights.
 
